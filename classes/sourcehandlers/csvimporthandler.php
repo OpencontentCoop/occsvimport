@@ -18,8 +18,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     
     public function initialize()
     {        
-        $currentUser = eZUser::currentUser();
-        $this->cli->warning( 'UserID #' . $currentUser->attribute( 'contentobject_id' ) );
         $this->csvIni = eZINI::instance( 'csvimport.ini' );
     	$this->classIdentifier = $this->options->attribute( 'class_identifier' );
         $this->contentClass = eZContentClass::fetchByIdentifier( $this->classIdentifier );
@@ -78,27 +76,22 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     		$attributeArray[$attribute->attribute( 'identifier' )] = $attribute->attribute( 'data_type_string' );
     		$attributeRepository[$attribute->attribute( 'identifier' )] = $attribute;
     	}
-
-        $remoteID = substr( self::REMOTE_IDENTIFIER . $this->currentGUID, 0, 100 );
         
+        $remoteID = substr( self::REMOTE_IDENTIFIER . $this->currentGUID, 0, 100 );
+
     	$contentOptions = new SQLIContentOptions( array(
             'class_identifier'      => $this->classIdentifier,
-            'remote_id'             => $remoteID
+            'remote_id'             => self::REMOTE_IDENTIFIER . $this->currentGUID
         ) );
         $content = SQLIContent::create( $contentOptions );
 
         foreach ( $headers as $key => $header )
         {
-        //	if( empty( $row->{$header} ) )
-        //    {
-        //        continue;
-        //    }
-            
-            $rawHeader = $rawHeaders[$key];
+        	$rawHeader = $rawHeaders[$key];
         	
         	if ( array_key_exists( $rawHeader, $attributeArray ) )
-        	{	        	
-                switch( $attributeArray[$rawHeader] )
+        	{
+	        	switch( $attributeArray[$rawHeader] )
 	    		{
 	    			case 'ezxmltext':
 	    			{
@@ -123,27 +116,13 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     				{
     					$fileAndName = explode( '|', $row->{$header} );
                         $file = $this->options->attribute( 'file_dir' ) . eZSys::fileSeparator() . OCCSVImportHandler::cleanFileName( $fileAndName[0] );
-                        if( !is_dir( $file ) )
+                        $name = '';
+                        if ( isset( $fileAndName[1] ) )
                         {
-                            $name = '';
-                            if ( isset( $fileAndName[1] ) )
-                            {
-                                $name = $fileAndName[1];
-                            }
-                            
-                            $fileHandler = eZClusterFileHandler::instance( $file );
-                            
-                            if( $fileHandler->exists() )
-                            {
-                                //$this->cli->notice( $file . '|' . $name );
-                                $content->fields->{$rawHeader} = $file . '|' . $name;
-                            }
-                            else
-                            {
-                                $this->cli->error( $file . ' non trovato' );
-                            }
+                            $name = $fileAndName[1];
                         }
-                        
+                        $this->cli->notice( $file . '|' . $name );
+                        $content->fields->{$rawHeader} = $file . '|' . $name;
     				}break;
     				
     				case 'ezbinaryfile':
@@ -151,34 +130,20 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 	        		{
     					$fileAndName = explode( '|', $row->{$header} );
                         $file = $this->options->attribute( 'file_dir' ) . eZSys::fileSeparator() . OCCSVImportHandler::cleanFileName( $fileAndName[0] );
-                        if( !is_dir( $file ) )
+                        $name = '';
+                        if ( isset( $fileAndName[1] ) )
                         {
-                            $name = '';
-                            if ( isset( $fileAndName[1] ) )
-                            {
-                                $name = $fileAndName[1];
-                            }
-                            
-                            $fileHandler = eZClusterFileHandler::instance( $file );
-                            
-                            if( $fileHandler->exists() )
-                            {
-                                //$this->cli->notice( $file );
-                                $content->fields->{$rawHeader} = $file;
-                            }
-                            else
-                            {
-                                $this->cli->error( $file . ' non trovato' );
-                            }
+                            $name = $fileAndName[1];
                         }
+                        $content->fields->{$rawHeader} = $file;
     				}break;
-	    			
+                    
                     case 'ezdate':
                     case 'ezdatetime':
 	    			{
 	    				$content->fields->{$rawHeader} = $this->getTimestamp( $row->{$header} );
 	    			}break;
-                    
+	    			
     				default:
 	    			{
 		    			$content->fields->{$rawHeader} = $row->{$header};

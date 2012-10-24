@@ -1,7 +1,7 @@
 <?php /* #?ini charset="utf-8"?
 
 [ImportSettings]
-AvailableSourceHandlers[]=csvimporthandler
+#AvailableSourceHandlers[]=csvimporthandler
 RobotUserID=14
 
 [csvimporthandler-HandlerSettings]

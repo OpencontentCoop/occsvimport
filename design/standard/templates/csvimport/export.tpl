@@ -22,7 +22,7 @@
                 <li>i campi relazione a oggetti (ezobjectrelation) e relazioni a oggetti (ezobjectrelationlist) in cui i valori considerati sono il titolo dell'oggetto e devono essere separati da virgola. Il sistema importa gli oggetti di cui trova corrispondenza nell'albero contenuti: esempio per Tipo di strutture <em>Incarico,Servizio,Ufficio</em></li>
                 <li>le immagini che possono avere il formato <em>nomefile.ext|testo alternativo</em></li>
                 <li>le date che devono avere il formato GG/MM/AAAA</li>
-                <li>le date-ore che devono avere il formato GG/MM/AAAA HH:MM</li>
+                <li>le date-ore che devono avere il formato GG/MM/AAAA HH:MM</li>                
                 </ul>   
             </li>
             <li>
