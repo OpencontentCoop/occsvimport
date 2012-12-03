@@ -7,6 +7,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     protected $currentGUID;
     protected $options;
     protected $csvIni, $doc, $classIdentifier, $contentClass, $countRow = 0;
+    private $rootNodes = array();
     
     const REMOTE_IDENTIFIER = 'csvimport_';
     
@@ -14,6 +15,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     {
         parent::__construct( $options );
         $this->options = $options;
+        $this->rootNodes();
     }
     
     public function initialize()
@@ -61,7 +63,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     
     public function process( $row )
     {        
-    	//$this->currentGUID = array_pop( explode( '/', $this->options->attribute( 'file_dir' ) ) ) . '_' . time() . '_' . $this->countRow++;
+        //$this->currentGUID = array_pop( explode( '/', $this->options->attribute( 'file_dir' ) ) ) . '_' . time() . '_' . $this->countRow++;
     	
         $headers = $this->doc->rows->getHeaders();
         $rawHeaders = $this->doc->rows->getRawHeaders();
@@ -235,6 +237,40 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         
     }
     
+    public function rootNodes()
+    {
+        $rootNodes = array();
+        $siteaccessDirs = eZDir::findSubdirs( 'settings/siteaccess', false, 'admin' );
+        foreach( $siteaccessDirs as $siteaccessDir )
+        {
+            $contentINI = eZINI::fetchFromFile( 'settings/siteaccess/' . $siteaccessDir . '/content.ini' );
+            if ( $contentINI->hasVariable( 'NodeSettings', 'RootNode' ) )
+            {
+                $rootNodes[] = $contentINI->variable( 'NodeSettings', 'RootNode' ); 
+            }
+        }
+        $this->rootNodes = array_unique( $rootNodes );
+    }
+    
+    public function getRootNode()
+    {
+        $baseNodeID = $this->options->attribute( 'parent_node_id' );        
+        $baseNode = eZContentObjectTreeNode::fetch( $baseNodeID );
+        if ( $baseNode )
+        {
+            $pathArray = $baseNode->attribute( 'path_array' );
+            $reversePathArray = array_reverse( $pathArray );
+            foreach( $reversePathArray as $id )
+            {
+                if ( in_array( $id, $this->rootNodes ) )
+                {
+                    return $id;
+                }
+            }
+        }
+        return eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' );
+    }
+    
     public function getTimestamp( $string )
     {
         $data_ora = explode( ' ', $string );
@@ -280,10 +316,11 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     	
     	foreach( $relationsNames as $name )
     	{
-    		$searchResult = eZSearch::search( 
-    			trim( $name ), 
+            $searchResult = eZSearch::search( 
+    			'"' . trim( $name ) . '"', 
 	    		array(
-	                'SearchContentClassID' => $classesIDs,
+	                'SearchSubTreeArray' => array( $this->getRootNode() ),
+                    'SearchContentClassID' => $classesIDs,
 	    			'SearchLimit' => 1
 	        	)
         	);
