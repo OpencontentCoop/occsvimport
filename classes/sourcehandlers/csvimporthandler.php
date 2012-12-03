@@ -194,7 +194,8 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         		{
         			if ( strpos( $rawHeader, $pseudo ) !== false )
         			{
-        				$files = explode( ',', $row->{$header} );
+        				$delimiter = $this->csvIni->variable( 'Settings', 'PseudoLocationsDelimiter' );
+                        $files = explode( $delimiter, $row->{$header} );
         				array_walk( $files, 'trim' );
         				
         				if ( !empty( $files ) && $files[0] != '' )
@@ -298,7 +299,8 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             return false;
         }
         $relations = array();
-    	$relationsNames = explode( ',', $relationsNames );
+        $delimiter = $this->csvIni->variable( 'Settings', 'RelatedObjectsDelimiter' );
+    	$relationsNames = explode( $delimiter, $relationsNames );
     	array_walk( $relationsNames, 'trim' );
     	
     	$classesIDs = array();
