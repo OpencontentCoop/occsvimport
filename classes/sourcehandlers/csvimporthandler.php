@@ -8,6 +8,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     protected $options;
     protected $csvIni, $doc, $classIdentifier, $contentClass, $countRow = 0;
     private $rootNodes = array();
+    private $currentIndex = 0;
     
     const REMOTE_IDENTIFIER = 'csvimport_';
     
@@ -39,7 +40,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         ) );
         $this->doc = new SQLICSVDoc( $csvOptions );
         $this->doc->parse();        
-        $this->dataSource = $this->doc->rows;
+        $this->dataSource = $this->doc->rows;        
     }
     
     public function getProcessLength()
@@ -62,13 +63,14 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     }
     
     public function process( $row )
-    {        
+    {                        
+        $this->currentIndex++;
         //$this->currentGUID = array_pop( explode( '/', $this->options->attribute( 'file_dir' ) ) ) . '_' . time() . '_' . $this->countRow++;
     	
         $headers = $this->doc->rows->getHeaders();
         $rawHeaders = $this->doc->rows->getRawHeaders();
         
-        $this->currentGUID = $row->{$headers[0]} . '_' . $this->classIdentifier;
+        $this->currentGUID = $this->currentIndex . '_' . $row->{$headers[0]} . '_' . $this->classIdentifier;
         
     	$pseudoLocations = array_keys( $this->csvIni->variable( 'Settings', 'PseudoLocation' ) );
 
@@ -81,7 +83,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     		$attributeRepository[$attribute->attribute( 'identifier' )] = $attribute;
     	}
 
-        $remoteID = substr( self::REMOTE_IDENTIFIER . $this->currentGUID, 0, 100 );
+        $remoteID = md5( self::REMOTE_IDENTIFIER . $this->currentGUID . time() );
         
     	$contentOptions = new SQLIContentOptions( array(
             'class_identifier'      => $this->classIdentifier,
@@ -169,7 +171,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                                 $content->fields->{$rawHeader} = $file;
                             }
                             else
-                            {
+                            {                                
                                 $this->cli->error( $file . ' non trovato' );
                             }
                         }
@@ -217,7 +219,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         $publisher = SQLIContentPublisher::getInstance();
         $publisher->publish( $content );
         
-        $newNodeID = $content->getRawContentObject()->attribute( 'main_node_id' ); 
+        $newNodeID = $content->getRawContentObject()->attribute( 'main_node_id' );        
         unset( $content );
         
         if ( $doAction !== false )

@@ -14,7 +14,7 @@ class OCCSVImportHandler
 	
 	public static function cleanFileName( $name )
 	{
-		$suffix = eZFile::suffix( $name );
+		$suffix = strtolower( eZFile::suffix( $name ) );
         $length = mb_strlen( $suffix ) + 1;
         $name = substr( $name, 0, -$length );
         $self = new OCCSVImportHandler();
@@ -31,7 +31,7 @@ class OCCSVImportHandler
         }
         
 		$storageDir = $this->ini->variable( 'Storage', 'StorageZipDir' );
-		$storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+		$storage = eZSys::cacheDirectory() . eZSys::fileSeparator() . $storageDir;
 		if ( !is_dir( $storage ) )
 		{
 			eZDir::mkdir( $storage, false, true );
@@ -77,7 +77,7 @@ class OCCSVImportHandler
 	public function inizializeFromHTTPFile( $httpFile )
 	{
 		$storageDir = $this->ini->variable( 'Storage', 'StorageZipDir' );
-		$storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+		$storage = eZSys::cacheDirectory() . eZSys::fileSeparator() . $storageDir;
 		if ( !is_dir( $storage ) )
 		{
 			eZDir::mkdir( $storage, false, true );
