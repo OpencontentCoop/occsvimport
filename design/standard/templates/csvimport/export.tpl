@@ -19,7 +19,7 @@
             <li>Per il formato degli attributi si veda <a target="_blank" href="https://github.com/lolautruche/SQLIImport/blob/master/doc/fromString.txt">SQLIImport - fromString() Appendix</a><br />
             <strong>Attenzione fanno eccezione:</strong>:
                 <ul>
-                <li>i campi relazione a oggetti (ezobjectrelation) e relazioni a oggetti (ezobjectrelationlist) in cui i valori considerati sono il titolo dell'oggetto e devono essere separati da < {ezini( 'Settings', 'RelatedObjectsDelimiter', 'csvimport.ini' )} >. Il sistema importa gli oggetti di cui trova corrispondenza nell'albero contenuti: esempio per Tipo di strutture <em>Incarico{ezini( 'Settings', 'RelatedObjectsDelimiter', 'csvimport.ini' )}Servizio{ezini( 'Settings', 'RelatedObjectsDelimiter', 'csvimport.ini' )}Ufficio</em></li>
+                <li>i campi relazione a oggetti (ezobjectrelation) e relazioni a oggetti (ezobjectrelationlist) in cui i valori considerati sono il titolo dell'oggetto e devono essere separati da virgola. Il sistema importa gli oggetti di cui trova corrispondenza nell'albero contenuti: esempio per Tipo di strutture <em>Incarico,Servizio,Ufficio</em></li>
                 <li>le immagini che possono avere il formato <em>nomefile.ext|testo alternativo</em></li>
                 <li>le date che devono avere il formato GG/MM/AAAA</li>
                 <li>le date-ore che devono avere il formato GG/MM/AAAA HH:MM</li>
@@ -28,7 +28,7 @@
             <li>
                 Il formato dei campi personalizzati deve essere: < <em>nomefile.ext|titolo,nomefile2.ext|titolo2</em> >.<br />
                 Dove <em>nomefile.ext</em> è il file presente nello zip e <em>titolo</em> è il titolo che si vuole dare all'oggetto creato.<br />
-                I valori dei campi personalizzati sono separarti da < {ezini( 'Settings', 'PseudoLocationsDelimiter', 'csvimport.ini' )} >.
+                I valori dei campi personalizzati sono separarti da < , >.
             </li>  
         </ul>
     </div>

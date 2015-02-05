@@ -7,8 +7,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     protected $currentGUID;
     protected $options;
     protected $csvIni, $doc, $classIdentifier, $contentClass, $countRow = 0;
-    private $rootNodes = array();
-    private $currentIndex = 0;
     
     const REMOTE_IDENTIFIER = 'csvimport_';
     
@@ -16,7 +14,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     {
         parent::__construct( $options );
         $this->options = $options;
-        $this->rootNodes();
     }
     
     public function initialize()
@@ -40,7 +37,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         ) );
         $this->doc = new SQLICSVDoc( $csvOptions );
         $this->doc->parse();        
-        $this->dataSource = $this->doc->rows;        
+        $this->dataSource = $this->doc->rows;
     }
     
     public function getProcessLength()
@@ -63,14 +60,13 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     }
     
     public function process( $row )
-    {                        
-        $this->currentIndex++;
-        //$this->currentGUID = array_pop( explode( '/', $this->options->attribute( 'file_dir' ) ) ) . '_' . time() . '_' . $this->countRow++;
+    {        
+    	//$this->currentGUID = array_pop( explode( '/', $this->options->attribute( 'file_dir' ) ) ) . '_' . time() . '_' . $this->countRow++;
     	
         $headers = $this->doc->rows->getHeaders();
         $rawHeaders = $this->doc->rows->getRawHeaders();
         
-        $this->currentGUID = $this->currentIndex . '_' . $row->{$headers[0]} . '_' . $this->classIdentifier;
+        $this->currentGUID = $row->{$headers[0]} . '_' . $this->classIdentifier;
         
     	$pseudoLocations = array_keys( $this->csvIni->variable( 'Settings', 'PseudoLocation' ) );
 
@@ -83,7 +79,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     		$attributeRepository[$attribute->attribute( 'identifier' )] = $attribute;
     	}
 
-        $remoteID = md5( self::REMOTE_IDENTIFIER . $this->currentGUID . time() );
+        $remoteID = substr( self::REMOTE_IDENTIFIER . $this->currentGUID, 0, 100 );
         
     	$contentOptions = new SQLIContentOptions( array(
             'class_identifier'      => $this->classIdentifier,
@@ -171,7 +167,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                                 $content->fields->{$rawHeader} = $file;
                             }
                             else
-                            {                                
+                            {
                                 $this->cli->error( $file . ' non trovato' );
                             }
                         }
@@ -196,8 +192,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         		{
         			if ( strpos( $rawHeader, $pseudo ) !== false )
         			{
-        				$delimiter = $this->csvIni->variable( 'Settings', 'PseudoLocationsDelimiter' );
-                        $files = explode( $delimiter, $row->{$header} );
+        				$files = explode( ',', $row->{$header} );
         				array_walk( $files, 'trim' );
         				
         				if ( !empty( $files ) && $files[0] != '' )
@@ -219,7 +214,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         $publisher = SQLIContentPublisher::getInstance();
         $publisher->publish( $content );
         
-        $newNodeID = $content->getRawContentObject()->attribute( 'main_node_id' );        
+        $newNodeID = $content->getRawContentObject()->attribute( 'main_node_id' ); 
         unset( $content );
         
         if ( $doAction !== false )
@@ -238,40 +233,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         	}
         }
         
-    }
-    
-    public function rootNodes()
-    {
-        $rootNodes = array();
-        $siteaccessDirs = eZDir::findSubdirs( 'settings/siteaccess', false, 'admin' );
-        foreach( $siteaccessDirs as $siteaccessDir )
-        {
-            $contentINI = eZINI::fetchFromFile( 'settings/siteaccess/' . $siteaccessDir . '/content.ini' );
-            if ( $contentINI->hasVariable( 'NodeSettings', 'RootNode' ) )
-            {
-                $rootNodes[] = $contentINI->variable( 'NodeSettings', 'RootNode' ); 
-            }
-        }
-        $this->rootNodes = array_unique( $rootNodes );
-    }
-    
-    public function getRootNode()
-    {
-        $baseNodeID = $this->options->attribute( 'parent_node_id' );        
-        $baseNode = eZContentObjectTreeNode::fetch( $baseNodeID );
-        if ( $baseNode )
-        {
-            $pathArray = $baseNode->attribute( 'path_array' );
-            $reversePathArray = array_reverse( $pathArray );
-            foreach( $reversePathArray as $id )
-            {
-                if ( in_array( $id, $this->rootNodes ) )
-                {
-                    return $id;
-                }
-            }
-        }
-        return eZINI::instance( 'content.ini' )->variable( 'NodeSettings', 'RootNode' );
     }
     
     public function getTimestamp( $string )
@@ -301,8 +262,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             return false;
         }
         $relations = array();
-        $delimiter = $this->csvIni->variable( 'Settings', 'RelatedObjectsDelimiter' );
-    	$relationsNames = explode( $delimiter, $relationsNames );
+    	$relationsNames = explode( ',', $relationsNames );
     	array_walk( $relationsNames, 'trim' );
     	
     	$classesIDs = array();
@@ -320,11 +280,10 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     	
     	foreach( $relationsNames as $name )
     	{
-            $searchResult = eZSearch::search( 
-    			'"' . trim( $name ) . '"', 
+    		$searchResult = eZSearch::search( 
+    			trim( $name ), 
 	    		array(
-	                'SearchSubTreeArray' => array( $this->getRootNode() ),
-                    'SearchContentClassID' => $classesIDs,
+	                'SearchContentClassID' => $classesIDs,
 	    			'SearchLimit' => 1
 	        	)
         	);
