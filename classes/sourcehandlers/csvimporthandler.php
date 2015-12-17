@@ -178,6 +178,11 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 	    			{
 	    				$content->fields->{$rawHeader} = $this->getTimestamp( $row->{$header} );
 	    			}break;
+
+                    case 'ezprice':
+                    {
+                        $content->fields->{$rawHeader} = $this->getPrice( $row->{$header} );
+                    }break;
                     
     				default:
 	    			{
@@ -237,22 +242,53 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     
     public function getTimestamp( $string )
     {
-        $data_ora = explode( ' ', $string );
-        $data = $data_ora[0];
-        $ora = isset( $data_ora[1] ) ? $data_ora[1] : '00:00';
-        $giorno_mese_anno = explode( '/', $data );
-        $ore_minuti = explode( ':', $ora );
-        
-        $ore = $ore_minuti[0];        
-        $minuti = $ore_minuti[1];
-        $giorno = $giorno_mese_anno[0];
-        if ( !isset( $giorno_mese_anno[1] ) )
-        {
-            return time();
+        /*
+         * Sostiutisco gli / con -
+         * Dates in the m/d/y or d-m-y formats are disambiguated by looking at the separator between the various components:
+         * if the separator is a slash (/), then the American m/d/y is assumed; whereas if the separator is a dash (-) or a dot (.),
+         * then the European d-m-y format is assumed.
+         */
+        if (!is_numeric($string)) {
+            $string = str_replace('/', '-', $string);
         }
-        $mese = $giorno_mese_anno[1];
-        $anno = $giorno_mese_anno[2];
-        return mktime( $ore, $minuti, 0, $mese, $giorno, $anno );
+
+        if (($timestamp = strtotime($string)) !== false) {
+            return $timestamp;
+        } else {
+            // Approccio con regex?
+            return time();
+            /*
+            $data_ora = explode( ' ', $string );
+            $data = $data_ora[0];
+            $ora = isset( $data_ora[1] ) ? $data_ora[1] : '00:00';
+            $giorno_mese_anno = explode( '/', $data );
+            $ore_minuti = explode( ':', $ora );
+
+            $ore = $ore_minuti[0];
+            $minuti = $ore_minuti[1];
+            $giorno = $giorno_mese_anno[0];
+            if ( !isset( $giorno_mese_anno[1] ) )
+            {
+                return time();
+            }
+            $mese = $giorno_mese_anno[1];
+            $anno = $giorno_mese_anno[2];
+            return mktime( $ore, $minuti, 0, $mese, $giorno, $anno );
+            */
+        }
+    }
+
+    public function getPrice( $string )
+    {
+        $priceComponent = explode('|', $string);
+        if (is_array($priceComponent)  && count($priceComponent) == 3)
+        {
+            return $string;
+        }
+        $pattern = '/(?<![0-9.,])(?:[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]*)?|[0-9]{1,3}(?:\.?[0-9]{3})*(?:,[0-9]*)?)(?![0-9.,])/';
+        preg_match( $pattern, $string, $matches);
+        return str_replace('.', '', $matches[0] . '|1|1');
+
     }
     
     public function getRelations( $relationsNames, $classes = array() )
