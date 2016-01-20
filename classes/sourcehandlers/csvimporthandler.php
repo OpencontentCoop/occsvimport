@@ -280,14 +280,14 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     public function getPrice( $string )
     {
-        $priceComponent = explode('|', $string);
-        if (is_array($priceComponent)  && count($priceComponent) == 3)
+        $priceComponent = explode( '|', $string );
+        if ( is_array( $priceComponent )  && count( $priceComponent ) == 3 )
         {
             return $string;
         }
-        $pattern = '/(?<![0-9.,])(?:[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]*)?|[0-9]{1,3}(?:\.?[0-9]{3})*(?:,[0-9]*)?)(?![0-9.,])/';
-        preg_match( $pattern, $string, $matches);
-        return str_replace('.', '', $matches[0] . '|1|1');
+        $locale = eZLocale::instance();
+        $data = $locale->internalCurrency( $string );
+        return $data . '|1|1';
 
     }
     
