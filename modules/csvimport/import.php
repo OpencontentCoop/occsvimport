@@ -50,6 +50,13 @@ if ( $module->isCurrentAction( 'UploadFile' ) )
         	{
         		$handler->setImportOption( 'parent_node_id', $NodeID );
         		$handler->setImportOption( 'name', 'Importazione in ' . $node->attribute( 'name' ) );
+				
+				/* Se è stata flaggata l'impostazione per l'import incrementale aggiungo un'opzione */
+				if ( $http->hasPostVariable( 'Incremental') && $http->postVariable('Incremental') == 1)
+				{
+					$handler->setImportOption( 'incremental', 1 );
+				}
+				
         		$handler->addImport();
         		$module->redirectTo( 'sqliimport/list' );
         	}

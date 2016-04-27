@@ -14,14 +14,18 @@
     <div class="attribute-header">
         <h1>Importa oggetti da file CSV in <a href={$node.url_alias|ezurl()} title="Importa in {$node.name|wash()}">{$node.name|wash()}</a></h1>
     </div>
+
     <div class="attribute-description">
-        
-        <h2></h2>
-    	
+        <div class="block">
+            <input type="checkbox" name="Incremental" value="1" />Import di tipo incrementale?
+        </div>
+
     	<div class="block">
     		<input type="file" name="ImportFile" />
             <input class="button" type="submit" name="UploadFileButton" value="Upload file" />
-        </div> 
+        </div>
+
+
     	
     	<input type="hidden" name="ObjectID" value="{$ObjectID}" />
     	<input type="hidden" name="NodeID" value="{$NodeID}" />

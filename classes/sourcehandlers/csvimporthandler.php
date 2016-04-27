@@ -191,6 +191,19 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                         $content->fields->{$rawHeader} = $this->getPrice( $row->{$header} );
                     }break;
 
+                    case 'ezmatrix':
+                    {
+                        if (isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
+                        {
+                            $content->fields->{$rawHeader} = $this->getIncrementalMatrix($contentOptions['remote_id'], $header, $row->{$header});
+                        }
+                        else
+                        {
+                            $content->fields->{$rawHeader} = $row->{$header};
+                        }
+                    }break;
+
+
                     default:
                     {
                         $content->fields->{$rawHeader} = $row->{$header};
@@ -295,6 +308,24 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         $locale = eZLocale::instance();
         $data = $locale->internalCurrency( $string );
         return $data . '|1|1';
+
+    }
+
+    public function getIncrementalMatrix( $remoteID, $attribute, $string )
+    {
+
+        $object = eZContentObject::fetchByRemoteID( $remoteID );
+        if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
+        {
+            return $string;
+        }
+
+        $dataMap = $object->dataMap();
+        if (!isset($dataMap[$attribute]))
+        {
+            return $string;
+        }
+        return $dataMap[$attribute]->hasContent() ? $dataMap[$attribute]->toString() . '&' . $string : $string;
 
     }
 
