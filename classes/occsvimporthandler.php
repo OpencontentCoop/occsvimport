@@ -186,10 +186,18 @@ class OCCSVImportHandler
 		$this->setImportOption( 'delimiter', $this->ini->variable( 'Settings', 'CSVDelimiter' ) );
 		$this->setImportOption( 'enclosure', $this->ini->variable( 'Settings', 'CSVEnclosure' ) );
 		$this->setImportOption( 'file_dir', $this->file_dir );
-		$this->setImportOption( 'class_identifier', $this->getCSVFile( false ) );
+        $classIdentifier = $this->getCSVFile( false );
+		$this->setImportOption( 'class_identifier', $classIdentifier );
+
+        // Seleziono l'handler in base alla classe, default valore SQLIImportHandler (import csv generale)
+        $handler = $this->ini->variable( 'Settings', 'SQLIImportHandler' );
+        if ($this->ini->hasVariable( 'Settings', 'SQLIImportHandler_' . $classIdentifier ))
+        {
+            $handler = $this->ini->variable( 'Settings', $classIdentifier );
+        }
 
 		$pendingImport = new SQLIImportItem( array(
-            'handler'               => $this->ini->variable( 'Settings', 'SQLIImportHandler' ),
+            'handler'               => $handler,
             'user_id'               => eZUser::currentUserID()
         ) );
         $pendingImport->setAttribute( 'options', new SQLIImportHandlerOptions( $this->import_options ) );
