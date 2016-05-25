@@ -1,7 +1,9 @@
 <?php
 
-class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportHandler
+class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIImportHandler
 {
+    private $handlerIdentifier = 'csvimporthandlerlotto';
+
     protected $rowIndex = 0;
     protected $rowCount;
     //protected $currentGUID;
@@ -72,6 +74,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
         $attributeArray = array();
         $attributeRepository = array();
+
         $attributes = $this->contentClass->fetchAttributes();
         foreach( $attributes as $attribute )
         {
@@ -79,15 +82,16 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             $attributeRepository[$attribute->attribute( 'identifier' )] = $attribute;
         }
 
+        $structuredFields = array();
+
         //$remoteID = substr( self::REMOTE_IDENTIFIER . $this->currentGUID, 0, 100 );
 
 
         $contentOptions = new SQLIContentOptions( array(
             'class_identifier'      => $this->classIdentifier
-
         ) );
 
-        if($headers[0]=='remoteId'){
+        if($headers[0]=='remoteId' || $headers[0]=='cig'){
             $remoteID = $this->classIdentifier.'_'.$row->{$headers[0]};
             $contentOptions->__set('remote_id', $remoteID);
         }
@@ -96,12 +100,9 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
         foreach ( $headers as $key => $header )
         {
-
-
-
-
-
+            
             $rawHeader = $rawHeaders[$key];
+            $rawHeaderArray = explode('.', $rawHeader);
 
             if ( array_key_exists( $rawHeader, $attributeArray ) )
             {
@@ -193,14 +194,9 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
                     case 'ezmatrix':
                     {
-                        if (isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
-                        {
-                            $content->fields->{$rawHeader} = $this->getIncrementalMatrix($contentOptions['remote_id'], $header, $row->{$header});
-                        }
-                        else
-                        {
-                            $content->fields->{$rawHeader} = $row->{$header};
-                        }
+
+                        $content->fields->{$rawHeader} = $this->getMatrix($contentOptions['remote_id'], $header, $row->{$header});
+
                     }break;
 
 
@@ -208,6 +204,17 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     {
                         $content->fields->{$rawHeader} = $row->{$header};
                     }break;
+                }
+            }
+            elseif ( count($rawHeaderArray) > 0 && array_key_exists( $rawHeaderArray[0], $attributeArray) )
+            {
+                switch( $attributeArray[$rawHeaderArray[0]] ) {
+                    case 'ezmatrix':
+                        $structuredFields[$rawHeaderArray[0]][$rawHeaderArray[1]] = $row->{$header};
+                        break;
+
+                    default:
+                        break;
                 }
             }
             else
@@ -233,6 +240,28 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     }
                 }
             }
+        }
+
+        // Ricompongo il campo con i valori della matrice salvati in $structuredFields
+        foreach ($structuredFields as $k => $v)
+        {
+            $content->fields->{$k} = $this->getStructuredMatrix($k, $v, $contentOptions['remote_id']);
+        }
+
+        // Gestione partecipanti ed aggiudicatari
+        // todo: modo migliore???
+        $sFields = array('partecipanti', 'aggiudicatari');
+        foreach ( $sFields as $s)
+        {
+            if ($row->{$s} == '2')
+            {
+                $content->fields->{$rawHeaders[array_search($s, $headers)]} = $this->prepareMatrixData($remoteID, $row, $s );
+            }
+            else
+            {
+                $content->fields->{$rawHeaders[array_search($s, $headers)]} = $this->preserveMatrixData($remoteID, $s );
+            }
+
         }
 
         $content->addLocation( SQLILocation::fromNodeID( intval( $this->options->attribute( 'parent_node_id' ) ) ) );
@@ -277,24 +306,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         } else {
             // Approccio con regex?
             return time();
-            /*
-            $data_ora = explode( ' ', $string );
-            $data = $data_ora[0];
-            $ora = isset( $data_ora[1] ) ? $data_ora[1] : '00:00';
-            $giorno_mese_anno = explode( '/', $data );
-            $ore_minuti = explode( ':', $ora );
-
-            $ore = $ore_minuti[0];
-            $minuti = $ore_minuti[1];
-            $giorno = $giorno_mese_anno[0];
-            if ( !isset( $giorno_mese_anno[1] ) )
-            {
-                return time();
-            }
-            $mese = $giorno_mese_anno[1];
-            $anno = $giorno_mese_anno[2];
-            return mktime( $ore, $minuti, 0, $mese, $giorno, $anno );
-            */
         }
     }
 
@@ -311,22 +322,76 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     }
 
-    public function getIncrementalMatrix( $remoteID, $attribute, $string )
+    /**
+     * @param $attributeIdentifier
+     * @param $values
+     * @param bool $remoteID
+     * @return string
+     */
+    public function getStructuredMatrix( $attributeIdentifier, $values, $remoteID = false )
     {
 
-        $object = eZContentObject::fetchByRemoteID( $remoteID );
-        if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
+        /** @var eZContentClassAttribute $attribute */
+        $attribute = $this->contentClass->fetchAttributeByIdentifier($attributeIdentifier);
+        $columns = $attribute->content()->attribute('columns');
+
+        $sortedValues = array();
+        foreach ($columns as $c)
         {
-            return $string;
+            $sortedValues [$c['identifier']] = isset( $values[$c['identifier']]) ? str_replace(array('&', '|'), '', $values[$c['identifier']]) : ' ';
         }
 
-        $dataMap = $object->dataMap();
-        if (!isset($dataMap[$attribute]))
-        {
-            return $string;
-        }
-        return $dataMap[$attribute]->hasContent() ? $dataMap[$attribute]->toString() . '&' . $string : $string;
+        $string = eZStringUtils::implodeStr( array_values($sortedValues), '|' );
 
+        /*eZLog::write('--------------', 'lotto.log');
+        eZLog::write(print_r($sortedValues, 1), 'lotto.log');
+        eZLog::write('Structured: ' . $string, 'lotto.log');*/
+
+
+        if ($remoteID && isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
+        {
+            $object = eZContentObject::fetchByRemoteID( $remoteID );
+            if (!$object instanceof eZContentObject )
+            {
+                return $string;
+            }
+
+            $dataMap = $object->dataMap();
+            if (!isset($dataMap[$attributeIdentifier]))
+            {
+                return $string;
+            }
+            $string =  $dataMap[$attributeIdentifier]->hasContent() ? $dataMap[$attributeIdentifier]->toString() . '&' . $string : $string;
+        }
+
+        /*eZLog::write('Aggregated: ' . $string, 'lotto.log');*/
+        return $string;
+    }
+
+    /**
+     * @param $remoteID
+     * @param $attribute
+     * @param $string
+     * @return string
+     */
+    public function getMatrix( $remoteID, $attribute, $string )
+    {
+        if ( isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
+        {
+            $object = eZContentObject::fetchByRemoteID( $remoteID );
+            if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
+            {
+                return $string;
+            }
+
+            $dataMap = $object->dataMap();
+            if (!isset($dataMap[$attribute]))
+            {
+                return $string;
+            }
+            return $dataMap[$attribute]->hasContent() ? $dataMap[$attribute]->toString() . '&' . $string : $string;
+        }
+        return $string;
     }
 
     public function getRelations( $relationsNames, $classes = array() )
@@ -373,6 +438,48 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         return false;
     }
 
+
+    public function prepareMatrixData( $remoteID, $row, $attributeIdentifier )
+    {
+        $data = array(
+            'codice_fiscale'                => !empty($row->{'invitatiCodiceFiscale'}) ? str_replace(array('&', '|'), '', $row->{'invitatiCodiceFiscale'} ) : ' ',
+            'identificativo_fiscale_estero' => !empty($row->{'invitatiIdentificativoFiscaleEstero'}) ? str_replace(array('&', '|'), '', $row->{'invitatiIdentificativoFiscaleEstero'} ) : ' ',
+            'ragione_sociale'               => !empty($row->{'invitatiRagioneSociale'}) ? str_replace(array('&', '|'), '', $row->{'invitatiRagioneSociale'} ) : ' ',
+            'id_gruppo'                     => ' ',
+            'ruolo'                         => ' ',
+        );
+
+        eZLog::write(print_r($row, 1), 'lotto.log');
+        eZLog::write(print_r($data, 1), 'lotto.log');
+        eZLog::write(' --------- ', 'lotto.log');
+
+        $dataToString = eZStringUtils::implodeStr( array_values($data), '|' );
+
+        if ( isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
+        {
+            $object = eZContentObject::fetchByRemoteID( $remoteID );
+            if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
+            {
+                return $dataToString;
+            }
+            $dataMap = $object->dataMap();
+            $dataToString = $dataMap[$attributeIdentifier]->hasContent() ? $dataMap[$attributeIdentifier]->toString() . '&' . $dataToString : $dataToString;
+        }
+        return $dataToString;
+    }
+
+    public function preserveMatrixData( $remoteID, $attributeIdentifier )
+    {
+
+        $object = eZContentObject::fetchByRemoteID( $remoteID );
+        if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
+        {
+            return '';
+        }
+        $dataMap = $object->dataMap();
+        return $dataMap[$attributeIdentifier]->hasContent() ? $dataMap[$attributeIdentifier]->toString()  : '';
+    }
+
     public function cleanup()
     {
         eZDir::recursiveDelete( $this->options->attribute( 'file_dir' ) );
@@ -386,7 +493,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     public function getHandlerIdentifier()
     {
-        return 'csvimportahandler';
+        return $this->handlerIdentifier;
     }
 
     public function getProgressionNotes()

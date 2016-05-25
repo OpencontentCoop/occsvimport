@@ -193,7 +193,7 @@ class OCCSVImportHandler
         $handler = $this->ini->variable( 'Settings', 'SQLIImportHandler' );
         if ($this->ini->hasVariable( 'Settings', 'SQLIImportHandler_' . $classIdentifier ))
         {
-            $handler = $this->ini->variable( 'Settings', $classIdentifier );
+            $handler = $this->ini->variable( 'Settings', 'SQLIImportHandler_' . $classIdentifier );
         }
 
 		$pendingImport = new SQLIImportItem( array(
