@@ -153,11 +153,13 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
                     }break;
 
+                    case 'ocmultibinary':
                     case 'ezbinaryfile':
                     case 'ezmedia':
                     {
                         $fileAndName = explode( '|', $row->{$header} );
                         $file = $this->options->attribute( 'file_dir' ) . eZSys::fileSeparator() . OCCSVImportHandler::cleanFileName( $fileAndName[0] );
+                        
                         if( !is_dir( $file ) )
                         {
                             $name = '';
