@@ -441,12 +441,13 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
 
     public function prepareMatrixData( $remoteID, $row, $attributeIdentifier )
     {
+
         $data = array(
-            'codice_fiscale'                => !empty($row->{'invitatiCodiceFiscale'}) ? str_replace(array('&', '|'), '', $row->{'invitatiCodiceFiscale'} ) : ' ',
-            'identificativo_fiscale_estero' => !empty($row->{'invitatiIdentificativoFiscaleEstero'}) ? str_replace(array('&', '|'), '', $row->{'invitatiIdentificativoFiscaleEstero'} ) : ' ',
-            'ragione_sociale'               => !empty($row->{'invitatiRagioneSociale'}) ? str_replace(array('&', '|'), '', $row->{'invitatiRagioneSociale'} ) : ' ',
-            'id_gruppo'                     => ' ',
-            'ruolo'                         => ' ',
+            'codice_fiscale'                => trim($row->{'invitatiCodiceFiscale'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiCodiceFiscale'} ) : '',
+            'identificativo_fiscale_estero' => trim($row->{'invitatiIdentificativoFiscaleEstero'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiIdentificativoFiscaleEstero'} ) : '',
+            'ragione_sociale'               => trim($row->{'invitatiRagioneSociale'})!=''? str_replace(array('&', '|'), '', $row->{'invitatiRagioneSociale'} ) : '',
+            'id_gruppo'                     => '',
+            'ruolo'                         => '',
         );
 
         eZLog::write(print_r($row, 1), 'lotto.log');
