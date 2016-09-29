@@ -98,13 +98,19 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
 
         $content = SQLIContent::create( $contentOptions );
 
+        $i = 0;
         foreach ( $headers as $key => $header )
         {
-            
+
             $rawHeader = $rawHeaders[$key];
             $rawHeaderArray = explode('.', $rawHeader);
 
-            if ( array_key_exists( $rawHeader, $attributeArray ) )
+            //FIX per problematica array_key_exists che ritorna sempre false su prima colonna del CSV
+            if($i==0){
+                $rawHeader = $headers[0];
+            }
+
+            if ( array_key_exists($rawHeader, $attributeArray ) )
             {
                 switch( $attributeArray[$rawHeader] )
                 {
@@ -240,6 +246,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
                     }
                 }
             }
+            $i++;
         }
 
         // Ricompongo il campo con i valori della matrice salvati in $structuredFields
@@ -265,6 +272,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         }
 
         $content->addLocation( SQLILocation::fromNodeID( intval( $this->options->attribute( 'parent_node_id' ) ) ) );
+
         $publisher = SQLIContentPublisher::getInstance();
         $publisher->publish( $content );
 
@@ -338,7 +346,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $sortedValues = array();
         foreach ($columns as $c)
         {
-            $sortedValues [$c['identifier']] = isset( $values[$c['identifier']]) ? str_replace(array('&', '|'), '', $values[$c['identifier']]) : ' ';
+            $sortedValues [$c['identifier']] = isset( $values[$c['identifier']]) ? str_replace(array('&', '|'), '', $values[$c['identifier']]) : '';
         }
 
         $string = eZStringUtils::implodeStr( array_values($sortedValues), '|' );
@@ -443,9 +451,9 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
     {
 
         $data = array(
-            'codice_fiscale'                => trim($row->{'invitatiCodiceFiscale'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiCodiceFiscale'} ) : '',
-            'identificativo_fiscale_estero' => trim($row->{'invitatiIdentificativoFiscaleEstero'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiIdentificativoFiscaleEstero'} ) : '',
-            'ragione_sociale'               => trim($row->{'invitatiRagioneSociale'})!=''? str_replace(array('&', '|'), '', $row->{'invitatiRagioneSociale'} ) : '',
+            'codice_fiscale'                => trim($row->{'invitatiCodiceFiscale'})!='' ? str_replace(array('&', '|'), '', trim($row->{'invitatiCodiceFiscale'} )) : '',
+            'identificativo_fiscale_estero' => trim($row->{'invitatiIdentificativoFiscaleEstero'})!='' ? str_replace(array('&', '|'), '', trim($row->{'invitatiIdentificativoFiscaleEstero'} )) : '',
+            'ragione_sociale'               => trim($row->{'invitatiRagioneSociale'})!=''? str_replace(array('&', '|'), '', trim($row->{'invitatiRagioneSociale'} )) : '',
             'id_gruppo'                     => '',
             'ruolo'                         => '',
         );
@@ -461,10 +469,10 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
             $object = eZContentObject::fetchByRemoteID( $remoteID );
             if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
             {
-                return $dataToString;
+                return trim($dataToString);
             }
             $dataMap = $object->dataMap();
-            $dataToString = $dataMap[$attributeIdentifier]->hasContent() ? $dataMap[$attributeIdentifier]->toString() . '&' . $dataToString : $dataToString;
+            $dataToString = $dataMap[$attributeIdentifier]->hasContent() ? trim($dataMap[$attributeIdentifier]->toString()) . '&' . trim($dataToString) : trim($dataToString);
         }
         return $dataToString;
     }

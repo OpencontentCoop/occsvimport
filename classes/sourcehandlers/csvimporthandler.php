@@ -94,14 +94,16 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
         $content = SQLIContent::create( $contentOptions );
 
+        $i=0;
         foreach ( $headers as $key => $header )
         {
 
-
-
-
-
             $rawHeader = $rawHeaders[$key];
+
+            //FIX per problematica array_key_exists che ritorna sempre false su prima colonna del CSV
+            if($i==0){
+                $rawHeader = $headers[0];
+            }
 
             if ( array_key_exists( $rawHeader, $attributeArray ) )
             {
@@ -260,6 +262,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             }
         }
 
+        $i++;
     }
 
     public function getTimestamp( $string )
