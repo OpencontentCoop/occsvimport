@@ -327,7 +327,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $priceComponent = explode( '|', $string );
         if ( is_array( $priceComponent )  && count( $priceComponent ) == 3 )
         {
-            if($priceComponent[0]=='0'){
+            if($priceComponent[0]=='0' || trim($priceComponent[0])==''){
                 return false;
             }else{
                 return $string;
@@ -337,17 +337,11 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $locale = eZLocale::instance();
         $data = $locale->internalCurrency( $string );
 
-        if($data=='0'){
+        if($data=='0' || $data==''){
             return false;
         }else{
             return $data . '|1|1';
         }
-    }
-
-    private function checkSommeLiquidate($column, $value){
-        if($column=='importo_somme_liquidate' && $value=='0')
-            return false;
-        return true;
     }
 
     /**
