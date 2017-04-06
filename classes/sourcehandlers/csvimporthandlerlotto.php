@@ -101,7 +101,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $i = 0;
         foreach ( $headers as $key => $header )
         {
-
+            
             $rawHeader = $rawHeaders[$key];
             $rawHeaderArray = explode('.', $rawHeader);
 
@@ -110,7 +110,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
                 $rawHeader = $headers[0];
             }
 
-            if ( array_key_exists($rawHeader, $attributeArray ) )
+            if ( array_key_exists( $rawHeader, $attributeArray ) )
             {
                 switch( $attributeArray[$rawHeader] )
                 {
@@ -195,12 +195,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
 
                     case 'ezprice':
                     {
-                        $value = $this->getPrice( $row->{$header} );
-
-                        if($value!==false){
-                            $content->fields->{$rawHeader} = $value;
-                        }
-
+                        $content->fields->{$rawHeader} = $this->getPrice( $row->{$header} );
                     }break;
 
                     case 'ezmatrix':
@@ -277,7 +272,6 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         }
 
         $content->addLocation( SQLILocation::fromNodeID( intval( $this->options->attribute( 'parent_node_id' ) ) ) );
-
         $publisher = SQLIContentPublisher::getInstance();
         $publisher->publish( $content );
 
@@ -322,26 +316,17 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         }
     }
 
-    public function getPrice($string )
+    public function getPrice( $string )
     {
         $priceComponent = explode( '|', $string );
         if ( is_array( $priceComponent )  && count( $priceComponent ) == 3 )
         {
-            if($priceComponent[0]=='0' || trim($priceComponent[0])==''){
-                return false;
-            }else{
-                return $string;
-            }
+            return $string;
         }
-
         $locale = eZLocale::instance();
         $data = $locale->internalCurrency( $string );
+        return $data . '|1|1';
 
-        if($data=='0' || $data==''){
-            return false;
-        }else{
-            return $data . '|1|1';
-        }
     }
 
     /**
@@ -360,7 +345,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $sortedValues = array();
         foreach ($columns as $c)
         {
-            $sortedValues [$c['identifier']] = isset( $values[$c['identifier']]) ? str_replace(array('&', '|'), '', $values[$c['identifier']]) : '';
+            $sortedValues [$c['identifier']] = isset( $values[$c['identifier']]) ? str_replace(array('&', '|'), '', $values[$c['identifier']]) : ' ';
         }
 
         $string = eZStringUtils::implodeStr( array_values($sortedValues), '|' );
@@ -465,9 +450,9 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
     {
 
         $data = array(
-            'codice_fiscale'                => trim($row->{'invitatiCodiceFiscale'})!='' ? str_replace(array('&', '|'), '', trim($row->{'invitatiCodiceFiscale'} )) : '',
-            'identificativo_fiscale_estero' => trim($row->{'invitatiIdentificativoFiscaleEstero'})!='' ? str_replace(array('&', '|'), '', trim($row->{'invitatiIdentificativoFiscaleEstero'} )) : '',
-            'ragione_sociale'               => trim($row->{'invitatiRagioneSociale'})!=''? str_replace(array('&', '|'), '', trim($row->{'invitatiRagioneSociale'} )) : '',
+            'codice_fiscale'                => trim($row->{'invitatiCodiceFiscale'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiCodiceFiscale'} ) : '',
+            'identificativo_fiscale_estero' => trim($row->{'invitatiIdentificativoFiscaleEstero'})!='' ? str_replace(array('&', '|'), '', $row->{'invitatiIdentificativoFiscaleEstero'} ) : '',
+            'ragione_sociale'               => trim($row->{'invitatiRagioneSociale'})!=''? str_replace(array('&', '|'), '', $row->{'invitatiRagioneSociale'} ) : '',
             'id_gruppo'                     => '',
             'ruolo'                         => '',
         );
@@ -483,10 +468,10 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
             $object = eZContentObject::fetchByRemoteID( $remoteID );
             if (! $object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/
             {
-                return trim($dataToString);
+                return $dataToString;
             }
             $dataMap = $object->dataMap();
-            $dataToString = $dataMap[$attributeIdentifier]->hasContent() ? trim($dataMap[$attributeIdentifier]->toString()) . '&' . trim($dataToString) : trim($dataToString);
+            $dataToString = $dataMap[$attributeIdentifier]->hasContent() ? $dataMap[$attributeIdentifier]->toString() . '&' . $dataToString : $dataToString;
         }
         return $dataToString;
     }
