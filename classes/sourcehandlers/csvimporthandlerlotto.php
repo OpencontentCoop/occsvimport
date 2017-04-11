@@ -195,7 +195,12 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
 
                     case 'ezprice':
                     {
-                        $content->fields->{$rawHeader} = $this->getPrice( $row->{$header} );
+                       $value = $this->getPrice( $row->{$header} );
+
+                       if($value!==false){
+                            $content->fields->{$rawHeader} = $value;
+                       }
+
                     }break;
 
                     case 'ezmatrix':
@@ -316,17 +321,26 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         }
     }
 
-    public function getPrice( $string )
+     public function getPrice( $string )
     {
         $priceComponent = explode( '|', $string );
-        if ( is_array( $priceComponent )  && count( $priceComponent ) == 3 )
+        if ( is_array( $priceComponent ) && count( $priceComponent ) == 3 )
         {
-            return $string;
+            if($priceComponent[0]=='0' || trim($priceComponent[0])==''){
+                return false;
+            }else{
+                return $string;
+            }
         }
+
         $locale = eZLocale::instance();
         $data = $locale->internalCurrency( $string );
-        return $data . '|1|1';
 
+        if($data=='0' || $data==''){
+            return false;
+        }else{
+            return $data . '|1|1';
+        }
     }
 
     /**
