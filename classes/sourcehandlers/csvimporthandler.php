@@ -237,6 +237,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     }
                 }
             }
+            $i++;
         }
 
         $content->addLocation( SQLILocation::fromNodeID( intval( $this->options->attribute( 'parent_node_id' ) ) ) );
@@ -260,9 +261,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                 );
                 call_user_func_array( array( 'OCCSVImportHandler', 'call' ), array( 'parameters' => $parameters ) );
             }
-        }
-
-        $i++;
+        }        
     }
 
     public function getTimestamp( $string )
