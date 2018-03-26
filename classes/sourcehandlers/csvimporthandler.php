@@ -266,6 +266,10 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     public function getTimestamp( $string )
     {
+        if (empty($string)){
+            return null;
+        }
+
         /*
          * Sostiutisco gli / con -
          * Dates in the m/d/y or d-m-y formats are disambiguated by looking at the separator between the various components:
