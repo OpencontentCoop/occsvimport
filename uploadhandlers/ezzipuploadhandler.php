@@ -4,9 +4,9 @@ class eZZipUploadHandler extends eZContentUploadHandler
 {
     static $InvalideCSVImportZipFiles = array();
 	
-	function eZZipUploadHandler()
+	function __construct()
     {
-    	$this->eZContentUploadHandler( 'Zip file handling', 'zip file' );
+    	parent::__construct( 'Zip file handling', 'zip file' );
     }
 
     function handleFile( &$upload, &$result,
