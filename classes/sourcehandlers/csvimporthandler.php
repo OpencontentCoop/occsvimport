@@ -195,6 +195,17 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                         $content->fields->{$rawHeader} = $this->getPrice( $row->{$header} );
                     }break;
 
+                    case 'ezurl':
+                    {
+                        if (empty($row->{$header}))
+                        {
+                            $content->fields->{$rawHeader} = '|';
+                        }
+                        else {
+                            $content->fields->{$rawHeader} = $row->{$header};
+                        }
+                    }break;
+
                     case 'ezmatrix':
                     {
                         if (isset( $this->options['incremental'] ) && $this->options['incremental'] == 1)
