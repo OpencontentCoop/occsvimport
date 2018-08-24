@@ -373,17 +373,25 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
         foreach( $relationsNames as $name )
         {
-            $searchResult = eZSearch::search(
-                trim( $name ),
-                array(
-                    'SearchContentClassID' => $classesIDs,
-                    'SearchLimit' => 1
-                )
-            );
-            if ( $searchResult['SearchCount'] > 0 )
-            {
-                $relations[] = $searchResult['SearchResult'][0]->attribute( 'contentobject_id' );
+            // First check by remoteId
+            $relationByRemote = eZContentObject::fetchByRemoteID( $name );
+
+            if ($relationByRemote instanceof eZContentObject) {
+                $relations[] = $relationByRemote->attribute( 'id' );
+            } else {
+                $searchResult = eZSearch::search(
+                    trim( $name ),
+                    array(
+                        'SearchContentClassID' => $classesIDs,
+                        'SearchLimit' => 1
+                    )
+                );
+                if ( $searchResult['SearchCount'] > 0 )
+                {
+                    $relations[] = $searchResult['SearchResult'][0]->attribute( 'contentobject_id' );
+                }
             }
+
         }
         if ( !empty( $relations ) )
         {
