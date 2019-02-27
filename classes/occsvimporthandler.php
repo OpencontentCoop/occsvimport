@@ -19,7 +19,8 @@ class OCCSVImportHandler
         $name = substr( $name, 0, -$length );
         $self = new OCCSVImportHandler();
         $name = $self->sanitize_title_with_dashes( $name );
-        $name = strtolower( urlencode( trim( $name ) ) );
+        //$name = strtolower( urlencode( trim( $name ) ) );
+        $name = urlencode( trim( $name ) );
         return $name . '.' . $suffix;
 	}
 	

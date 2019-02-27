@@ -3,6 +3,7 @@
 [ImportSettings]
 AvailableSourceHandlers[]=csvimporthandler
 AvailableSourceHandlers[]=csvimporthandlerlotto
+AvailableSourceHandlers[]=googlespreadsheetimporthandler
 RobotUserID=14
 
 [csvimporthandler-HandlerSettings]
@@ -16,6 +17,13 @@ DefaultParentNodeID=2
 Enabled=true
 Name=CSV Import Handler Lotto
 ClassName=CSVImportHandlerLotto
+Debug=enabled
+DefaultParentNodeID=2
+
+[googlespreadsheetimporthandler-HandlerSettings]
+Enabled=true
+Name=Google Spreadsheet Import Handler
+ClassName=OCGoogleSpreadsheetImportHandler
 Debug=enabled
 DefaultParentNodeID=2
 
