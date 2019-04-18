@@ -83,7 +83,7 @@ class OCGoogleSpreadsheetHandler
      * @param \Google\Spreadsheet\Worksheet $worksheet
      * @return OCGoogleSpreadsheetSQLICSVDoc
      */
-    public static function getWorksheetAsSQLICSVDoc($worksheet, eZContentClass $contentClass, $mapper = array())
+    public static function getWorksheetAsSQLICSVDoc($worksheet, eZContentClass $contentClass = null, $mapper = array())
     {
         $serviceRequest = new DefaultServiceRequest("");
         ServiceRequestFactory::setInstance($serviceRequest);
