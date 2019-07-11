@@ -97,7 +97,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         ));
 
         if ($headers[0] == 'remoteId') {
-            $remoteID = $this->classIdentifier . '_' . $row->{$headers[0]};
+            $remoteID = $this->generatePrefixedRemoteId($this->classIdentifier, $row->{$headers[0]});
             $contentOptions->__set('remote_id', $remoteID);
         }
 
@@ -239,6 +239,11 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
      
     }
 
+    private function generatePrefixedRemoteId($classIdentifier, $name)
+    {
+        return $classIdentifier . '_' . $name;
+    }
+
     protected function getTimestamp($string)
     {
         if (empty($string)){
@@ -309,18 +314,20 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         array_walk($relationsNames, 'trim');
 
         $classesIDs = array();
+        $classesIdentifiers = array();
         if (!empty($classes)) {
             foreach ($classes as $class) {
                 $contentClass = eZContentClass::fetchByIdentifier($class);
                 if ($contentClass) {
                     $classesIDs[] = $contentClass->attribute('id');
+                    $classesIdentifiers[] = $contentClass->attribute('identifier');
                 }
             }
         }
 
         foreach ($relationsNames as $name) {
-            $relationByRemote = eZContentObject::fetchByRemoteID( $name );
-            if ($relationByRemote instanceof eZContentObject) {
+            $relationByRemote = $this->getRelationByRemoteId($name, $classesIdentifiers);
+            if ($relationByRemote) {
                 $relations[] = $relationByRemote->attribute( 'id' );
             } else {
                 $searchResult = eZSearch::search(trim($name),
@@ -337,6 +344,24 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
         if (!empty($relations)) {
             return implode('-', $relations);
+        }
+
+        return false;
+    }
+
+    private function getRelationByRemoteId($name, array $classIdentifierList)
+    {
+        $relationByRemote = eZContentObject::fetchByRemoteID($name);
+        if ($relationByRemote instanceof eZContentObject) {
+            return $relationByRemote;
+        }
+
+        foreach ($classIdentifierList as $classIdentifier){
+            $remoteID = $this->generatePrefixedRemoteId($classIdentifier, $name);
+            $relationByRemote = eZContentObject::fetchByRemoteID($remoteID);
+            if ($relationByRemote instanceof eZContentObject) {
+                return $relationByRemote;
+            }
         }
 
         return false;
