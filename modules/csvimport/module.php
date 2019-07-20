@@ -28,9 +28,19 @@ $ViewList['configure'] = array(
         'ImportGoogleSpreadsheetButton' => 'ImportGoogleSpreadsheet',
     )
 );
-
+$ViewList['import_tag'] = array(
+    'script' => 'import_tag.php',
+    'default_navigation_part' => 'eztagsnavigationpart',
+    'single_post_actions' => array(
+        'ImportButton' => 'Import',        
+        'SelectGoogleSpreadsheetButton' => 'SelectGoogleSpreadsheet',        
+        'ImportGoogleSpreadsheetButton' => 'ImportGoogleSpreadsheet'
+    ),
+    'params' => array('ParentTagID')
+);
 $FunctionList = array();
 $FunctionList['import'] = array();
 $FunctionList['export'] = array();
+$FunctionList['import_tag'] = array();
 
 ?>
