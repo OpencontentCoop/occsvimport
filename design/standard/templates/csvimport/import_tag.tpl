@@ -1,12 +1,9 @@
 {section show=$error} {* $error can be either bool=false or array *}
-    {section show=$error.number|ne(0)}
-        <div class="message-warning">
-            <h2>
-                <span class="time">[{currentdate()|l10n( shortdatetime )}]</span>
-                {$error.number}) {$error.message}
-            </h2>
-        </div>
-    {/section}
+    <div class="message-warning">
+        <h2>
+            {$error.message}
+        </h2>
+    </div>
 {/section}
 
 {if $tag}
@@ -44,7 +41,24 @@
                                                 <input class="button" type="submit" name="ImportGoogleSpreadsheetButton" value="Importa"/>                                                
                                             </div>
                                             {/if}
-                                            <p><a href={'publish_to_web.png'|ezimage()}>Il documento Google Spreadsheet deve essere pubblicato sul web</a></p>
+
+                                            <div class="block">
+                                                <h4>Le intestazioni previste per il foglio di calcolo sono:</h4>
+                                                <img style="max-width: 100%" src={'images/csv_sample.png'|ezdesign()} />
+                                                <ul>
+                                                    <li><code>tag</code> <strong>obbligatorio</strong>: il tag principale importato nella lingua di default</li>
+                                                    <li><code>tag_LANGUAGE_CODE</code> (ad esempio <code>tag_eng-GB</code>): traduzione del tag</li>
+                                                    <li><code>syn_*_LANGUAGE_CODE</code> (ad esempio <code>syn_1_ita-IT</code>, <code>syn_2_ita-IT</code>): sinonimo del tag (il carattere jolly * serve a permettere l'inserimento di più tag)</li>
+                                                    <li><code>children</code>: titolo del foglio dello stesso documento Google Spreadsheet da cui importare i tag figli</li>
+                                                </ul>
+                                            </div>
+
+                                            <div class="block">
+                                                <h4>Note:</h4>
+                                                <p><a href={'publish_to_web.png'|ezimage()}>Il documento Google Spreadsheet deve condiviso con chiunque abbia il link e pubblicato sul web</a></p>
+                                                <p>L'importatore verifica l'esistenza del tag per evitare duplicazioni</p>
+                                                <p>Non è possibile utilizzare un foglio children su più livelli dell'alberatura</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

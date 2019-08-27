@@ -51,66 +51,25 @@ if ($parentTag instanceof eZTagsObject) {
         }
     } elseif ($module->isCurrentAction('ImportGoogleSpreadsheet')) {
 
-        $googleSpreadsheetUrl = $http->variable('GoogleSpreadsheetUrl', false);
-        $sheet = $http->variable('ImportGoogleSpreadsheetSheet', false);
+        try {
+            $googleSpreadsheetUrl = $http->variable('GoogleSpreadsheetUrl', false);
+            $sheet = $http->variable('ImportGoogleSpreadsheetSheet', false);
 
-        $handler = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl);
-        $worksheetFeed = $handler->getWorksheetFeed();
-        $worksheet = $worksheetFeed->getByTitle($sheet);
-        $doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($worksheet);
-        $dataSource = $doc->rows;
-        $tagList = array();
-        foreach ($dataSource as $item) {
-            $tagList[] = (string)$item->tag;
+            $dataSource = OCCSVImportTagHandler::getSQLICSVRowSetFromGoogleSpreadsheetUrl($googleSpreadsheetUrl, $sheet);
+            $tagStructList = OCCSVImportTagHandler::getStructList($dataSource, $googleSpreadsheetUrl);
+            OCCSVImportTagHandler::importStructList($tagStructList, $parentTag);
+
+            $tagUrl = $parentTag->attribute('url');
+            eZURI::transformURI($tagUrl);
+            $module->redirectTo($tagUrl);
+
+            return;
+        } catch (Exception $e) {
+            $tpl->setVariable('error', makeErrorArray(
+                $e->getCode(),
+                $e->getMessage()
+            ));
         }
-
-        $locale = eZLocale::currentLocaleCode();
-        $language = eZContentLanguage::fetchByLocale($locale);
-        if (!$language instanceof eZContentLanguage) {
-            return $module->handleError(eZError::KERNEL_NOT_FOUND, 'kernel');
-        }
-        $languageMask = eZContentLanguage::maskByLocale(array($language->attribute('locale')), true);
-        $db = eZDB::instance();
-
-        foreach ($tagList as $newKeyword) {
-            $db->begin();
-            $tag = new eZTagsObject(
-                array('parent_id' => $parentTagID,
-                    'main_tag_id' => 0,
-                    'depth' => $parentTag instanceof eZTagsObject ? $parentTag->attribute('depth') + 1 : 1,
-                    'path_string' => $parentTag instanceof eZTagsObject ? $parentTag->attribute('path_string') : '/',
-                    'main_language_id' => $language->attribute('id'),
-                    'language_mask' => $languageMask
-                ),
-                $language->attribute('locale')
-            );
-            $tag->store();
-            $translation = new eZTagsKeyword(
-                array(
-                    'keyword_id' => $tag->attribute('id'),
-                    'language_id' => $language->attribute('id'),
-                    'keyword' => $newKeyword,
-                    'locale' => $language->attribute('locale'),
-                    'status' => eZTagsKeyword::STATUS_PUBLISHED
-                )
-            );
-            $translation->setAttribute('language_id', $translation->attribute('language_id') + 1);
-            $translation->store();
-            $tag->setAttribute('path_string', $tag->attribute('path_string') . $tag->attribute('id') . '/');
-            $tag->store();
-            $tag->updateModified();
-
-            if (class_exists('ezpEvent', false))
-                ezpEvent::getInstance()->filter('tag/add', array('tag' => $tag, 'parentTag' => $parentTag));
-
-            $db->commit();
-        }
-
-        $tagUrl = $parentTag->attribute('url');
-        eZURI::transformURI($tagUrl);
-        $module->redirectTo($tagUrl);
-        
-        return;
     }
 } else {
     $tpl->setVariable('error', makeErrorArray(
