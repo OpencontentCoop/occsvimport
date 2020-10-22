@@ -146,6 +146,11 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                         break;
 
                     case 'ocmultibinary':
+                        {
+                            $content->fields->{$rawHeader} = $this->getFiles($row->{$header});
+                        }
+                        break;
+
                     case 'ezbinaryfile':
                     case 'ezmedia':
                         {
@@ -418,6 +423,17 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         }
 
         return null;
+    }
+
+    protected function getFiles($rowData)
+    {
+        $data = [];
+        $files = explode('|', $rowData);
+        foreach ($files as $file){
+            $data[] = $this->getFile($file);
+        }
+
+        return implode('|', $data);
     }
 
     public function cleanup()

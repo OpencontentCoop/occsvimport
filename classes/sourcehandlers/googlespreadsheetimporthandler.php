@@ -70,7 +70,7 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
             if ($this->options->hasAttribute('file_dir')){
                 return parent::getFile($rowData);
             }else{
-                return SQLIContentUtils::getRemoteFile($rowData);
+                return $this->getNamedRemoteFile($rowData);
             }            
         }
 
@@ -91,5 +91,47 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
         }
         
         return parent::getTimestamp($string);
+    }
+
+    protected function getNamedRemoteFile($url)
+    {
+        $filename = basename($url);
+        $suffix = eZFile::suffix($filename);
+        if ($suffix == $filename){
+            $newFileName = $this->getFileNameFromContentDisposition($url);
+            $localPathName = SQLIContentUtils::getRemoteFile($url);
+            $localPath = dirname($localPathName);
+            $newLocalPathName = $localPath . '/' . $newFileName;
+            if ($newLocalPathName != $localPathName) {
+                eZFile::rename($localPathName, $newLocalPathName);
+            }
+            return $newLocalPathName;
+        }else{
+            return SQLIContentUtils::getRemoteFile($url);
+        }
+    }
+
+    private function getFileNameFromContentDisposition($url)
+    {
+        $filename = basename($url);
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, (int)eZINI::instance('sqliimport.ini')->variable('ImportSettings', 'StreamTimeout'));
+        curl_setopt($ch, CURLOPT_FAILONERROR, true);
+        curl_setopt($ch, CURLOPT_FILETIME, true);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $headers = curl_exec($ch);
+        $parsedHeaders = array_map(function ($x) {
+            return array_map("trim", explode(":", $x, 2));
+        }, array_filter(array_map("trim", explode("\n", $headers))));
+        foreach ($parsedHeaders as $line) {
+            if (trim($line[0]) == 'Content-Disposition') {
+                $parts = explode('filename=', $line[1]);
+                $filename = trim(array_pop($parts), '"');
+            }
+        }
+
+        return $filename;
     }
 }
