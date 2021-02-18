@@ -88,22 +88,39 @@ class OCGoogleSpreadsheetHandler
         $serviceRequest = new DefaultServiceRequest("");
         ServiceRequestFactory::setInstance($serviceRequest);
         $data = $worksheet->getCsv();
-
-        $dataArray = str_getcsv($data, "\r\n");
-        foreach ($dataArray as &$row) {
-            $row = str_getcsv($row, ",");
-        }
-
+        $dataArray = self::parseCsv($data);
         $headers = array_shift($dataArray);
         $headers = self::mapHeaders($headers, $mapper);
         $cleanHeaders = OCGoogleSpreadsheetSQLICSVRowSet::doCleanHeaders($headers);
-        array_walk($dataArray, function (&$a) use ($dataArray, $cleanHeaders) {
-            $a = array_map('trim', $a);
+        array_walk($dataArray, function (&$a) use ($cleanHeaders) {
             $a = array_combine($cleanHeaders, $a);
         });
-
         return new OCGoogleSpreadsheetSQLICSVDoc(
             OCGoogleSpreadsheetSQLICSVRowSet::instance($headers, $dataArray)
+        );
+    }
+
+    private static function parseCsv($csv_string, $delimiter = ",", $skip_empty_lines = true, $trim_fields = true)
+    {
+        return array_map(
+            function ($line) use ($delimiter, $trim_fields) {
+                return array_map(
+                    function ($field) {
+                        return str_replace('!!Q!!', '"', utf8_decode(urldecode($field)));
+                    },
+                    $trim_fields ? array_map('trim', explode($delimiter, $line)) : explode($delimiter, $line)
+                );
+            },
+            preg_split(
+                $skip_empty_lines ? ($trim_fields ? '/( *\R)+/s' : '/\R+/s') : '/\R/s',
+                preg_replace_callback(
+                    '/"(.*?)"/s',
+                    function ($field) {
+                        return urlencode(utf8_encode($field[1]));
+                    },
+                    $enc = preg_replace('/(?<!")""/', '!!Q!!', $csv_string)
+                )
+            )
         );
     }
 

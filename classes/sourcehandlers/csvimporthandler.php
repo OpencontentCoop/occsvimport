@@ -1,5 +1,8 @@
 <?php
 
+use Opencontent\Opendata\Api\AttributeConverter\Tags;
+use Opencontent\Opendata\Api\PublicationProcess;
+
 class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportHandler
 {
     protected $rowIndex = 0;
@@ -25,12 +28,23 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     protected $countRow = 0;
 
+    protected $errors = [];
+
     //const REMOTE_IDENTIFIER = 'csvimport_';
 
     public function __construct(SQLIImportHandlerOptions $options = null)
     {
         parent::__construct($options);
         $this->options = $options;
+    }
+
+    protected function registerError($error)
+    {
+        $this->cli->error($error);
+        if ($this->dataSource instanceof SQLICSVRowSet){
+            $error = "#" . $this->dataSource->key() . ' ' . $error;
+        }
+        $this->errors[] = $error;
     }
 
     public function initialize()
@@ -42,7 +56,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         $this->contentClass = eZContentClass::fetchByIdentifier($this->classIdentifier);
 
         if (!$this->contentClass) {
-            $this->cli->error("La class $this->classIdentifier non esiste.");
+            $this->registerError("La class $this->classIdentifier non esiste.");
             die();
         }
 
@@ -122,20 +136,17 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                         break;
 
                     case 'ezobjectrelationlist':
-                        {
-                            $contentClassAttributeContent = $attributeRepository[$rawHeader]->content();
-                            $relationsNames = $row->{$header};
-                            $content->fields->{$rawHeader} = $this->getRelations($relationsNames,
-                                $contentClassAttributeContent['class_constraint_list']);
-                        }
-                        break;
-
                     case 'ezobjectrelation':
                         {
+                            /** @var array $contentClassAttributeContent */
                             $contentClassAttributeContent = $attributeRepository[$rawHeader]->content();
+                            $constraintList = isset($contentClassAttributeContent['class_constraint_list']) ?
+                                $contentClassAttributeContent['class_constraint_list'] : [];
                             $relationsNames = $row->{$header};
-                            $content->fields->{$rawHeader} = $this->getRelations($relationsNames,
-                                $contentClassAttributeContent['class_constraint_list']);
+                            $content->fields->{$rawHeader} = $this->getRelations(
+                                $relationsNames,
+                                $constraintList
+                            );
                         }
                         break;
 
@@ -192,6 +203,11 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                         }
                         break;
 
+                    case 'eztags':
+                        {
+                            $content->fields->{$rawHeader} = $this->getTags($row->{$header}, $attributeRepository[$rawHeader]);
+                        }
+                        break;
 
                     default:
                         {
@@ -241,72 +257,12 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                 call_user_func_array(array('OCCSVImportHandler', 'call'), array('parameters' => $parameters));
             }
         }
-     
+
     }
 
     private function generatePrefixedRemoteId($classIdentifier, $name)
     {
         return $classIdentifier . '_' . $name;
-    }
-
-    protected function getTimestamp($string)
-    {
-        if (empty($string)){
-            return null;
-        }
-
-        /*
-         * Sostiutisco gli / con -
-         * Dates in the m/d/y or d-m-y formats are disambiguated by looking at the separator between the various components:
-         * if the separator is a slash (/), then the American m/d/y is assumed; whereas if the separator is a dash (-) or a dot (.),
-         * then the European d-m-y format is assumed.
-         */
-        if (!is_numeric($string)) {
-            $string = str_replace('/', '-', $string);
-        }
-
-        $parts = explode('-', $string);
-
-        if (mb_strlen($parts[2]) == 2){
-            $parts[2] = '20' . $parts[2];
-        }
-        $string = implode('-', $parts);
-
-        if (($timestamp = strtotime($string)) !== false) {
-            return $timestamp;
-        }
-
-        return null;
-    }
-
-    protected function getPrice($string)
-    {
-        $priceComponent = explode('|', $string);
-        if (is_array($priceComponent) && count($priceComponent) == 3) {
-            return $string;
-        }
-        $locale = eZLocale::instance();
-        $data = $locale->internalCurrency($string);
-
-        return $data . '|1|1';
-
-    }
-
-    protected function getIncrementalMatrix($remoteID, $attribute, $string)
-    {
-
-        $object = eZContentObject::fetchByRemoteID($remoteID);
-        if (!$object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/ {
-            return $string;
-        }
-
-        $dataMap = $object->dataMap();
-        if (!isset($dataMap[$attribute])) {
-            return $string;
-        }
-
-        return $dataMap[$attribute]->hasContent() ? $dataMap[$attribute]->toString() . '&' . $string : $string;
-
     }
 
     protected function getRelations($relationsNames, $classes = array())
@@ -333,7 +289,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         foreach ($relationsNames as $name) {
             $relationByRemote = $this->getRelationByRemoteId($name, $classesIdentifiers);
             if ($relationByRemote) {
-                $relations[] = $relationByRemote->attribute( 'id' );
+                $relations[] = $relationByRemote->attribute('id');
             } else {
                 $searchResult = eZSearch::search(trim($name),
                     array(
@@ -361,7 +317,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             return $relationByRemote;
         }
 
-        foreach ($classIdentifierList as $classIdentifier){
+        foreach ($classIdentifierList as $classIdentifier) {
             $remoteID = $this->generatePrefixedRemoteId($classIdentifier, $name);
             $relationByRemote = eZContentObject::fetchByRemoteID($remoteID);
             if ($relationByRemote instanceof eZContentObject) {
@@ -370,11 +326,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         }
 
         return false;
-    }
-
-    protected function cleanFileName($fileName)
-    {
-        return OCCSVImportHandler::cleanFileName($fileName);
     }
 
     protected function getImage($rowData)
@@ -394,11 +345,27 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                 //$this->cli->notice( $file );
                 return $file . '|' . $name;
             } else {
-                $this->cli->error($file . ' non trovato');
+                $this->registerError($file . ' non trovato');
             }
         }
 
         return null;
+    }
+
+    protected function cleanFileName($fileName)
+    {
+        return OCCSVImportHandler::cleanFileName($fileName);
+    }
+
+    protected function getFiles($rowData)
+    {
+        $data = [];
+        $files = explode('|', $rowData);
+        foreach ($files as $file) {
+            $data[] = $this->getFile($file);
+        }
+
+        return implode('|', $data);
     }
 
     protected function getFile($rowData)
@@ -418,22 +385,71 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                 //$this->cli->notice( $file );
                 return $file;
             } else {
-                $this->cli->error($file . ' non trovato');
+                $this->registerError($file . ' non trovato');
             }
         }
 
         return null;
     }
 
-    protected function getFiles($rowData)
+    protected function getTimestamp($string)
     {
-        $data = [];
-        $files = explode('|', $rowData);
-        foreach ($files as $file){
-            $data[] = $this->getFile($file);
+        if (empty($string)) {
+            return null;
         }
 
-        return implode('|', $data);
+        /*
+         * Sostiutisco gli / con -
+         * Dates in the m/d/y or d-m-y formats are disambiguated by looking at the separator between the various components:
+         * if the separator is a slash (/), then the American m/d/y is assumed; whereas if the separator is a dash (-) or a dot (.),
+         * then the European d-m-y format is assumed.
+         */
+        if (!is_numeric($string)) {
+            $string = str_replace('/', '-', $string);
+        } else {
+            return $string;
+        }
+
+        $parts = explode('-', $string);
+
+        if (mb_strlen($parts[2]) == 2) {
+            $parts[2] = '20' . $parts[2];
+        }
+        $string = implode('-', $parts);
+
+        if (($timestamp = strtotime($string)) !== false) {
+            return $timestamp;
+        }
+
+        return null;
+    }
+
+    protected function getPrice($string)
+    {
+        $priceComponent = explode('|', $string);
+        if (is_array($priceComponent) && count($priceComponent) == 3) {
+            return $string;
+        }
+        $locale = eZLocale::instance();
+        $data = $locale->internalCurrency($string);
+
+        return $data . '|1|1';
+
+    }
+
+    protected function getIncrementalMatrix($remoteID, $attribute, $string)
+    {
+        $object = eZContentObject::fetchByRemoteID($remoteID);
+        if (!$object instanceof eZContentObject) /*(empty($object->MainNodeID) || $object->Published == 0)*/ {
+            return $string;
+        }
+
+        $dataMap = $object->dataMap();
+        if (!isset($dataMap[$attribute])) {
+            return $string;
+        }
+
+        return $dataMap[$attribute]->hasContent() ? $dataMap[$attribute]->toString() . '&' . $string : $string;
     }
 
     public function cleanup()
@@ -455,6 +471,30 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     public function getProgressionNotes()
     {
-        return 'Current: ' . $this->currentGUID;
+        $current = 'Current: ' . $this->currentGUID;
+        if (count($this->errors)){
+            $current .= "<br>Errors:<ul><li>" . implode("</li><li>", $this->errors) . '</li></ul>';
+        }
+
+        return $current;
+    }
+
+    protected function getTags($tagsString, eZContentClassAttribute $classAttribute)
+    {
+        if (empty($tagsString)){
+            return '';
+        }
+
+        if (strpos($tagsString, '|#') !== false){
+            return $tagsString;
+        }
+
+        $tags = array_map('trim', explode(',', $tagsString));
+        $tagsConverter = new Tags(
+            $this->contentClass->attribute('identifier'),
+            $classAttribute->attribute('identifier')
+        );
+
+        return $tagsConverter->set($tags, new PublicationProcess(null));
     }
 }
