@@ -83,6 +83,13 @@ if ($http->hasVariable('DateFormat')){
 }
 $tpl->setVariable('date_format', $dateFormat);
 
+if ($http->hasVariable('Language')){
+    $language = $http->variable('Language');
+}else{
+    $language = eZContentObject::defaultLanguage();
+}
+$tpl->setVariable('language', $language);
+
 if (!$tpl->hasVariable('error')){
     if ($module->isCurrentAction('UpdateGoogleSpreadsheet')) {
         if ($contentClass && $sheet){
@@ -121,8 +128,13 @@ if (!$tpl->hasVariable('error')){
         if ($incremental) {
             $handler->setImportOption('incremental', 1);
         }
+
+        if ($language){
+            $handler->setImportOption('language', $language);
+        }
         $handler->setImportOption('parent_node_id', $nodeID);
         $handler->setImportOption('name', 'Importazione di ' .  $feedTitle .' in ' . $node->attribute('name'));
+
 
         $handler->addImport();
         $module->redirectTo('sqliimport/list');

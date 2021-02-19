@@ -11,17 +11,7 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
         $this->worksheetFeed = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetId($this->options['google_spreadsheet_id'])->getWorksheetFeed();
         $this->worksheet = $this->worksheetFeed->getByTitle($this->options['sheet']);
 
-        $this->csvIni = eZINI::instance('csvimport.ini');
-        $this->classIdentifier = $this->options->attribute('class_identifier');
-        $this->contentClass = eZContentClass::fetchByIdentifier($this->classIdentifier);
-
-        if (!$this->contentClass) {
-            $this->registerError("La class $this->classIdentifier non esiste.");
-            die();
-        }
-
         $mapper = $this->options->hasAttribute('fields_map') ? json_decode($this->options->attribute('fields_map'), 1) : array();
-
         $this->doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($this->worksheet, $this->contentClass, $mapper);
         $this->dataSource = $this->doc->rows;
     }

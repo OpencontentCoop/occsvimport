@@ -30,12 +30,26 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     protected $errors = [];
 
+    protected $language;
+
     //const REMOTE_IDENTIFIER = 'csvimport_';
 
     public function __construct(SQLIImportHandlerOptions $options = null)
     {
         parent::__construct($options);
         $this->options = $options;
+
+        $this->language = $this->options->hasAttribute('language') ?
+            $this->options->attribute('language') : eZContentObject::defaultLanguage();
+
+        $this->csvIni = eZINI::instance('csvimport.ini');
+        $this->classIdentifier = $this->options->attribute('class_identifier');
+        $this->contentClass = eZContentClass::fetchByIdentifier($this->classIdentifier);
+
+        if (!$this->contentClass) {
+            $this->registerError("La class $this->classIdentifier non esiste.");
+            die();
+        }
     }
 
     protected function registerError($error)
@@ -51,14 +65,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
     {
         $currentUser = eZUser::currentUser();
         $this->cli->warning('UserID #' . $currentUser->attribute('contentobject_id'));
-        $this->csvIni = eZINI::instance('csvimport.ini');
-        $this->classIdentifier = $this->options->attribute('class_identifier');
-        $this->contentClass = eZContentClass::fetchByIdentifier($this->classIdentifier);
-
-        if (!$this->contentClass) {
-            $this->registerError("La class $this->classIdentifier non esiste.");
-            die();
-        }
 
         $csvOptions = new SQLICSVOptions(array(
             'csv_path' => $this->options->attribute('csv_path'),
@@ -89,175 +95,182 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
 
     public function process($row)
     {
-        $headers = $this->doc->rows->getHeaders();
-        $rawHeaders = $this->doc->rows->getRawHeaders();
+        try {
+            $headers = $this->doc->rows->getHeaders();
+            $rawHeaders = $this->doc->rows->getRawHeaders();
 
-        $this->currentGUID = $row->{$headers[0]} . '_' . $this->classIdentifier;
+            $this->currentGUID = $row->{$headers[0]} . '_' . $this->classIdentifier;
 
-        $pseudoLocations = array_keys($this->csvIni->variable('Settings', 'PseudoLocation'));
+            $pseudoLocations = array_keys($this->csvIni->variable('Settings', 'PseudoLocation'));
 
-        $attributeArray = array();
-        $attributeRepository = array();
-        /** @var eZContentClassAttribute[] $attributes */
-        $attributes = $this->contentClass->fetchAttributes();
-        foreach ($attributes as $attribute) {
-            $attributeArray[$attribute->attribute('identifier')] = $attribute->attribute('data_type_string');
-            $attributeRepository[$attribute->attribute('identifier')] = $attribute;
-        }
-
-        $contentOptions = new SQLIContentOptions(array(
-            'class_identifier' => $this->classIdentifier
-
-        ));
-
-        if ($headers[0] == 'remoteId') {
-            $remoteID = $this->generatePrefixedRemoteId($this->classIdentifier, $row->{$headers[0]});
-            $contentOptions->__set('remote_id', $remoteID);
-        }
-
-        $content = SQLIContent::create($contentOptions);
-
-        $i = 0;
-        foreach ($headers as $key => $header) {
-
-            $rawHeader = $rawHeaders[$key];
-
-            //FIX per problematica array_key_exists che ritorna sempre false su prima colonna del CSV
-            if ($i == 0) {
-                $rawHeader = $headers[0];
+            $attributeArray = array();
+            $attributeRepository = array();
+            /** @var eZContentClassAttribute[] $attributes */
+            $attributes = $this->contentClass->fetchAttributes();
+            foreach ($attributes as $attribute) {
+                $attributeArray[$attribute->attribute('identifier')] = $attribute->attribute('data_type_string');
+                $attributeRepository[$attribute->attribute('identifier')] = $attribute;
             }
 
-            if (array_key_exists($rawHeader, $attributeArray)) {
-                switch ($attributeArray[$rawHeader]) {
-                    case 'ezxmltext':
-                        {
-                            $content->fields->{$rawHeader} = $this->getRichContent($row->{$header});
-                        }
-                        break;
+            $contentOptions = new SQLIContentOptions(array(
+                'class_identifier' => $this->classIdentifier,
+                'language' => $this->language
+            ));
 
-                    case 'ezobjectrelationlist':
-                    case 'ezobjectrelation':
-                        {
-                            /** @var array $contentClassAttributeContent */
-                            $contentClassAttributeContent = $attributeRepository[$rawHeader]->content();
-                            $constraintList = isset($contentClassAttributeContent['class_constraint_list']) ?
-                                $contentClassAttributeContent['class_constraint_list'] : [];
-                            $relationsNames = $row->{$header};
-                            $content->fields->{$rawHeader} = $this->getRelations(
-                                $relationsNames,
-                                $constraintList
-                            );
-                        }
-                        break;
+            if ($headers[0] == 'remoteId') {
+                $remoteID = $this->generatePrefixedRemoteId($this->classIdentifier, $row->{$headers[0]});
+                $contentOptions->__set('remote_id', $remoteID);
+            }
 
-                    case 'ezimage':
-                        {
-                            $content->fields->{$rawHeader} = $this->getImage($row->{$header});
-                        }
-                        break;
+            $content = SQLIContent::create($contentOptions);
+            if (!isset($content->fields[$this->language])) {
+                $content->addTranslation($this->language);
+            }
 
-                    case 'ocmultibinary':
-                        {
-                            $content->fields->{$rawHeader} = $this->getFiles($row->{$header});
-                        }
-                        break;
+            $i = 0;
+            foreach ($headers as $key => $header) {
 
-                    case 'ezbinaryfile':
-                    case 'ezmedia':
-                        {
-                            $content->fields->{$rawHeader} = $this->getFile($row->{$header});
-                        }
-                        break;
+                $rawHeader = $rawHeaders[$key];
 
-                    case 'ezdate':
-                    case 'ezdatetime':
-                        {
-                            $content->fields->{$rawHeader} = $this->getTimestamp($row->{$header});
-                        }
-                        break;
-
-                    case 'ezprice':
-                        {
-                            $content->fields->{$rawHeader} = $this->getPrice($row->{$header});
-                        }
-                        break;
-
-                    case 'ezurl':
-                        {
-                            if (empty($row->{$header})) {
-                                $content->fields->{$rawHeader} = '|';
-                            } else {
-                                $content->fields->{$rawHeader} = $row->{$header};
-                            }
-                        }
-                        break;
-
-                    case 'ezmatrix':
-                        {
-                            if (isset($this->options['incremental']) && $this->options['incremental'] == 1) {
-                                $content->fields->{$rawHeader} = $this->getIncrementalMatrix($contentOptions['remote_id'],
-                                    $header, $row->{$header});
-                            } else {
-                                $content->fields->{$rawHeader} = $row->{$header};
-                            }
-                        }
-                        break;
-
-                    case 'eztags':
-                        {
-                            $content->fields->{$rawHeader} = $this->getTags($row->{$header}, $attributeRepository[$rawHeader]);
-                        }
-                        break;
-
-                    default:
-                        {
-                            $content->fields->{$rawHeader} = $row->{$header};
-                        }
-                        break;
+                //FIX per problematica array_key_exists che ritorna sempre false su prima colonna del CSV
+                if ($i == 0) {
+                    $rawHeader = $headers[0];
                 }
-            } else {
-                $doAction = false;
-                foreach ($pseudoLocations as $pseudo) {
-                    if (strpos($rawHeader, $pseudo) !== false) {
-                        $files = explode(',', $row->{$header});
-                        array_walk($files, 'trim');
 
-                        if (!empty($files) && $files[0] != '') {
-                            $actionArray = explode('_', $rawHeader);
-                            $action = array_shift($actionArray);
-                            $doAction[$action][] = array(
-                                'attribute' => array_shift($actionArray),
-                                'class' => implode('_', $actionArray),
-                                'values' => $files
-                            );
+                if (array_key_exists($rawHeader, $attributeArray)) {
+                    switch ($attributeArray[$rawHeader]) {
+                        case 'ezxmltext':
+                            {
+                                $content->fields->{$rawHeader} = $this->getRichContent($row->{$header});
+                            }
+                            break;
+
+                        case 'ezobjectrelationlist':
+                        case 'ezobjectrelation':
+                            {
+                                /** @var array $contentClassAttributeContent */
+                                $contentClassAttributeContent = $attributeRepository[$rawHeader]->content();
+                                $constraintList = isset($contentClassAttributeContent['class_constraint_list']) ?
+                                    $contentClassAttributeContent['class_constraint_list'] : [];
+                                $relationsNames = $row->{$header};
+                                $content->fields->{$rawHeader} = $this->getRelations(
+                                    $relationsNames,
+                                    $constraintList
+                                );
+                            }
+                            break;
+
+                        case 'ezimage':
+                            {
+                                $content->fields->{$rawHeader} = $this->getImage($row->{$header});
+                            }
+                            break;
+
+                        case 'ocmultibinary':
+                            {
+                                $content->fields->{$rawHeader} = $this->getFiles($row->{$header});
+                            }
+                            break;
+
+                        case 'ezbinaryfile':
+                        case 'ezmedia':
+                            {
+                                $content->fields->{$rawHeader} = $this->getFile($row->{$header});
+                            }
+                            break;
+
+                        case 'ezdate':
+                        case 'ezdatetime':
+                            {
+                                $content->fields->{$rawHeader} = $this->getTimestamp($row->{$header});
+                            }
+                            break;
+
+                        case 'ezprice':
+                            {
+                                $content->fields->{$rawHeader} = $this->getPrice($row->{$header});
+                            }
+                            break;
+
+                        case 'ezurl':
+                            {
+                                if (empty($row->{$header})) {
+                                    $content->fields->{$rawHeader} = '|';
+                                } else {
+                                    $content->fields->{$rawHeader} = $row->{$header};
+                                }
+                            }
+                            break;
+
+                        case 'ezmatrix':
+                            {
+                                if (isset($this->options['incremental']) && $this->options['incremental'] == 1) {
+                                    $content->fields->{$rawHeader} = $this->getIncrementalMatrix($contentOptions['remote_id'],
+                                        $header, $row->{$header});
+                                } else {
+                                    $content->fields->{$rawHeader} = $row->{$header};
+                                }
+                            }
+                            break;
+
+                        case 'eztags':
+                            {
+                                $content->fields->{$rawHeader} = $this->getTags($row->{$header}, $attributeRepository[$rawHeader]);
+                            }
+                            break;
+
+                        default:
+                            {
+                                $content->fields->{$rawHeader} = $row->{$header};
+                            }
+                            break;
+                    }
+                } else {
+                    $doAction = false;
+                    foreach ($pseudoLocations as $pseudo) {
+                        if (strpos($rawHeader, $pseudo) !== false) {
+                            $files = explode(',', $row->{$header});
+                            array_walk($files, 'trim');
+
+                            if (!empty($files) && $files[0] != '') {
+                                $actionArray = explode('_', $rawHeader);
+                                $action = array_shift($actionArray);
+                                $doAction[$action][] = array(
+                                    'attribute' => array_shift($actionArray),
+                                    'class' => implode('_', $actionArray),
+                                    'values' => $files
+                                );
+                            }
                         }
                     }
                 }
+                $i++;
             }
-            $i++;
-        }
 
-        $content->addLocation(SQLILocation::fromNodeID(intval($this->options->attribute('parent_node_id'))));
-        $publisher = SQLIContentPublisher::getInstance();
-        $publisher->publish($content);
+            $content->addLocation(SQLILocation::fromNodeID(intval($this->options->attribute('parent_node_id'))));
+            $publisher = SQLIContentPublisher::getInstance();
+            $publisher->publish($content);
 
-        $newNodeID = $content->getRawContentObject()->attribute('main_node_id');
-        unset($content);
+            $newNodeID = $content->getRawContentObject()->attribute('main_node_id');
+            unset($content);
 
-        if ($doAction !== false) {
-            foreach ((array)$doAction as $action => $values) {
-                $parameters = array(
-                    'method' => 'make_' . $action,
-                    'data' => $values,
-                    'parent_node_id' => $this->options->attribute('parent_node_id'),
-                    'this_node_id' => $newNodeID,
-                    'guid' => $this->currentGUID,
-                    'file_dir' => $this->options->hasAttribute('file_dir') ? $this->options->attribute('file_dir') : null
-                );
-                call_user_func_array(array('OCCSVImportHandler', 'call'), array('parameters' => $parameters));
+            if ($doAction !== false) {
+                foreach ((array)$doAction as $action => $values) {
+                    $parameters = array(
+                        'method' => 'make_' . $action,
+                        'data' => $values,
+                        'parent_node_id' => $this->options->attribute('parent_node_id'),
+                        'this_node_id' => $newNodeID,
+                        'guid' => $this->currentGUID,
+                        'language' => $this->language,
+                        'file_dir' => $this->options->hasAttribute('file_dir') ? $this->options->attribute('file_dir') : null
+                    );
+                    call_user_func_array(array('OCCSVImportHandler', 'call'), array('parameters' => $parameters));
+                }
             }
+        }catch (Exception $e){
+            $this->registerError($e->getMessage());
         }
-
     }
 
     private function generatePrefixedRemoteId($classIdentifier, $name)

@@ -51,11 +51,11 @@
                         </label>
                     </div>
 
-                    <div class="block">
+                    {*<div class="block">
                         <label>
                             <input type="checkbox" name="Incremental" value="1" {if $incremental} checked="checked" {/if}/>Import di tipo incrementale?
                         </label>
-                    </div>
+                    </div>*}
 
                     {if is_set($class_attributes)}
                     <table class="list" cellspacing="0">
@@ -89,6 +89,19 @@
 
                     <div class="block">
                         <label>
+                            Lingua
+                            <select name="Language">
+                                {foreach ezini('RegionalSettings', 'SiteLanguageList') as $locale}
+                                    <option value="{$locale|wash()}" {if $locale|eq($language)}selected="selected"{/if}>{$locale|wash()}</option>
+                                {/foreach}
+                            </select>
+                        </label>
+                    </div>
+
+                    <hr />
+
+                    <div class="block">
+                        <label>
                             Cartella file
                             <input type="text" name="FileDir" value="{$file_dir|wash()}" class="halfbox" />
                         </label>
@@ -101,6 +114,8 @@
                         </label>
                     </div>
 
+                    <hr />
+                    
                     <input class="button" type="submit" name="UpdateGoogleSpreadsheetButton" value="Update configurator"/>
 
                     <input class="button" type="submit" name="ImportGoogleSpreadsheetButton" value="Import"/>
@@ -109,7 +124,7 @@
 
             </div>
 
-                </div></div></div>
+        </div></div></div>
         <div class="border-bl"><div class="border-br"><div class="border-bc"></div></div></div>
     </div>
 </form>
