@@ -1,19 +1,24 @@
 <?php
 
+use Google\Spreadsheet\CellEntry;
 use Google\Spreadsheet\DefaultServiceRequest;
 use Google\Spreadsheet\ServiceRequestFactory;
 use Google\Spreadsheet\SpreadsheetService;
+use Google\Spreadsheet\Worksheet;
+use Google\Spreadsheet\WorksheetFeed;
 
 class OCGoogleSpreadsheetHandler
 {
     /**
-     * @var \Google\Spreadsheet\WorksheetFeed
+     * @var WorksheetFeed
      */
     private $worksheetFeed;
 
     private $worksheetId;
 
     private $import_options;
+
+    public static $parseFromCsvUrl = false;
 
     public static function instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl)
     {
@@ -39,7 +44,7 @@ class OCGoogleSpreadsheetHandler
     }
 
     /**
-     * @return \Google\Spreadsheet\WorksheetFeed
+     * @return WorksheetFeed
      */
     public function getWorksheetFeed()
     {
@@ -67,7 +72,6 @@ class OCGoogleSpreadsheetHandler
 
         if (isset($this->import_options['class_identifier'])) {
 
-            $classIdentifier = $this->import_options['class_identifier'];
             $handler = 'googlespreadsheetimporthandler';
 
             $pendingImport = new SQLIImportItem(array(
@@ -80,15 +84,16 @@ class OCGoogleSpreadsheetHandler
     }
 
     /**
-     * @param \Google\Spreadsheet\Worksheet $worksheet
+     * @param $worksheet
+     * @param eZContentClass|null $contentClass
+     * @param array $mapper
      * @return OCGoogleSpreadsheetSQLICSVDoc
      */
     public static function getWorksheetAsSQLICSVDoc($worksheet, eZContentClass $contentClass = null, $mapper = array())
     {
         $serviceRequest = new DefaultServiceRequest("");
         ServiceRequestFactory::setInstance($serviceRequest);
-        $data = $worksheet->getCsv();
-        $dataArray = self::parseCsv($data);
+        $dataArray = self::parse($worksheet);
         $headers = array_shift($dataArray);
         $headers = self::mapHeaders($headers, $mapper);
         $cleanHeaders = OCGoogleSpreadsheetSQLICSVRowSet::doCleanHeaders($headers);
@@ -100,7 +105,19 @@ class OCGoogleSpreadsheetHandler
         );
     }
 
-    private static function parseCsv($csv_string, $delimiter = ",", $skip_empty_lines = true, $trim_fields = true)
+    private static function parse(Worksheet $worksheet, $skip_empty_lines = true, $trim_fields = false)
+    {
+        if (self::$parseFromCsvUrl) {
+            $csv_string = $worksheet->getCsv();
+            $csv = self::parseFromCsvUrl($csv_string, ",", $skip_empty_lines, $trim_fields);
+        }else{
+            $csv = self::parseFromCellFeed($worksheet,$skip_empty_lines, $trim_fields);
+        }
+
+        return $csv;
+    }
+
+    private static function parseFromCsvUrl($csv_string, $delimiter = ",", $skip_empty_lines = true, $trim_fields = true)
     {
         return array_map(
             function ($line) use ($delimiter, $trim_fields) {
@@ -122,6 +139,42 @@ class OCGoogleSpreadsheetHandler
                 )
             )
         );
+    }
+
+    private static function parseFromCellFeed(Worksheet $worksheet, $skip_empty_lines, $trim_fields)
+    {
+        $cellFeed = $worksheet->getCellFeed();
+        $rowCount = $worksheet->getRowCount();
+        $colCount = $worksheet->getColCount();
+        $realColCount = 1;
+        for ($col = 1; $col <= $colCount; $col++) {
+            $cell = $cellFeed->getCell(1, $col);
+            if ($cell instanceof CellEntry && !empty($cell->getContent())) {
+                $realColCount = $col;
+            }
+        }
+
+        $csv = [];
+        for ($row = 1; $row <= $rowCount; $row++) {
+            $line = [];
+            for ($col = 1; $col <= $realColCount; $col++) {
+                $cell = $cellFeed->getCell($row, $col);
+                if ($cell instanceof CellEntry) {
+                    $content = $cell->getContent();
+                    if ($trim_fields) {
+                        $content = trim($content);
+                    }
+                    $line[$col] = $content;
+                } else {
+                    $line[$col] = '';
+                }
+            }
+            if (trim(implode('', $line)) != '' || !$skip_empty_lines) {
+                $csv[$row] = $line;
+            }
+        }
+
+        return $csv;
     }
 
     private static function mapHeaders($headers, $mapper)
