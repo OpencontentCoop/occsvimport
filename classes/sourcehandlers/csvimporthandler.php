@@ -180,6 +180,14 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                             break;
 
                         case 'ezdate':
+                            {
+                                $timestamp = $this->getTimestamp($row->{$header});
+                                if (method_exists('eZTimestamp', 'getUtcTimestampFromLocalTimestamp')){
+                                    $timestamp = eZTimestamp::getUtcTimestampFromLocalTimestamp($timestamp);
+                                }
+                                $content->fields->{$rawHeader} = $timestamp;
+                            }
+                            break;
                         case 'ezdatetime':
                             {
                                 $content->fields->{$rawHeader} = $this->getTimestamp($row->{$header});
