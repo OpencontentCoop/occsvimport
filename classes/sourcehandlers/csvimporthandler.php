@@ -510,12 +510,35 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             return $tagsString;
         }
 
+        $db = eZDB::instance();
         $tags = array_map('trim', explode(',', $tagsString));
-        $tagsConverter = new Tags(
-            $this->contentClass->attribute('identifier'),
-            $classAttribute->attribute('identifier')
-        );
+        $tagIdList = [];
+        foreach ($tags as $tag){
+            $tag = $db->escapeString($tag);
+            $rows = $db->arrayQuery("select keyword_id from eztags_keyword where keyword = '$tag' and locale = '{$this->language}'");
+            $tagIdList = array_merge($tagIdList, array_column($rows, 'keyword_id'));
+        }
 
-        return $tagsConverter->set($tags, new PublicationProcess(null));
+        $parentTagId = (int)$classAttribute->attribute('data_int1');
+        //@todo find parent
+
+        $tagIds = array();
+        $tagKeywords = array();
+        $tagParents = array();
+        $tagLanguages = array();
+        foreach ($tagIdList as $tagId){
+            $tagObject = eZTagsObject::fetch($tagId, $this->language);
+            $tagIds[] = $tagObject->attribute('id');
+            $tagKeywords[] = $tagObject->attribute('keyword');
+            $tagParents[] = $tagObject->attribute('parent_id');
+            $tagLanguages[] = $this->language;
+        }
+
+        $tagIds = implode('|#', $tagIds);
+        $tagKeywords = implode('|#', $tagKeywords);
+        $tagParents = implode('|#', $tagParents);
+        $tagLanguages = implode('|#', $tagLanguages);
+
+        return empty($tagIdList) ? '' : $tagIds . '|#' . $tagKeywords . '|#' . $tagParents . '|#' . $tagLanguages;
     }
 }
