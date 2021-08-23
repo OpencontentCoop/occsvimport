@@ -1,16 +1,12 @@
 <?php
 
-use Google\Spreadsheet\CellEntry;
-use Google\Spreadsheet\DefaultServiceRequest;
-use Google\Spreadsheet\ServiceRequestFactory;
-use Google\Spreadsheet\SpreadsheetService;
-use Google\Spreadsheet\Worksheet;
-use Google\Spreadsheet\WorksheetFeed;
+use Google\Service\Sheets\Sheet;
+use Opencontent\Google\GoogleSheet;
 
 class OCGoogleSpreadsheetHandler
 {
     /**
-     * @var WorksheetFeed
+     * @var GoogleSheet
      */
     private $worksheetFeed;
 
@@ -18,33 +14,32 @@ class OCGoogleSpreadsheetHandler
 
     private $import_options;
 
-    public static $parseFromCsvUrl = false;
-
     public static function instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl)
+    {
+        return self::instanceFromPublicSpreadsheetId(self::getSpreadsheetIdFromUri($googleSpreadsheetUrl));
+    }
+
+    public static function getSpreadsheetIdFromUri($googleSpreadsheetUrl)
     {
         //https://docs.google.com/spreadsheets/d/14Cwv4eY7cgyUpgRoYu9AIqLQ5AbJpqJLC42w0rkldLk/edit#gid=0 -> 14Cwv4eY7cgyUpgRoYu9AIqLQ5AbJpqJLC42w0rkldLk
         $googleSpreadsheetTemp = explode('/',
             str_replace('https://docs.google.com/spreadsheets/d/', '', $googleSpreadsheetUrl));
-        $googleSpreadsheetId = array_shift($googleSpreadsheetTemp);
-
-        return self::instanceFromPublicSpreadsheetId($googleSpreadsheetId);
+        return array_shift($googleSpreadsheetTemp);
     }
 
     public static function instanceFromPublicSpreadsheetId($googleSpreadsheetId)
     {
-        $serviceRequest = new DefaultServiceRequest("");
-        ServiceRequestFactory::setInstance($serviceRequest);
-        $spreadsheetService = new SpreadsheetService();
+        $sheet = new GoogleSheet($googleSpreadsheetId);
 
         $handler = new OCGoogleSpreadsheetHandler;
         $handler->worksheetId = $googleSpreadsheetId;
-        $handler->worksheetFeed = $spreadsheetService->getPublicSpreadsheet($googleSpreadsheetId);
+        $handler->worksheetFeed = $sheet;
 
         return $handler;
     }
 
     /**
-     * @return WorksheetFeed
+     * @return GoogleSheet
      */
     public function getWorksheetFeed()
     {
@@ -84,97 +79,32 @@ class OCGoogleSpreadsheetHandler
     }
 
     /**
-     * @param $worksheet
+     * @param string $spreadSheetId
+     * @param string $sheetTitle
      * @param eZContentClass|null $contentClass
      * @param array $mapper
      * @return OCGoogleSpreadsheetSQLICSVDoc
      */
-    public static function getWorksheetAsSQLICSVDoc($worksheet, eZContentClass $contentClass = null, $mapper = array())
+    public static function getWorksheetAsSQLICSVDoc($spreadSheetId, $sheetTitle, eZContentClass $contentClass = null, $mapper = array())
     {
-        $serviceRequest = new DefaultServiceRequest("");
-        ServiceRequestFactory::setInstance($serviceRequest);
-        $dataArray = self::parse($worksheet);
+        $sheet = new GoogleSheet($spreadSheetId);
+        $dataArray = $sheet->getSheetDataArray($sheetTitle);
+
         $headers = array_shift($dataArray);
         $headers = self::mapHeaders($headers, $mapper);
         $cleanHeaders = OCGoogleSpreadsheetSQLICSVRowSet::doCleanHeaders($headers);
         array_walk($dataArray, function (&$a) use ($cleanHeaders) {
+            $countHeaders = count($cleanHeaders);
+            $countA = count($a);
+            if ($countHeaders > $countA){
+                $a = array_pad($a, $countHeaders, '');
+            }
             $a = array_combine($cleanHeaders, $a);
         });
+
         return new OCGoogleSpreadsheetSQLICSVDoc(
             OCGoogleSpreadsheetSQLICSVRowSet::instance($headers, $dataArray)
         );
-    }
-
-    private static function parse(Worksheet $worksheet, $skip_empty_lines = true, $trim_fields = false)
-    {
-        if (self::$parseFromCsvUrl) {
-            $csv_string = $worksheet->getCsv();
-            $csv = self::parseFromCsvUrl($csv_string, ",", $skip_empty_lines, $trim_fields);
-        }else{
-            $csv = self::parseFromCellFeed($worksheet,$skip_empty_lines, $trim_fields);
-        }
-
-        return $csv;
-    }
-
-    private static function parseFromCsvUrl($csv_string, $delimiter = ",", $skip_empty_lines = true, $trim_fields = true)
-    {
-        return array_map(
-            function ($line) use ($delimiter, $trim_fields) {
-                return array_map(
-                    function ($field) {
-                        return str_replace('!!Q!!', '"', utf8_decode(urldecode($field)));
-                    },
-                    $trim_fields ? array_map('trim', explode($delimiter, $line)) : explode($delimiter, $line)
-                );
-            },
-            preg_split(
-                $skip_empty_lines ? ($trim_fields ? '/( *\R)+/s' : '/\R+/s') : '/\R/s',
-                preg_replace_callback(
-                    '/"(.*?)"/s',
-                    function ($field) {
-                        return urlencode(utf8_encode($field[1]));
-                    },
-                    $enc = preg_replace('/(?<!")""/', '!!Q!!', $csv_string)
-                )
-            )
-        );
-    }
-
-    private static function parseFromCellFeed(Worksheet $worksheet, $skip_empty_lines, $trim_fields)
-    {
-        $cellFeed = $worksheet->getCellFeed();
-        $rowCount = $worksheet->getRowCount();
-        $colCount = $worksheet->getColCount();
-        $realColCount = 1;
-        for ($col = 1; $col <= $colCount; $col++) {
-            $cell = $cellFeed->getCell(1, $col);
-            if ($cell instanceof CellEntry && !empty($cell->getContent())) {
-                $realColCount = $col;
-            }
-        }
-
-        $csv = [];
-        for ($row = 1; $row <= $rowCount; $row++) {
-            $line = [];
-            for ($col = 1; $col <= $realColCount; $col++) {
-                $cell = $cellFeed->getCell($row, $col);
-                if ($cell instanceof CellEntry) {
-                    $content = $cell->getContent();
-                    if ($trim_fields) {
-                        $content = trim($content);
-                    }
-                    $line[$col] = $content;
-                } else {
-                    $line[$col] = '';
-                }
-            }
-            if (trim(implode('', $line)) != '' || !$skip_empty_lines) {
-                $csv[$row] = $line;
-            }
-        }
-
-        return $csv;
     }
 
     private static function mapHeaders($headers, $mapper)
@@ -198,8 +128,13 @@ class OCGoogleSpreadsheetSQLICSVRowSet extends SQLICSVRowSet
     {
         $rowSet = new OCGoogleSpreadsheetSQLICSVRowSet;
         $rowSet->setRowHeaders($headers);
-        foreach ($rows as $row) {
-            $rowSet->rows[] = new SQLICSVRow($row);
+        foreach ($rows as $index => $row) {
+            try {
+                if (!empty($row)) {
+                    $rowSet->rows[] = new SQLICSVRow($row);
+                }
+            }catch (Exception $e){
+            }
         }
         $rowSet->initIterator();
 
