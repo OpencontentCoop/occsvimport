@@ -23,14 +23,9 @@ $tpl->setVariable('import_identifier', $importIdentifier);
 try {
     $handler = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetId($importIdentifier);    
     $worksheetFeed = $handler->getWorksheetFeed();
-    $feedTitle = (string)$worksheetFeed->getXml()->title;
+    $feedTitle = (string)$worksheetFeed->getTitle();
     $tpl->setVariable('feed_title', $feedTitle);
-    
-    $entries = $worksheetFeed->getEntries();
-    $sheets = array();
-    foreach ($entries as $entry){
-        $sheets[] = $entry->getTitle();
-    }
+    $sheets = $worksheetFeed->getSheetTitleList();
     $tpl->setVariable('sheets', $sheets);
 
 } catch (Exception $e) {
@@ -96,9 +91,8 @@ if (!$tpl->hasVariable('error')){
             $attributes = $contentClass->fetchAttributes();
             $tpl->setVariable('class_attributes', $attributes);        
 
-            $worksheet = $worksheetFeed->getByTitle($sheet);                        
             try{
-                $doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($worksheet, $contentClass);
+                $doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($importIdentifier, $sheet, $contentClass);
                 $headers = $doc->rows->getRawHeaders();
                 $tpl->setVariable('headers', $headers);
             } catch (Exception $e) {
