@@ -55,7 +55,7 @@ if ($module->isCurrentAction('UploadFile')) {
     try {
         $handler = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl);
 
-        if (count($handler->getWorksheetFeed()->getEntries()) > 0){
+        if (count($handler->getWorksheetFeed()->getSheetTitleList()) > 0){
             return $module->redirectTo('csvimport/configure/' . $NodeID . '/' . $handler->getWorksheetId());
         }else{
             $tpl->setVariable('error', makeErrorArray(

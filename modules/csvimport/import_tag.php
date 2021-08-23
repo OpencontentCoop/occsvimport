@@ -27,15 +27,11 @@ if ($parentTag instanceof eZTagsObject) {
         try {
             $handler = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl);
 
-            if (count($handler->getWorksheetFeed()->getEntries()) > 0) {
+            if (count($handler->getWorksheetFeed()->getSheetTitleList()) > 0) {
                 $worksheetFeed = $handler->getWorksheetFeed();
-                $feedTitle = (string)$worksheetFeed->getXml()->title;
+                $feedTitle = (string)$worksheetFeed->getTitle();
                 $tpl->setVariable('feed_title', $feedTitle);
-                $entries = $worksheetFeed->getEntries();
-                $sheets = array();
-                foreach ($entries as $entry) {
-                    $sheets[] = $entry->getTitle();
-                }
+                $sheets = $worksheetFeed->getSheetTitleList();
                 $tpl->setVariable('sheets', $sheets);
             } else {
                 $tpl->setVariable('error', makeErrorArray(
