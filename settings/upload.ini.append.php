@@ -1,7 +1,7 @@
 <?php /*
 
-[CreateSettings]
-MimeUploadHandlerMap[application/zip]=ezzipuploadhandler
+#[CreateSettings]
+#MimeUploadHandlerMap[application/zip]=ezzipuploadhandler
 
 
 

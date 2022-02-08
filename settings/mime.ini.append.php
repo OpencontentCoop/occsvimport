@@ -1,6 +1,6 @@
 <?php /*
 
 [csv]
-Types[]=text/plain
+Types[]=text/csv
 
 */ ?>
