@@ -55,7 +55,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
             "Unità organizzativa*" => $this->attribute('for_entity'),
             "Compensi" => $this->attribute('compensi'),
             "Importi di viaggio e/o servizio" => $this->attribute('importi'),
-            "Data inizio incarico" => $this->attribute('start_time'),
+            "Data inizio incarico*" => $this->attribute('start_time'),
             "Data conclusione incarico" => $this->attribute('end_time'),
             "Data insediamento" => $this->attribute('data_insediamento'),
             "Atto di nomina" => $this->attribute('atto_nomina'),
