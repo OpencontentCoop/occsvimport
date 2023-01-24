@@ -172,11 +172,11 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             "Dichiarazioni patrimoniali del soggetto" => $this->attribute('dichiarazioni_patrimoniali_soggetto'),
             "Dichiarazioni patrimoniali del coniuge non separato e parenti entro il secondo grado" =>
                 $this->attribute('dichiarazioni_patrimoniali_parenti'),
-            "Dichiarazione dei redditi" => $this->attribute('dichiarazione_redditi'),
-            "Spese elettorali" => $this->attribute('spese_elettorali'),
+            "Dichiarazione dei redditi*" => $this->attribute('dichiarazione_redditi'),
+            "Spese elettorali*" => $this->attribute('spese_elettorali'),
             "Spese elettorali (allegati)" => $this->attribute('spese_elettorali_files'),
-            "Variazioni situazione patrimoniale" => $this->attribute('variazioni_situazione_patrimoniale'),
-            "Altre cariche" => $this->attribute('altre_cariche'),
+            "Variazioni situazione patrimoniale*" => $this->attribute('variazioni_situazione_patrimoniale'),
+            "Altre cariche*" => $this->attribute('altre_cariche'),
             "Altri eventuali incarichi con oneri a carico della finanza pubblica e l'indicazione dei compensi spettanti" =>
                 $this->attribute('eventuali_incarichi'),
             "Dichiarazione incompatibilità e inconferibilità" => $this->attribute('dichiarazione_incompatibilita'),

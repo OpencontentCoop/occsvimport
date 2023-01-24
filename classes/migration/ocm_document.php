@@ -105,6 +105,7 @@ class ocm_document extends eZPersistentObject implements ocm_interface
             "Tipologia di bando" => $this->attribute('announcement_type'),
             "Data di scadenza delle iscrizioni" => $this->attribute('data_di_scadenza_delle_iscrizioni'),
             "Data di conclusione del bando/progetto" => $this->attribute('data_di_conclusione'),
+            "Servizi" => $this->attribute('related_public_services'),
         ];
     }
 
