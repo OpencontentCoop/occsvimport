@@ -111,7 +111,7 @@ class OCMigration extends eZPersistentObject
             if (!in_array($class, $exists)) {
                 if ($cli) $cli->warning('Create table ' . $class);
                 foreach ($fields as $field => $definition) {
-                    $cli->output(' - ' . $field);
+                    if ($cli) $cli->output(' - ' . $field);
                 }
                 $db->query($tableCreateSql);
                 $db->query($tableKeySql);
