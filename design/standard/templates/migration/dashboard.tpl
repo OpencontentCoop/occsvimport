@@ -1,9 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<html>
+<!doctype html>
+<html lang="it">
 <head>
     <title>Assistente migrazione</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     {ezscript_load(array(
         'ezjsc::jquery',
         'ezjsc::jqueryUI',
