@@ -14,102 +14,153 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
 
     public function fillData(array $namesFilter = [], $isUpdate = false)
     {
-        $this->fillOrganigrammaData();
+        $escludePathList = [
+            'classificazioni',
+            'amministrazione_trasparente'
+        ];
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_file', ['file', 'file_pdf'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_pagina_sito', ['pagina_sito'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_folder', ['folder'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['luogo'], $escludePathList);
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_organization',
+            ['area', 'servizio', 'ufficio', 'organo_politico', 'sindaco'],
+            $escludePathList
+        );
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_public_person', ['dipendente', 'politico',], $escludePathList);
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_time_indexed_role',
+            ['dipendente', 'politico', 'ruolo'],
+            $escludePathList
+        );
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_document',
+            [
+                'accordo',
+                'bilancio_di_settore',
+                'bando',
+                'circolare',
+                'concorso',
+                'concessioni',
+                'convenzione',
+                'decreto_sindacale',
+                'deliberazione',
+                'determinazione',
+                'documento',
+                'graduatoria',
+                'interpellanza',
+                'interrogazione',
+                'modello',
+                'modulo',
+                'modulistica',
+                'mozione',
+                'normativa',
+                'ordinanza',
+                'ordine_del_giorno',
+                'parere',
+                'piano_progetto',
+                'procedura',
+                'protocollo',
+                'rapporto',
+                'regolamento',
+                'statuto',
+                'trattamento',
+            ],
+            $escludePathList,
+            ['at_']
+        );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_article',
+            ['avviso',],
+            $escludePathList,
+            ['at_'],
+            ['standard']
+        );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_event',
+            ['event',],
+            $escludePathList,
+            ['at_'],
+            ['standard'],
+            true,
+            2
+        );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_private_organization',
+            ['associazione',],
+            $escludePathList,
+            [],
+            ['standard']
+        );
+
+        //servizio_sul_territorio
+        //procedimento
     }
 
-    protected function fillOrganigrammaData()
+    /**
+     * @param eZContentObject|eZContentObjectTreeNode $nodeOrObject
+     * @return ?string
+     */
+    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file'): ?string
     {
-        return; //@todo
-        $nodes = $this->getNodesByClassIdentifierList(['area', 'servizio', 'ufficio']);
-        foreach ($nodes as $node){
-            $this->info(' - ' . $node->attribute('name'));
-            $this->fillOrganigrammaItem($node);
+        $dataMap = $nodeOrObject->dataMap();
+        if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
+            $attribute = $dataMap[$attributeIdentifier];
+            /** @var \eZBinaryFile $file */
+            $file = $attribute->content();
+            $url = 'content/download/' . $attribute->attribute('contentobject_id')
+                . '/' . $attribute->attribute('id')
+                . '/' . $attribute->attribute('version')
+                . '/' . urlencode($file->attribute('original_filename'));
+            eZURI::transformURI($url, true, 'full');
+            return $url;
         }
+
+        return null;
     }
 
-    protected function fillOrganigrammaItem(eZContentObjectTreeNode $node)
+    /**
+     * @param eZContentObjectTreeNode $node
+     * @return eZContentObjectTreeNode[]
+     */
+    public static function getAttachmentsByNode(eZContentObjectTreeNode $node): array
     {
-        $id = $node->attribute('class_identifier') . ':' . $node->attribute('contentobject_id');
-        $name = $node->attribute('name');
-
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
-
-        $hoursId = $id . ':hours';
-        $hours = new ocm_opening_hours_specification();
-        $hours->setAttribute('_id', $hoursId);
-        $hours->setAttribute('name', "Orari $name");
-        $hours->setAttribute('stagionalita', "Unico");
-        $hours->setAttribute('note', $this->getAttributeContent('orario', $dataMap));
-        $hours->store();
-
-        $contactsId = $id . ':contacts';
-        $contacts = new ocm_online_contact_point();
-        $contacts->setAttribute('_id', $contactsId);
-        $contacts->setAttribute('name', "Contatti $name");
-        $data = [];
-        foreach (['telefoni', 'fax', 'email', 'email2', 'email_certificata', ] as $identifier){
-            if (isset($dataMap[$identifier])){
-                $data[] = eZStringUtils::implodeStr([
-                    $dataMap[$identifier]->attribute('contentclass_attribute_name'),
-                    str_replace(['&', '|'], '', $dataMap[$identifier]->toString()),
-                    ''
-                ], '|' );
-            }
-        }
-        $contacts->setAttribute('contact', eZStringUtils::implodeStr( $data, '&' ));
-        $contacts->setAttribute('phone_availability_time', $hoursId);
-        $contacts->store();
-
-        $placeId = $id . ':place';
-        $place = new ocm_place();
-        $place->setAttribute('_id', $placeId);
-        $place->setAttribute('name', "Sede $name");
-        $place->setAttribute('type', 'Palazzo');
-        $place->setAttribute('opening_hours_specification', $hoursId);
-        $place->setAttribute('help', $contactsId);
-        $place->store();
-
-        $organization = new ocm_organization();
-        $organization->setAttribute('_id', $id);
-        $organization->setAttribute('legal_name', $this->getAttributeContent('titolo', $dataMap));
-        $organization->setAttribute('abstract', $this->getAttributeContent('abstract', $dataMap));
-        $organization->setAttribute('image', $this->getAttributeContent('image', $dataMap));
-        $organization->setAttribute('main_function', $this->getAttributeContent('competenze', $dataMap));
-// @todo
-//        $area = $this->getAttributeContent('area', $dataMap);
-//        $servizio = $this->getAttributeContent('servizio', $dataMap);
-//        $organization->setAttribute('hold_employment', $this->getAttributeContent('orario', $dataMap));
-
-        $type = $node->attribute('class_identifier') === 'area' ? 'Area' : 'Ufficio';
-        $organization->setAttribute('type', $type);
-        $organization->setAttribute('has_spatial_coverage', $placeId);
-        $organization->setAttribute('has_online_contact_point', $contactsId);
-        $organization->setAttribute('attachments', $this->getAttributeContent(['file', 'ubicazione'], $dataMap, '|'));
-        $organization->setAttribute('more_information', $this->getAttributeContent(['descrizione', 'riferimenti_utili'], $dataMap));
-        $organization->store();
-
+        return $node->subTree([
+            'Depth' => 1,
+            'DepthOperator' => 'eq',
+            'ClassFilterType' => 'include',
+            'ClassFilterArray' => ['file', 'file_pdf'],
+        ]);
     }
 
-    protected function getAttributeContent($attributeIdentifier, $dataMap, $separator = ' ')
-    {
-        if (!is_array($attributeIdentifier)) {
-            $attributeIdentifier = [$attributeIdentifier];
-        }
-        $data = [];
-        foreach ($attributeIdentifier as $aid) {
-            if (isset($dataMap[$aid])) {
-                $attribute = $dataMap[$aid];
-                $converter = AttributeConverterLoader::load(
-                    $attribute->attribute('object')->attribute('class_identifier'),
-                    $attribute->attribute('contentclass_attribute_identifier'),
-                    $attribute->attribute('data_type_string')
-                );
-                $content = $converter->get($attribute);
-                $data[] = $content['content'];
-            }
-        }
-
-        return implode($separator, $data);
+    /**
+     * @param eZContentObjectTreeNode $node
+     * @param $item
+     * @param array $options
+     * @return ocm_interface
+     * @throws Exception
+     */
+    protected function createFromNode(
+        eZContentObjectTreeNode $node,
+        ocm_interface $item,
+        array $options = []
+    ): ocm_interface {
+        return $item->fromComunwebNode($node, $options);
     }
 }

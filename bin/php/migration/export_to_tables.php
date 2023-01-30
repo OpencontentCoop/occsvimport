@@ -12,9 +12,9 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[only:][update]",
+    "[only:][update][truncate][reset]",
     "", [
-    'only' => implode(',', OCMigration::getAvailableClasses()),
+    'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
@@ -22,6 +22,14 @@ $script->setUseDebugAccumulators(true);
 /** @var eZUser $user */
 $user = eZUser::fetchByName('admin');
 eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
+
+if ($options['reset']){
+    OCMigrationSpreadsheet::resetCurrentStatus();
+}
+
+if ($options['truncate']){
+    OCMigration::createTableIfNeeded($cli, true);
+}
 
 $opt = [
     'class_filter' => $options['only'] ? explode(',', $options['only']) : [],

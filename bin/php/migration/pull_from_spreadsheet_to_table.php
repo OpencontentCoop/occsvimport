@@ -14,7 +14,7 @@ $script->startup();
 $options = $script->getOptions(
     "[only:]",
     "", [
-    'only' => implode(',', OCMigration::getAvailableClasses()),
+    'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
