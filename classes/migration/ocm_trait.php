@@ -36,7 +36,6 @@ trait ocm_trait
         $this->setAttribute('_id', $object->attribute('remote_id'));
 
         return $this;
-        //return $this->internalFromOpencityNode($node, $options);
     }
 
     protected function internalFromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface

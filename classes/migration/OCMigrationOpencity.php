@@ -139,14 +139,16 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
         return $item->fromOpencityNode($node, $options);
     }
 
-    public static function getMapperHelper(string $type): callable
+    public static function getMapperHelper(string $field): callable
     {
-        switch ($type) {
+        switch ($field) {
+
             case 'image/name':
                 return function (Content $content, $firstLocalizedContentData) {
                     $contentValue = $firstLocalizedContentData['image']['content'];
                     return $contentValue ? $contentValue['filename'] : '';
                 };
+
             case 'image/url':
                 return function (Content $content, $firstLocalizedContentData) {
                     $contentValue = $firstLocalizedContentData['image']['content'];
@@ -154,16 +156,71 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
                     eZURI::transformURI($url, false, 'full');
                     return $contentValue ? $url : '';
                 };
+
             default:
-                return function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale) use ($type
-                ) {
-                    $field = $firstLocalizedContentData[$type];
+
+                return function (
+                    Content $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale
+                ) use ($field) {
+
+                    $field = $firstLocalizedContentData[$field];
+                    $contentValue = $field['content'];
+                    $dataType = $field['datatype'];
                     $converter = AttributeConverterLoader::load(
                         $content->metadata->classIdentifier,
-                        $type,
-                        $field['datatype']
+                        $field,
+                        $dataType
                     );
-                    return $converter->toCSVString($field['content'], $firstLocalizedContentLocale);
+
+                    switch ($dataType){
+
+                        case eZDateType::DATA_TYPE_STRING:
+                            return $contentValue && intval($contentValue) > 0 ? date(
+                                    'j/n/Y',
+                                    strtotime($contentValue)
+                                ) : '';
+
+                        case eZDateTimeType::DATA_TYPE_STRING;
+                            return $contentValue && intval($contentValue) > 0 ? date(
+                                'j/n/Y H:i',
+                                strtotime($contentValue)
+                            ) : '';
+
+                        case eZBinaryFileType::DATA_TYPE_STRING:
+                            $contentValue = $converter->toCSVString($contentValue, $firstLocalizedContentLocale);
+                            if (!empty($contentValue)) {
+                                $parts = explode('/', $contentValue);
+                                $name = array_pop($parts);
+                                $parts[] = urlencode($name);
+                                return implode('/', $parts);
+                            }
+                            return '';
+
+                        case OCMultiBinaryType::DATA_TYPE_STRING:
+                            if (!empty($contentValue)) {
+                                $files = [];
+                                foreach ($contentValue as $file) {
+                                    $fileParts = explode('/', $file['url']);
+                                    $fileName = array_pop($fileParts);
+                                    $fileParts[] = urlencode($fileName);
+                                    $files[] = implode('/', $fileParts);
+                                }
+                                return implode(PHP_EOL, $files);
+                            }
+                            return '';
+
+                        case eZXMLTextType::DATA_TYPE_STRING:
+                            return $contentValue;
+
+                        case eZGmapLocationType::DATA_TYPE_STRING:
+                            return json_encode($contentValue);
+                            
+                        default:{
+                            return $converter->toCSVString($contentValue, $firstLocalizedContentLocale);
+                        }
+                    }
                 };
         }
     }

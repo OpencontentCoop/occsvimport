@@ -1,14 +1,18 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_opening_hours_specification extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
 
     public static $fields = [
         'name',
+        'de_name',
         'valid_from',
         'valid_through',
         'note',
+        'de_note',
         'stagionalita',
         'closure___reason',
         'closure___day',
@@ -20,6 +24,32 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         'opening_hours___saturday',
         'opening_hours___sunday',
     ];
+
+    protected function getOpencityFieldMapper(): array
+    {
+        return [
+            'name' => function(Content $content){
+                return $content->data['ita-IT']['name']['content'] ?? '';
+            },
+            'de_name' => function(Content $content){
+                return $content->data['ger-DE']['name']['content'] ?? '';
+            },
+            'valid_from',
+            'valid_through',
+            'note',
+            'de_note',
+            'stagionalita',
+            'closure___reason',
+            'closure___day',
+            'opening_hours___monday',
+            'opening_hours___tuesday',
+            'opening_hours___wednesday',
+            'opening_hours___thursday',
+            'opening_hours___friday',
+            'opening_hours___saturday',
+            'opening_hours___sunday',
+        ];
+    }
 
     public static function getSpreadsheetTitle(): string
     {
