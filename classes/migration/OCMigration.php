@@ -25,6 +25,7 @@ class OCMigration extends eZPersistentObject
 
     final public static function discoverContext()
     {
+
         if (eZContentClass::classIDByIdentifier('organization')) {
             return false;
         }

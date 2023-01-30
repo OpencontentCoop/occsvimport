@@ -44,7 +44,10 @@
 
             {if $migration_spreadsheet}
                 <p>
-                    <a href="https://docs.google.com/spreadsheets/d/{$migration_spreadsheet}/edit" target="_blank">{$migration_spreadsheet}</a> </p>
+                    <a href="https://docs.google.com/spreadsheets/d/{$migration_spreadsheet}/edit" target="_blank">
+                        {$migration_spreadsheet_title|wash()}<br />{$migration_spreadsheet}
+                    </a>
+                </p>
                 <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
                     <input type="hidden" name="remove_migration_spreadsheet" value="1" />
                     <input type="submit" class="btn btn-success" value="Rimuovi"/>

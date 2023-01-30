@@ -73,6 +73,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         ];
 
         $object = $node->object();
+        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
         /** @var eZContentObjectAttribute[] $dataMap */
         $dataMap = $node->attribute('data_map');
         $this->setAttribute('_id', $object->attribute('remote_id'));
@@ -85,7 +86,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
 
             if (isset($map[$node->classIdentifier()][$id])){
                 foreach ($map[$node->classIdentifier()][$id] as $mapToId){
-                    $data = static::getAttributeString($mapToId, $dataMap, $options);
+                    $data = static::getAttributeString($mapToId, $dataMap, $content, $options);
                     foreach ($data as $name => $value) {
                         $this->appendAttribute($id, $value);
                     }
@@ -94,7 +95,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             }
 
             if (!isset($alreadyDone[$id])) {
-                $data = static::getAttributeString($id, $dataMap, $options);
+                $data = static::getAttributeString($id, $dataMap, $content, $options);
                 foreach ($data as $name => $value) {
                     $this->setAttribute($name, $value);
                 }

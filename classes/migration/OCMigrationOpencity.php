@@ -1,5 +1,9 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+use Opencontent\Opendata\Api\AttributeConverter\Base;
+use Opencontent\Opendata\Api\AttributeConverterLoader;
+
 class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
 {
     public function __construct()
@@ -127,9 +131,40 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
      * @return ocm_interface
      * @throws Exception
      */
-    protected function createFromNode(eZContentObjectTreeNode $node, ocm_interface $item, array $options = []): ocm_interface
-    {
+    protected function createFromNode(
+        eZContentObjectTreeNode $node,
+        ocm_interface $item,
+        array $options = []
+    ): ocm_interface {
         return $item->fromOpencityNode($node, $options);
     }
 
+    public static function getMapperHelper(string $type): callable
+    {
+        switch ($type) {
+            case 'image/name':
+                return function (Content $content, $firstLocalizedContentData) {
+                    $contentValue = $firstLocalizedContentData['image']['content'];
+                    return $contentValue ? $contentValue['filename'] : '';
+                };
+            case 'image/url':
+                return function (Content $content, $firstLocalizedContentData) {
+                    $contentValue = $firstLocalizedContentData['image']['content'];
+                    $url = $contentValue ? $contentValue['url'] : '';
+                    eZURI::transformURI($url, false, 'full');
+                    return $contentValue ? $url : '';
+                };
+            default:
+                return function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale) use ($type
+                ) {
+                    $field = $firstLocalizedContentData[$type];
+                    $converter = AttributeConverterLoader::load(
+                        $content->metadata->classIdentifier,
+                        $type,
+                        $field['datatype']
+                    );
+                    return $converter->toCSVString($field['content'], $firstLocalizedContentLocale);
+                };
+        }
+    }
 }

@@ -49,6 +49,18 @@ class OCMigrationSpreadsheet
         return $siteData->attribute('value');
     }
 
+    public static function getConnectedSpreadSheetTitle()
+    {
+        $id = self::getConnectedSpreadSheet();
+        $title = false;
+        if ($id){
+            $spreadsheet = new GoogleSheet($id);
+            $title = $spreadsheet->getTitle();
+        }
+
+        return $title;
+    }
+
     public static function setConnectedSpreadSheet($spreadsheet)
     {
         $checkAccessSpreadsheet = new GoogleSheet($spreadsheet);

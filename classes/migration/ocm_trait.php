@@ -1,5 +1,6 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
 use Opencontent\Opendata\Rest\Client\PayloadBuilder;
 use Opencontent\Opendata\Api\AttributeConverter\Base;
 use Opencontent\Opendata\Api\AttributeConverterLoader;
@@ -10,23 +11,65 @@ trait ocm_trait
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        return $this->internalFromOpencityNode($node, $options);
+        $object = $node->object();
+        $content = Content::createFromEzContentObject($object);
+        $contentData = $content->data;
+        $firstLocalizedContentData = [];
+        $firstLocalizedContentLocale = 'ita-IT';
+        foreach ($contentData as $locale => $data){
+            $firstLocalizedContentData = $data;
+            $firstLocalizedContentLocale = $locale;
+            break;
+        }
+        $mapper = $this->getOpencityFieldMapper();
+
+        foreach ($mapper as $identifier => $callFunction){
+            if ($callFunction === false){
+                $callFunction = OCMigrationOpencity::getMapperHelper($identifier);
+            }
+            $this->setAttribute($identifier, call_user_func($callFunction,
+                $content,
+                $firstLocalizedContentData,
+                $firstLocalizedContentLocale
+            ));
+        }
+        $this->setAttribute('_id', $object->attribute('remote_id'));
+
+        return $this;
+        //return $this->internalFromOpencityNode($node, $options);
     }
 
     protected function internalFromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
         $object = $node->object();
+        $content = Content::createFromEzContentObject($object);
         /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
+        $dataMap = $node->dataMap();
         $this->setAttribute('_id', $object->attribute('remote_id'));
         $alreadyDone = [];
+
         foreach (static::$fields as $identifier) {
-            [$id] = explode('___', $identifier);
-            if (isset($alreadyDone[$id])) {
+            $locale = 'ita-IT';
+            if (stripos($identifier, 'de_') === 0) {
+                $locale = 'ger-DE';
+                $id = substr($identifier, 3);
+            } elseif (stripos($identifier, 'en_') === 0) {
+                $locale = 'eng-GB';
+                $id = substr($identifier, 3);
+            } else{
+                $id = $identifier;
+            }
+
+            if (stripos($identifier, '___') !== false){
+                [$id] = explode('___', $identifier);
+            }
+
+            if (isset($alreadyDone[$identifier])) {
                 continue;
             }
-            $alreadyDone[$id] = true;
-            $data = static::getAttributeString($id, $dataMap, $options);
+            $alreadyDone[$identifier] = true;
+
+            $data = static::getAttributeString($id, $dataMap, $content, $options, $locale);
             foreach ($data as $name => $value) {
                 $this->setAttribute($name, $value);
             }
@@ -38,25 +81,38 @@ trait ocm_trait
     /**
      * @param string $attributeIdentifier
      * @param eZContentObjectAttribute[] $dataMap
-     * @return array
+     * @param Content $content
+     * @param array $options
+     * @param string $locale
+     * @return array|string[]
      * @throws Exception
      */
-    protected static function getAttributeString($attributeIdentifier, $dataMap, $options = []): array
-    {
-        $locale = 'ita-IT';  //@todo language
+    protected static function getAttributeString(
+        string $attributeIdentifier,
+        array $dataMap,
+        Content $content,
+        ?array $options = [],
+        ?string $locale = 'ita-IT'
+    ): array {
 
         $options = array_merge([
             'matrix_converter' => 'multiline',
         ], $options);
+
         if (isset($dataMap[$attributeIdentifier])) {
             $attribute = $dataMap[$attributeIdentifier];
+
+            $contentValue = $content->data[$locale][$attributeIdentifier]['content'];
+
             $converter = AttributeConverterLoader::load(
                 $attribute->attribute('object')->attribute('class_identifier'),
                 $attribute->attribute('contentclass_attribute_identifier'),
                 $attribute->attribute('data_type_string')
             );
-            $content = $converter->get($attribute);
-            $contentValue = $content['content'];
+//
+//            $content = $converter->get($attribute);
+//            $contentValue = $content['content'];
+
             switch ($attribute->attribute('data_type_string')) {
                 case eZObjectRelationListType::DATA_TYPE_STRING:
                 {
@@ -163,7 +219,7 @@ trait ocm_trait
                             $idList = explode('-', $attribute->toString());
                             $objects = OpenPABase::fetchObjects($idList);
                             foreach ($objects as $object) {
-                                if (isset($topics[$object->remoteID()])){
+                                if (isset($topics[$object->remoteID()])) {
                                     $data[] = $object->name();
                                 }
                             }
@@ -177,6 +233,14 @@ trait ocm_trait
                         $attributeIdentifier => implode(PHP_EOL, $data),
                     ];
                 }
+
+                case eZDateTimeType::DATA_TYPE_STRING:
+                    return [
+                        $attributeIdentifier => $contentValue && intval($contentValue) > 0 ? date(
+                            'j/n/Y H:i',
+                            strtotime($contentValue)
+                        ) : '',
+                    ];
 
                 case eZDateType::DATA_TYPE_STRING:
                     return [
@@ -217,18 +281,16 @@ trait ocm_trait
                         $attributeIdentifier . '___url' => $contentValue ? $url : '',
                     ];
 
-                case eZDateTimeType::DATA_TYPE_STRING:
-                    return [
-                        $attributeIdentifier => $contentValue && intval($contentValue) > 0 ? date(
-                            'j/n/Y H:i',
-                            strtotime($contentValue)
-                        ) : '',
-                    ];
-
                 case eZXMLTextType::DATA_TYPE_STRING:
                     return [$attributeIdentifier => $contentValue];
 
                 case eZGmapLocationType::DATA_TYPE_STRING:
+                    if ($locale === 'ger-DE') {
+                        $attributeIdentifier = 'de_' . $attributeIdentifier;
+                    }
+                    if ($locale === 'eng-GB') {
+                        $attributeIdentifier = 'en_' . $attributeIdentifier;
+                    }
                     return [$attributeIdentifier => json_encode($contentValue)];
 
                 case eZMatrixType::DATA_TYPE_STRING:
@@ -248,6 +310,12 @@ trait ocm_trait
                 }
 
                 default:
+                    if ($locale === 'ger-DE') {
+                        $attributeIdentifier = 'de_' . $attributeIdentifier;
+                    }
+                    if ($locale === 'eng-GB') {
+                        $attributeIdentifier = 'en_' . $attributeIdentifier;
+                    }
                     return [$attributeIdentifier => $converter->toCSVString($contentValue, $locale)];
             }
         }

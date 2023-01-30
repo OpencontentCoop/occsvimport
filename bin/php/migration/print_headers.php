@@ -26,13 +26,19 @@ $spreadsheet = new GoogleSheet($spreadsheetId);
 
 foreach (OCMigration::getAvailableClasses() as $className) {
     $cli->warning($className);
-    $row = $spreadsheet->getSheetDataHash($className::getSpreadsheetTitle())[0];
-    /** @var ocm_interface $test */
-    $test = new $className;
-    print_r(array_diff(
-        array_keys($row),
-        array_keys($test->toSpreadsheet())
-    ));
+    try {
+        $row = $spreadsheet->getSheetDataHash($className::getSpreadsheetTitle())[0];
+        /** @var ocm_interface $test */
+        $test = new $className;
+        print_r(
+            array_diff(
+                array_keys($row),
+                array_keys($test->toSpreadsheet())
+            )
+        );
+    }catch (Exception $e){
+        $cli->error($e->getMessage());
+    }
 }
 
 $script->shutdown();

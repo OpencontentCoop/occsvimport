@@ -8,6 +8,7 @@ $tpl->setVariable('ezxform_token', ezxFormToken::getToken());
 $tpl->setVariable('error_spreadsheet', false);
 $tpl->setVariable('context', OCMigration::discoverContext());
 $tpl->setVariable('migration_spreadsheet', OCMigrationSpreadsheet::getConnectedSpreadSheet());
+$tpl->setVariable('migration_spreadsheet_title', OCMigrationSpreadsheet::getConnectedSpreadSheetTitle());
 $tpl->setVariable('google_user', 'phpsheet@norse-fiber-323812.iam.gserviceaccount.com'); //@todo
 
 $classes = OCMigration::getAvailableClasses();

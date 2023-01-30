@@ -54,6 +54,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         ];
 
         $object = $node->object();
+        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
         /** @var eZContentObjectAttribute[] $dataMap */
         $dataMap = $node->attribute('data_map');
         $this->setAttribute('_id', $object->attribute('remote_id'));
@@ -66,7 +67,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 
             if (isset($map[$node->classIdentifier()][$id])) {
                 foreach ($map[$node->classIdentifier()][$id] as $mapToId) {
-                    $data = static::getAttributeString($mapToId, $dataMap, $options);
+                    $data = static::getAttributeString($mapToId, $dataMap, $content, $options);
                     foreach ($data as $name => $value) {
                         $this->appendAttribute($id, $value);
                     }
@@ -75,7 +76,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             }
 
             if (!isset($alreadyDone[$id])) {
-                $data = static::getAttributeString($id, $dataMap, $options);
+                $data = static::getAttributeString($id, $dataMap, $content, $options);
                 foreach ($data as $name => $value) {
                     $this->setAttribute($name, $value);
                 }
@@ -101,6 +102,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     protected function appendContactPointFromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $dataMap = $node->dataMap();
+        $object = $node->object();
+        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
         $contact = [];
         if (self::hasAttributeStringContent($dataMap, 'phone')){
             $contact[] = [
@@ -141,7 +144,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 $openingHour = new ocm_opening_hours_specification();
                 $openingHour->setAttribute('_id', 'hours_' . $this->attribute('_id'));
                 $openingHour->setAttribute('name', 'Ricevimento di ' . $node->attribute('name'));
-                $data = static::getAttributeString('ricevimento', $dataMap, $options);
+                $data = static::getAttributeString('ricevimento', $dataMap, $content, $options);
                 foreach ($data as $name => $value) {
                     $openingHour->appendAttribute('note', $value);
                 }
