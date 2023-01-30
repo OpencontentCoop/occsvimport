@@ -1,14 +1,28 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_opening_hours_specification extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
 
+    public static function canPush(): bool
+    {
+        return true;
+    }
+
+    public static function canExport(): bool
+    {
+        return OCMigration::discoverContext() === 'opencity';
+    }
+
     public static $fields = [
         'name',
+        'de_name',
         'valid_from',
         'valid_through',
         'note',
+        'de_note',
         'stagionalita',
         'closure___reason',
         'closure___day',
@@ -20,6 +34,37 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         'opening_hours___saturday',
         'opening_hours___sunday',
     ];
+
+
+    protected function getOpencityFieldMapper(): array
+    {
+        return [
+            'name' => function(Content $content){
+                return $content->data['ita-IT']['name']['content'] ?? '';
+            },
+            'de_name' => function(Content $content){
+                return $content->data['ger-DE']['name']['content'] ?? '';
+            },
+            'valid_from' => false,
+            'valid_through' => false,
+            'note' => function(Content $content){
+                return $content->data['ita-IT']['note']['content'] ?? '';
+            },
+            'de_note' => function(Content $content){
+                return $content->data['ger-DE']['note']['content'] ?? '';
+            },
+            'stagionalita' => false,
+            'closure___reason' => OCMigration::getMapperHelper('closure/reason'),
+            'closure___day' => OCMigration::getMapperHelper('closure/day'),
+            'opening_hours___monday' => OCMigration::getMapperHelper('opening_hours/monday'),
+            'opening_hours___tuesday' => OCMigration::getMapperHelper('opening_hours/tuesday'),
+            'opening_hours___wednesday' => OCMigration::getMapperHelper('opening_hours/wednesday'),
+            'opening_hours___thursday' => OCMigration::getMapperHelper('opening_hours/thursday'),
+            'opening_hours___friday' => OCMigration::getMapperHelper('opening_hours/friday'),
+            'opening_hours___saturday' => OCMigration::getMapperHelper('opening_hours/saturday'),
+            'opening_hours___sunday' => OCMigration::getMapperHelper('opening_hours/sunday'),
+        ];
+    }
 
     public static function getSpreadsheetTitle(): string
     {
@@ -41,11 +86,17 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         return "Identificatore*";
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome*";
+    }
+
     public function toSpreadsheet(): array
     {
         return [
             'Identificatore*' => $this->attribute('_id'),
             'Nome*' => $this->attribute('name'),
+            'Name* [de]' => $this->attribute('de_name'),
             'Valido dal*' => $this->attribute('valid_from'),
             'Valido fino al' => $this->attribute('valid_through'),
             'Note' => $this->attribute('note'),
@@ -59,6 +110,33 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             'Domenica' => $this->attribute('opening_hours___sunday'),
             'Giorni di chiusura' => $this->attribute('closure___day'),
             'Motivo di chiusura' => $this->attribute('closure___reason'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
+        ];
+    }
+
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            'Valido dal*',
+            'Valido fino al',
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            'Note',
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Stagionalità*' => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('stagionalita'),
+            ],
         ];
     }
 

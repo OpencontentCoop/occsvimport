@@ -6,11 +6,17 @@ interface ocm_interface
 
     public static function getIdColumnLabel(): string;
 
+    public static function getColumnName(): string;
+
+    public static function getSortField(): string;
+
     public function toSpreadsheet(): array;
 
     public static function fromSpreadsheet($row): ocm_interface;
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
+
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
 
     public function generatePayload(): array;
 

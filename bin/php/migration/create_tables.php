@@ -11,9 +11,16 @@ $script = eZScript::instance([
 ]);
 
 $script->startup();
-$options = $script->getOptions();
+$options = $script->getOptions(
+    "[truncate][drop]",
+    "",
+    [
+        'truncate' => 'truncate tables',
+        'drop' => 'drop tables',
+    ]
+);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
-OCMigration::createTableIfNeeded($cli);
+OCMigration::createTableIfNeeded($cli, $options['truncate'], $options['drop']);
 
 $script->shutdown();

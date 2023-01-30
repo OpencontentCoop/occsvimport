@@ -16,108 +16,22 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
      */
     public function fillData(array $namesFilter = [], $isUpdate = false)
     {
-        if (empty($namesFilter) || in_array('ocm_image', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['image']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_image(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_opening_hours_specification', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['opening_hours_specification']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_opening_hours_specification(), [
-                    'matrix_converter' => 'multiline',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_online_contact_point', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['online_contact_point']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_online_contact_point(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_document', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['document']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_document(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_place', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['place']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_place(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_organization', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList([
-                'administrative_area',
-                'homogeneous_organizational_area',
-                'office',
-                'political_body',
-            ]);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_organization(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_public_person', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList([
-                'employee',
-                'politico',
-            ]);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_public_person(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
-
-        if (empty($namesFilter) || in_array('ocm_time_indexed_role', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['time_indexed_role']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_time_indexed_role(), [
-                    'matrix_converter' => 'multiline',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-        }
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_opening_hours_specification', ['opening_hours_specification']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_online_contact_point', ['online_contact_point']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_document', ['document']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['place']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_organization', [
+            'administrative_area',
+            'homogeneous_organizational_area',
+            'office',
+            'political_body',
+        ]);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_public_person', [
+            'employee',
+            'politico',
+        ]);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_time_indexed_role', ['time_indexed_role']);
     }
 
     /**
@@ -127,8 +41,11 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
      * @return ocm_interface
      * @throws Exception
      */
-    protected function createFromNode(eZContentObjectTreeNode $node, ocm_interface $item, array $options = []): ocm_interface
-    {
+    protected function createFromNode(
+        eZContentObjectTreeNode $node,
+        ocm_interface $item,
+        array $options = []
+    ): ocm_interface {
         return $item->fromOpencityNode($node, $options);
     }
 
