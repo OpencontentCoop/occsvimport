@@ -9,7 +9,12 @@ trait ocm_trait
 {
     protected static $parentNodes = [];
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    protected function getOpencityFieldMapper(): array
+    {
+        return array_fill_keys(static::$fields, false);
+    }
+
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ocm_interface
     {
         $object = $node->object();
         $content = Content::createFromEzContentObject($object);

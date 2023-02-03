@@ -34,20 +34,24 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             'de_name' => function(Content $content){
                 return $content->data['ger-DE']['name']['content'] ?? '';
             },
-            'valid_from',
-            'valid_through',
-            'note',
-            'de_note',
-            'stagionalita',
-            'closure___reason',
-            'closure___day',
-            'opening_hours___monday',
-            'opening_hours___tuesday',
-            'opening_hours___wednesday',
-            'opening_hours___thursday',
-            'opening_hours___friday',
-            'opening_hours___saturday',
-            'opening_hours___sunday',
+            'valid_from' => false,
+            'valid_through' => false,
+            'note' => function(Content $content){
+                return $content->data['ita-IT']['note']['content'] ?? '';
+            },
+            'de_note' => function(Content $content){
+                return $content->data['ger-DE']['note']['content'] ?? '';
+            },
+            'stagionalita' => false,
+            'closure___reason' => OCMigrationOpencity::getMapperHelper('closure/reason'),
+            'closure___day' => OCMigrationOpencity::getMapperHelper('closure/day'),
+            'opening_hours___monday' => OCMigrationOpencity::getMapperHelper('opening_hours/monday'),
+            'opening_hours___tuesday' => OCMigrationOpencity::getMapperHelper('opening_hours/tuesday'),
+            'opening_hours___wednesday' => OCMigrationOpencity::getMapperHelper('opening_hours/wednesday'),
+            'opening_hours___thursday' => OCMigrationOpencity::getMapperHelper('opening_hours/thursday'),
+            'opening_hours___friday' => OCMigrationOpencity::getMapperHelper('opening_hours/friday'),
+            'opening_hours___saturday' => OCMigrationOpencity::getMapperHelper('opening_hours/saturday'),
+            'opening_hours___sunday' => OCMigrationOpencity::getMapperHelper('opening_hours/sunday'),
         ];
     }
 
@@ -76,6 +80,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         return [
             'Identificatore*' => $this->attribute('_id'),
             'Nome*' => $this->attribute('name'),
+            'Name* [de]' => $this->attribute('de_name'),
             'Valido dal*' => $this->attribute('valid_from'),
             'Valido fino al' => $this->attribute('valid_through'),
             'Note' => $this->attribute('note'),
