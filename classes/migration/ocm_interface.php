@@ -12,6 +12,8 @@ interface ocm_interface
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
 
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
+
     public function generatePayload(): array;
 
     public static function getImportPriority(): int;

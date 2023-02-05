@@ -16,6 +16,21 @@ trait ocm_trait
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ocm_interface
     {
+        return $this->fromNode($node, $this->getOpencityFieldMapper(), $options);
+    }
+
+    protected function getComunwebFieldMapper(): array
+    {
+        return array_fill_keys(static::$fields, false);
+    }
+
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
+    }
+
+    protected function fromNode(eZContentObjectTreeNode $node, array $mapper, array $options = [])
+    {
         $object = $node->object();
         $content = Content::createFromEzContentObject($object);
         $contentData = $content->data;
@@ -26,7 +41,6 @@ trait ocm_trait
             $firstLocalizedContentLocale = $locale;
             break;
         }
-        $mapper = $this->getOpencityFieldMapper();
 
         foreach ($mapper as $identifier => $callFunction){
             if ($callFunction === false){
@@ -39,45 +53,10 @@ trait ocm_trait
             ));
         }
         $this->setAttribute('_id', $object->attribute('remote_id'));
-
-        return $this;
-    }
-
-    protected function internalFromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
-    {
-        $object = $node->object();
-        $content = Content::createFromEzContentObject($object);
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->dataMap();
-        $this->setAttribute('_id', $object->attribute('remote_id'));
-        $alreadyDone = [];
-
-        foreach (static::$fields as $identifier) {
-            $locale = 'ita-IT';
-            if (stripos($identifier, 'de_') === 0) {
-                $locale = 'ger-DE';
-                $id = substr($identifier, 3);
-            } elseif (stripos($identifier, 'en_') === 0) {
-                $locale = 'eng-GB';
-                $id = substr($identifier, 3);
-            } else{
-                $id = $identifier;
-            }
-
-            if (stripos($identifier, '___') !== false){
-                [$id] = explode('___', $identifier);
-            }
-
-            if (isset($alreadyDone[$identifier])) {
-                continue;
-            }
-            $alreadyDone[$identifier] = true;
-
-            $data = static::getAttributeString($id, $dataMap, $content, $options, $locale);
-            foreach ($data as $name => $value) {
-                $this->setAttribute($name, $value);
-            }
-        }
+        $nodeUrl = $node->attribute('url_alias');
+        eZURI::transformURI($nodeUrl, false, 'full');
+        $this->setAttribute('_original_url', $nodeUrl);
+        $this->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
 
         return $this;
     }
@@ -401,6 +380,18 @@ trait ocm_trait
         foreach ($identifiers as $identifier) {
             $fields[$identifier] = static::getStringFieldDefinition($identifier);
         }
+        $fields['_original_url'] = [
+            'name' => '_original_url',
+            'datatype' => 'string',
+            'default' => '',
+            'required' => true,
+        ];
+        $fields['_parent_name'] = [
+            'name' => '_parent_name',
+            'datatype' => 'string',
+            'default' => '',
+            'required' => true,
+        ];
         $fields['_id'] = [
             'name' => '_id',
             'datatype' => 'string',

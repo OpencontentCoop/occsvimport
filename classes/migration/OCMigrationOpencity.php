@@ -1,8 +1,7 @@
 <?php
 
-use Opencontent\Opendata\Api\Values\Content;
-use Opencontent\Opendata\Api\AttributeConverter\Base;
 use Opencontent\Opendata\Api\AttributeConverterLoader;
+use Opencontent\Opendata\Api\Values\Content;
 
 class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
 {
@@ -173,6 +172,9 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
                     $localizedFields = [];
                     foreach ($content->data as $locale => $data){
                         $localizedFields[$locale] = $data[$field]['content'] ?? [];
+                    }
+                    if (!isset($firstLocalizedContentData[$field])){
+                        return '';
                     }
                     $fieldInfo = $firstLocalizedContentData[$field];
                     $contentValue = $fieldInfo['content'];

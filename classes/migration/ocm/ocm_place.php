@@ -54,6 +54,8 @@ class ocm_place extends eZPersistentObject implements ocm_interface
             "Struttura responsabile" => $this->attribute('has_office'),
             "Ulteriori informazioni" => $this->attribute('more_information'),
             "Codice luogo" => $this->attribute('identifier'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

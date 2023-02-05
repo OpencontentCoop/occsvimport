@@ -56,7 +56,7 @@ class OCMigration extends eZPersistentObject
      * @param array $classIdentifiers
      * @return eZContentObjectTreeNode[]
      */
-    protected function getNodesByClassIdentifierList(array $classIdentifiers): array
+    protected function getNodesByClassIdentifierList(array $classIdentifiers, $escludeNodeNameList = []): array
     {
         $this->info('Fetching ' . implode(', ', $classIdentifiers) . '... ', false);
         /** @var eZContentObjectTreeNode[] $nodes */
@@ -64,7 +64,26 @@ class OCMigration extends eZPersistentObject
             'MainNodeOnly' => true,
             'ClassFilterType' => 'include',
             'ClassFilterArray' => $classIdentifiers,
+            'SortBy' => [['path_string', true]]
         ], 1);
+
+        if (!empty($escludeNodeNameList)){
+            $_nodes = [];
+            foreach ($nodes as $node){
+                $do = true;
+                foreach ($escludeNodeNameList as $escludeNodeName){
+                    if (stripos($node->attribute('path_identification_string'), $escludeNodeName) !== false){
+                        $do = false;
+                        break;
+                    }
+                }
+                if ($do){
+                    $_nodes[] = $node;
+                }
+            }
+            $nodes = $_nodes;
+        }
+
         $this->info(count($nodes) . ' node founds');
 
         return $nodes;
@@ -86,14 +105,14 @@ class OCMigration extends eZPersistentObject
         return $ocmList;
     }
 
-    final public static function createTableIfNeeded($cli = null)
+    final public static function createTableIfNeeded($cli = null, $truncate = false, $drop = false)
     {
         $db = eZDB::instance();
         eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
         if ($cli) $cli->warning("Using db " . $db->DB);
 
         $tableQuery = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename  like 'ocm_%';";
-        $exists = array_column($db->arrayQuery($tableQuery), 'tablename');
+        $exists = array_fill_keys(array_column($db->arrayQuery($tableQuery), 'tablename'), true);
 
         $classes = OCMigration::getAvailableClasses();
         foreach ($classes as $class) {
@@ -109,7 +128,14 @@ class OCMigration extends eZPersistentObject
             }
             $tableCreateSql .= ');';
             $tableKeySql = "ALTER TABLE ONLY $class ADD CONSTRAINT {$class}_pkey PRIMARY KEY (_id);";
-            if (!in_array($class, $exists)) {
+
+            if ($drop && isset($exists[$class])){
+                if ($cli) $cli->output('Drop ' . $class);
+                $db->query('DROP TABLE ' . $class);
+                unset($exists[$class]);
+            }
+
+            if (!isset($exists[$class])) {
                 if ($cli) $cli->warning('Create table ' . $class);
                 foreach ($fields as $field => $definition) {
                     if ($cli) $cli->output(' - ' . $field);
@@ -118,6 +144,10 @@ class OCMigration extends eZPersistentObject
                 $db->query($tableKeySql);
             } else {
                 if ($cli) $cli->output('Table ' . $class . ' already exists');
+                if ($truncate){
+                    if ($cli) $cli->output('Truncate ' . $class);
+                    $db->query('TRUNCATE TABLE ' . $class);
+                }
             }
         }
     }

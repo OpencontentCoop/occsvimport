@@ -14,7 +14,15 @@ $tpl->setVariable('google_user', 'phpsheet@norse-fiber-323812.iam.gserviceaccoun
 $classes = OCMigration::getAvailableClasses();
 $classHash = [];
 foreach ($classes as $class) {
-    $classHash[$class] = $class::getSpreadsheetTitle();
+    $add = true;
+    if (!OCMigration::discoverContext()){
+        $add = $class::canImport() || $class::canPull();
+    }else{
+        $add = $class::canExport() || $class::canPush();
+    }
+    if ($add) {
+        $classHash[$class] = $class::getSpreadsheetTitle();
+    }
 }
 $tpl->setVariable('class_hash', $classHash);
 

@@ -77,6 +77,8 @@ class ocm_image extends eZPersistentObject implements ocm_interface
             'Fonte della licenza proprietaria' => $this->attribute('proprietary_license_source'),
             'Autore*' => $this->attribute('author'),
             'Autor* [de]' => $this->attribute('de_author'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

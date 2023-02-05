@@ -58,6 +58,12 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         /** @var eZContentObjectAttribute[] $dataMap */
         $dataMap = $node->attribute('data_map');
         $this->setAttribute('_id', $object->attribute('remote_id'));
+
+        $nodeUrl = $node->attribute('url_alias');
+        eZURI::transformURI($nodeUrl, false, 'full');
+        $this->setAttribute('_original_url', $nodeUrl);
+        $this->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
+
         $alreadyDone = [];
         foreach (static::$fields as $identifier) {
             [$id] = explode('___', $identifier);
@@ -184,6 +190,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 $this->attribute('eventuali_incarichi'),
             "Dichiarazione incompatibilità e inconferibilità" => $this->attribute('dichiarazione_incompatibilita'),
             "Ulteriori informazioni" => $this->attribute('notes'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

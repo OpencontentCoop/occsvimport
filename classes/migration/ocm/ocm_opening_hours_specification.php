@@ -94,6 +94,8 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             'Domenica' => $this->attribute('opening_hours___sunday'),
             'Giorni di chiusura' => $this->attribute('closure___day'),
             'Motivo di chiusura' => $this->attribute('closure___reason'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

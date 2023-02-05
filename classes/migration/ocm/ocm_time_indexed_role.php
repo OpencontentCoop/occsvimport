@@ -27,7 +27,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        $this->internalFromOpencityNode($node, $options);
+        $this->fromNode($node, $this->getOpencityFieldMapper(), $options);
         $this->setAttribute('type', $node->classIdentifier() === 'politico' ? 'Politico' : 'Amministrativo');
 
         return $this;
@@ -66,6 +66,8 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
             "Ruolo principale" => $this->attribute('ruolo_principale'),
             "Priorità" => $this->attribute('priorita'),
             "Ulteriori informazioni" => $this->attribute('notes'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

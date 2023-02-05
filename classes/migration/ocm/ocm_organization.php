@@ -76,7 +76,13 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
         /** @var eZContentObjectAttribute[] $dataMap */
         $dataMap = $node->attribute('data_map');
+
         $this->setAttribute('_id', $object->attribute('remote_id'));
+        $nodeUrl = $node->attribute('url_alias');
+        eZURI::transformURI($nodeUrl, false, 'full');
+        $this->setAttribute('_original_url', $nodeUrl);
+        $this->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
+
         $alreadyDone = [];
         foreach (static::$fields as $identifier) {
             [$id] = explode('___', $identifier);
@@ -132,6 +138,8 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             'Nome alternativo' => $this->attribute('alt_name'),
             'Identificatore univoco interno' => $this->attribute('identifier'),
             'Codice fiscale servizio di fatturazione elettronica' => $this->attribute('tax_code_e_invoice_service'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

@@ -57,6 +57,9 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
             $data['Kontakt ' . $indexLabel . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? '';
         }
 
+        $data['Pagina contenitore'] = $this->attribute('_parent_name');
+        $data['Url originale'] = $this->attribute('_original_url');
+
         return $data;
     }
 
