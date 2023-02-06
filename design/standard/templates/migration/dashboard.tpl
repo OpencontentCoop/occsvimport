@@ -24,7 +24,7 @@
 </head>
 <body class="bg-primary">
 
-<div class="container my-5 bg-white rounded-top p-5">
+<div class="container my-5 bg-white rounded p-5">
     <div class="row">
         <div class="col-12">
             <h1>Assistente migrazione <code>{$context|wash()}</code></h1>
@@ -54,7 +54,7 @@
                     <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
                 </form>
 
-                <div class="my-4 actions bg-light border p-2 d-none">
+                <div class="my-4 actions bg-light border p-2">
 
                     <div class="container options mb-4">
                         {foreach $class_hash as $class => $name}
@@ -103,28 +103,37 @@
             {/if}
         </div>
 
+
+    </div>
+</div>
+
+<div class="container-fluid my-5 bg-white">
+    <div class="row">
         {if $migration_spreadsheet}
-        <div class="col-12">
-            <h2 class="my-4">Anteprima dati da {if $context}esportare{else}importare{/if}</h2>
-        </div>
-        <div class="col-12">
-            <ul class="nav nav-tabs">
-                {foreach $class_hash as $class => $name}
-                    <li class="nav-item"><a href="#" class="nav-link" data-identifier="{$class}">{$name|wash()}</a></li>
-                {/foreach}
-            </ul>
-        </div>
-        <div class="col-12">
-            <div>
-                <table id="data" class="table table-striped table-sm display responsive no-wrap w-100"></table>
+            <div class="col-12">
+                <h2 class="my-4">Anteprima dati da {if $context}esportare{else}importare{/if}</h2>
             </div>
-        </div>
+            <div class="col-12">
+                <ul class="nav nav-tabs">
+                    {foreach $class_hash as $class => $name}
+                        <li class="nav-item"><a href="#" class="nav-link" data-identifier="{$class}">{$name|wash()}</a></li>
+                    {/foreach}
+                </ul>
+            </div>
+            <div class="col-12">
+                <div>
+                    <table id="data" class="table table-striped table-sm display responsive no-wrap w-100"></table>
+                </div>
+            </div>
         {/if}
     </div>
 </div>
 
 <div id="loader" class="d-none"></div>
 
+<script type="text/javascript">
+    var BaseUrl = "{'/migration/dashboard'|ezurl(no)}";
+</script>
 {literal}
     <script type="text/javascript">
       $(document).ready(function () {
@@ -135,13 +144,13 @@
           }
           var type = $('.nav-link.active').data('identifier');
           data.html('');
-          $.getJSON('/migration/dashboard?fields='+type, function (columns) {
+          $.getJSON(BaseUrl+'?fields='+type, function (columns) {
             data.DataTable({
-              dom: 'ti', //@todo pr
+              dom: 'it', //@todo pr
               pageLength: 100,
               responsive: true,
               columns: columns,
-              ajax: '/migration/dashboard?datatable='+type,
+              ajax: BaseUrl+'?datatable='+type,
               processing: true,
               serverSide: true
             });
@@ -203,7 +212,7 @@
         }
 
         var checkStatus = function (cb, context) {
-          $.getJSON('/migration/dashboard?status', function (data) {
+          $.getJSON(BaseUrl+'?status', function (data) {
             console.log(data);
             parseStatus(data);
             if ($.isFunction(cb)) {
@@ -240,7 +249,7 @@
               }
             })
             var isUpdate = $('#isUpdate');
-            $.getJSON('/migration/dashboard', {
+            $.getJSON(BaseUrl, {
               action: action,
               options: {
                 class_filter: classes,

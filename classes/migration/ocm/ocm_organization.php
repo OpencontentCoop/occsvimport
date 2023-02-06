@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_organization extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -34,89 +36,301 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         return "Identificativo unità organizzativa*";
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        $map = [
-            'administrative_area' => [
-                'attachments' => ['allegati'],
-                'identifier' => ['ipacode'],
-                'alt_name' => ['org_acronym'],
-                '_constraint' =>  [
-                    'type' => 'Area',
-                ],
-            ],
-            'homogeneous_organizational_area' => [
-                'attachments' => ['allegati'],
-                'identifier' => ['a_o_o_identifier'],
-                'alt_name' => ['org_acronym'],
-                '_constraint' => [
-                    'type' => 'Area',
-                ],
-            ],
-            'office' => [
-                'attachments' => ['allegati'],
-                'alt_name' => ['acronym'],
-                'hold_employment' => ['is_part_of'],
-                'identifier' => [
-                    'office_identifier',
-                    'a_o_o_identifier',
-                    'identifier',
-                ],
-                '_constraint' => [
-                    'type' => 'Ufficio',
-                ],
-            ],
-            'political_body' => [
-                'type' => ['type_political_body'],
-                '_constraint' => [],
-            ]
-        ];
+        if (in_array($node->classIdentifier(), ['area', 'servizio', 'ufficio'])){
+            return $this->fromNode($node, $this->getComunwebAmministrativaFieldMapper(), $options);
+        }elseif (in_array($node->classIdentifier(), ['organo_politico'])){
+            return $this->fromNode($node, $this->getComunwebPoliticaFieldMapper(), $options);
+        }
+        return null;
+    }
 
-        $object = $node->object();
-        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
+    protected function getComunwebAmministrativaFieldMapper(): array
+    {
+        return [
+            'legal_name' => OCMigrationOpencity::getMapperHelper('titolo'),
+            'alt_name' => false,
+            'topics' => false,
+            'abstract' => OCMigrationOpencity::getMapperHelper('abstract'),
+            'description' => OCMigrationOpencity::getMapperHelper('description'),
+            'image' => false,
+            'main_function' => OCMigrationOpencity::getMapperHelper('competenze'),
+            'type' => function(Content $content){
+                return $content->metadata['classIdentifier'] === 'area' ? 'Area' : 'Ufficio';
+            },
+            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
 
-        $this->setAttribute('_id', $object->attribute('remote_id'));
-        $nodeUrl = $node->attribute('url_alias');
-        eZURI::transformURI($nodeUrl, false, 'full');
-        $this->setAttribute('_original_url', $nodeUrl);
-        $this->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+                $hoursId = $id . ':hours';
+                $hoursName = "Orari $name";
+                $hours = new ocm_opening_hours_specification();
+                $hours->setAttribute('_id', $hoursId);
+                $hours->setAttribute('name', $hoursName);
+                $hours->setAttribute('stagionalita', "Unico");
+                $hours->setAttribute('note', OCMigrationOpencity::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale));
+                $hours->store();
 
-        $alreadyDone = [];
-        foreach (static::$fields as $identifier) {
-            [$id] = explode('___', $identifier);
-            if (isset($alreadyDone[$id])) {
-                continue;
-            }
-
-            if (isset($map[$node->classIdentifier()][$id])){
-                foreach ($map[$node->classIdentifier()][$id] as $mapToId){
-                    $data = static::getAttributeString($mapToId, $dataMap, $content, $options);
-                    foreach ($data as $name => $value) {
-                        $this->appendAttribute($id, $value);
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $data = [];
+                foreach (['telefoni', 'fax', 'email', 'email2', 'email_certificata', ] as $identifier){
+                    if (isset($dataMap[$identifier])){
+                        $type = $identifier;
+                        if ($identifier == 'telefoni'){
+                            $type = 'Telefono';
+                        }elseif ($identifier == 'fax'){
+                            $type = 'Fax';
+                        }elseif ($identifier == 'email_certificata'){
+                            $type = 'PEC';
+                        }elseif (stripos($identifier, 'email') !== false){
+                            $type = 'Email';
+                        }
+                        $data[] = [
+                            'type' => $type,
+                            'value' => $dataMap[$identifier]->toString(),
+                            'contact' => '',
+                        ];
                     }
                 }
-                $alreadyDone[$id] = true;
-            }
+                $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                $contacts->setAttribute('phone_availability_time', $hoursName);
+                $contacts->store();
 
-            if (!isset($alreadyDone[$id])) {
-                $data = static::getAttributeString($id, $dataMap, $content, $options);
-                foreach ($data as $name => $value) {
-                    $this->setAttribute($name, $value);
+                return $contactsName;
+            },
+            'has_spatial_coverage' => function(Content $content){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+                $placeId = $id . ':place';
+                $hoursName = "Orari $name";
+                $contactsName = "Contatti $name";
+                $placeName = "Sede $name";
+                $place = new ocm_place();
+                $place->setAttribute('_id', $placeId);
+                $place->setAttribute('name', $placeName);
+                $place->setAttribute('type', 'Palazzo');
+                $place->setAttribute('opening_hours_specification', $hoursName);
+                $place->setAttribute('help', $contactsName);
+                $place->store();
+
+                return $placeName;
+            },
+            'attachments' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+                $data = [];
+//                $file = OCMigrationOpencity::getMapperHelper('file')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                if (!empty($file)){
+//                    $data[] = $file;
+//                }
+//                $ubicazione = OCMigrationOpencity::getMapperHelper('ubicazione')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                if (!empty($ubicazione)){
+//                    $data[] = $ubicazione;
+//                }
+
+                return implode(PHP_EOL, $data);
+            },
+            'more_information' => OCMigrationOpencity::getMapperHelper('riferimenti_utili'),
+            'identifier' => false,
+            'tax_code_e_invoice_service' => false,
+            'has_logo___name' => OCMigrationOpencity::getMapperHelper('image/name'),
+            'has_logo___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+        ];
+    }
+
+    protected function getComunwebPoliticaFieldMapper(): array
+    {
+        return [
+            'legal_name' => OCMigrationOpencity::getMapperHelper('titolo'),
+            'alt_name' => false,
+            'topics' => false,
+            'abstract' => OCMigrationOpencity::getMapperHelper('abstract'),
+            'description' => OCMigrationOpencity::getMapperHelper('descrizione'),
+            'image' => false,
+            'main_function' => OCMigrationOpencity::getMapperHelper('competenze'),
+            'type' => function(Content $content){
+                $name = $content->metadata['name']['ita-IT'];
+                $type = 'Struttura politica';
+                if (stripos($name, 'sindaco') !== false){
+                    $type = 'Sindaco';
                 }
-                $alreadyDone[$id] = true;
-            }
+                if (stripos($name, 'consiglio') !== false){
+                    $type = 'Consiglio comunale';
+                }
+                if (stripos($name, 'giunta') !== false){
+                    $type = 'Giunta comunale';
+                }
+                if (stripos($name, 'commiss') !== false){
+                    $type = 'Commissione';
+                }
+                return $type;
+            },
+            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+                $hoursId = $id . ':hours';
+                $hoursName = "Orari $name";
+                $hours = new ocm_opening_hours_specification();
+                $hours->setAttribute('_id', $hoursId);
+                $hours->setAttribute('name', $hoursName);
+                $hours->setAttribute('stagionalita', "Unico");
+                $hours->setAttribute('note', OCMigrationOpencity::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale));
+                $hours->store();
 
-            if (isset($map[$node->classIdentifier()]['_defaults'][$id]) && empty($this->attribute($id))){
-                $this->setAttribute($id, $map[$node->classIdentifier()]['_defaults'][$id]);
-            }
-            if (isset($map[$node->classIdentifier()]['_constraint'][$id])){
-                $this->setAttribute($id, $map[$node->classIdentifier()]['_constraint'][$id]);
-            }
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $contacts->setAttribute('phone_availability_time', $hoursName);
+                $contacts->store();
+
+                return $contactsName;
+            },
+            'has_spatial_coverage' => function(Content $content){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+                $placeId = $id . ':place';
+                $hoursName = "Orari $name";
+                $contactsName = "Contatti $name";
+                $placeName = "Sede $name";
+                $place = new ocm_place();
+                $place->setAttribute('_id', $placeId);
+                $place->setAttribute('name', $placeName);
+                $place->setAttribute('type', 'Palazzo');
+                $place->setAttribute('opening_hours_specification', $hoursName);
+                $place->setAttribute('help', $contactsName);
+                $place->store();
+
+                return $placeName;
+            },
+            'attachments' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+                $data = [];
+//                $file = OCMigrationOpencity::getMapperHelper('curriculum')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                if (!empty($file)){
+//                    $data[] = $file;
+//                }
+                return implode(PHP_EOL, $data);
+            },
+            'more_information' => OCMigrationOpencity::getMapperHelper('nota'),
+            'has_logo___name' => OCMigrationOpencity::getMapperHelper('image/name'),
+            'has_logo___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+        ];
+    }
+
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        if ($node->classIdentifier() === 'administrative_area'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromAdministrativeArea(), $options);
+        }
+        if ($node->classIdentifier() === 'homogeneous_organizational_area'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromOrganizationalArea(), $options);
+        }
+        if ($node->classIdentifier() === 'office'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromOffice(), $options);
+        }
+        if ($node->classIdentifier() === 'political_body'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromPoliticalBody(), $options);
         }
 
-        return $this;
+        return null;
+    }
+
+    protected function getOpencityFieldMapperFromAdministrativeArea(): array
+    {
+        return [
+            'legal_name' => false,
+            'alt_name' => OCMigrationOpencity::getMapperHelper('org_acronym'),
+            'topics' => false,
+            'abstract' => false,
+            'description' => false,
+            'image' => false,
+            'main_function' => false,
+            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'type' => function(){ return 'Area'; },
+            'has_spatial_coverage' => false,
+            'has_online_contact_point' => false,
+            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'more_information' => false,
+            'identifier' => OCMigrationOpencity::getMapperHelper('ipacode'),
+            'tax_code_e_invoice_service' => false,
+            'has_logo___name' => false,
+            'has_logo___url' => false,
+        ];
+    }
+
+    protected function getOpencityFieldMapperFromOrganizationalArea(): array
+    {
+        return [
+            'legal_name' => false,
+            'alt_name' => OCMigrationOpencity::getMapperHelper('org_acronym'),
+            'topics' => false,
+            'abstract' => false,
+            'description' => false,
+            'image' => false,
+            'main_function' => false,
+            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'type' => function(){ return 'Area'; },
+            'has_spatial_coverage' => false,
+            'has_online_contact_point' => false,
+            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'more_information' => false,
+            'identifier' => OCMigrationOpencity::getMapperHelper('a_o_o_identifier'),
+            'tax_code_e_invoice_service' => false,
+            'has_logo___name' => false,
+            'has_logo___url' => false,
+        ];
+    }
+
+    protected function getOpencityFieldMapperFromOffice(): array
+    {
+        return [
+            'legal_name' => false,
+            'alt_name' => OCMigrationOpencity::getMapperHelper('acronym'),
+            'topics' => false,
+            'abstract' => false,
+            'description' => false,
+            'image' => false,
+            'main_function' => false,
+            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'type' => function(){ return 'Ufficio'; },
+            'has_spatial_coverage' => false,
+            'has_online_contact_point' => false,
+            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'more_information' => false,
+            'identifier' => OCMigrationOpencity::getMapperHelper('office_identifier'),
+            'tax_code_e_invoice_service' => false,
+            'has_logo___name' => false,
+            'has_logo___url' => false,
+        ];
+    }
+
+    protected function getOpencityFieldMapperFromPoliticalBody(): array
+    {
+        return [
+            'legal_name' => false,
+            'alt_name' => false,
+            'topics' => false,
+            'abstract' => false,
+            'description' => false,
+            'image' => false,
+            'main_function' => false,
+            'hold_employment' => false,
+            'type' => OCMigrationOpencity::getMapperHelper('type_political_body'),
+            'has_spatial_coverage' => false,
+            'has_online_contact_point' => false,
+            'attachments' => false,
+            'more_information' => false,
+            'identifier' => false,
+            'tax_code_e_invoice_service' => false,
+            'has_logo___name' => false,
+            'has_logo___url' => false,
+        ];
     }
 
     public function toSpreadsheet(): array

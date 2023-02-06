@@ -16,57 +16,103 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
     {
         if (empty($namesFilter) || in_array('ocm_image', $namesFilter)) {
             $nodes = $this->getNodesByClassIdentifierList(['image'], ['classificazioni']);
+            $rows = 0;
             foreach ($nodes as $node) {
                 if ($this->createFromNode($node, new ocm_image(), [
                     'is_update' => $isUpdate,
                 ])->storeThis($isUpdate)) {
+                    $rows++;
                     $this->info(' - ' . $node->attribute('name'));
                     $this->hasAttachments($node);
                 }
             }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_image' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
         }
 
         if (empty($namesFilter) || in_array('ocm_pagina_sito', $namesFilter)) {
             $nodes = $this->getNodesByClassIdentifierList(['pagina_sito'], ['classificazioni', 'amministrazione_trasparente']);
+            $rows = 0;
             foreach ($nodes as $node) {
                 if ($this->createFromNode($node, new ocm_pagina_sito(), [
                     'is_update' => $isUpdate,
                 ])->storeThis($isUpdate)) {
+                    $rows++;
                     $this->info(' - ' . $node->attribute('name'));
                     $this->hasAttachments($node);
                 }
             }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_pagina_sito' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
         }
 
         if (empty($namesFilter) || in_array('ocm_folder', $namesFilter)) {
             $nodes = $this->getNodesByClassIdentifierList(['folder'], ['classificazioni', 'amministrazione_trasparente']);
+            $rows = 0;
             foreach ($nodes as $node) {
                 if ($this->createFromNode($node, new ocm_folder(), [
                     'is_update' => $isUpdate,
                 ])->storeThis($isUpdate)) {
+                    $rows++;
                     $this->info(' - ' . $node->attribute('name'));
                     $this->hasAttachments($node);
                 }
             }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_folder' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
         }
 
-        $this->fillOrganigrammaData();
-    }
-
-    protected function fillOrganigrammaData()
-    {
-        $nodes = $this->getNodesByClassIdentifierList(['area', 'servizio', 'ufficio'], ['classificazioni', 'amministrazione_trasparente']);
-        foreach ($nodes as $node){
-            $this->info(' - ' . $node->attribute('name'));
-            $this->hasAttachments($node);
-            $this->fillFromAreaServizioUfficio($node);
+        if (empty($namesFilter) || in_array('ocm_place', $namesFilter)) {
+            $nodes = $this->getNodesByClassIdentifierList(['luogo'], ['classificazioni', 'amministrazione_trasparente']);
+            $rows = 0;
+            foreach ($nodes as $node) {
+                if ($this->createFromNode($node, new ocm_place(), [
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->info(' - ' . $node->attribute('name'));
+                    $this->hasAttachments($node);
+                }
+            }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_place' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
         }
 
-        $nodes = $this->getNodesByClassIdentifierList(['organo_politico'], ['amministrazione_trasparente']);
-        foreach ($nodes as $node){
-            $this->info(' - ' . $node->attribute('name'));
-            $this->hasAttachments($node);
-            $this->fillFromOrganoPolitico($node);
+        if (empty($namesFilter) || in_array('ocm_organization', $namesFilter)) {
+            $nodes = $this->getNodesByClassIdentifierList(['area', 'servizio', 'ufficio'], ['classificazioni', 'amministrazione_trasparente']);
+            $rows = 0;
+            foreach ($nodes as $node){
+                if ($this->createFromNode($node, new ocm_organization(), [
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->info(' - ' . $node->attribute('name'));
+                    $this->hasAttachments($node);
+                }
+            }
+
+            $nodes = $this->getNodesByClassIdentifierList(['organo_politico'], ['amministrazione_trasparente']);
+            foreach ($nodes as $node){
+                if ($this->createFromNode($node, new ocm_organization(), [
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->info(' - ' . $node->attribute('name'));
+                    $this->hasAttachments($node);
+                }
+            }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_organization' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
         }
     }
 
@@ -83,146 +129,6 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
         }
 
         return $count > 0;
-    }
-
-    protected function fillFromOrganoPolitico(eZContentObjectTreeNode $node)
-    {
-        $id = $node->attribute('class_identifier') . ':' . $node->attribute('contentobject_id');
-        $name = $node->attribute('name');
-
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
-
-        $hoursId = $id . ':hours';
-        $hoursName = "Orari $name";
-        $hours = new ocm_opening_hours_specification();
-        $hours->setAttribute('_id', $hoursId);
-        $hours->setAttribute('name', $hoursName);
-        $hours->setAttribute('stagionalita', "Unico");
-        $hours->setAttribute('note', $this->getAttributeContent('contatti', $dataMap));
-        $hours->store();
-
-        $contactsId = $id . ':contacts';
-        $contactsName = "Contatti $name";
-        $contacts = new ocm_online_contact_point();
-        $contacts->setAttribute('_id', $contactsId);
-        $contacts->setAttribute('name', $contactsName);
-        $contacts->setAttribute('phone_availability_time', $hoursName);
-        $contacts->store();
-
-        $placeId = $id . ':place';
-        $placeName = "Sede $name";
-        $place = new ocm_place();
-        $place->setAttribute('_id', $placeId);
-        $place->setAttribute('name', $placeName);
-        $place->setAttribute('type', 'Palazzo');
-        $place->setAttribute('opening_hours_specification', $hoursName);
-        $place->setAttribute('help', $contactsName);
-        $place->store();
-    }
-
-    protected function fillFromAreaServizioUfficio(eZContentObjectTreeNode $node)
-    {
-        $id = $node->attribute('class_identifier') . ':' . $node->attribute('contentobject_id');
-        $name = $node->attribute('name');
-
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
-
-        $hoursId = $id . ':hours';
-        $hoursName = "Orari $name";
-        $hours = new ocm_opening_hours_specification();
-        $hours->setAttribute('_id', $hoursId);
-        $hours->setAttribute('name', $hoursName);
-        $hours->setAttribute('stagionalita', "Unico");
-        $hours->setAttribute('note', $this->getAttributeContent('orario', $dataMap));
-        $hours->store();
-
-        $contactsId = $id . ':contacts';
-        $contactsName = "Contatti $name";
-        $contacts = new ocm_online_contact_point();
-        $contacts->setAttribute('_id', $contactsId);
-        $contacts->setAttribute('name', $contactsName);
-        $data = [];
-        foreach (['telefoni', 'fax', 'email', 'email2', 'email_certificata', ] as $identifier){
-            if (isset($dataMap[$identifier])){
-                $type = $identifier;
-                if ($identifier == 'telefoni'){
-                    $type = 'Telefono';
-                }elseif ($identifier == 'fax'){
-                    $type = 'Fax';
-                }elseif ($identifier == 'email_certificata'){
-                    $type = 'PEC';
-                }elseif (stripos($identifier, 'email') !== false){
-                    $type = 'Email';
-                }
-                $data[] = [
-                    'type' => $type,
-                    'value' => $dataMap[$identifier]->toString(),
-                    'contact' => '',
-                ];
-            }
-        }
-        $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
-        $contacts->setAttribute('phone_availability_time', $hoursName);
-        $contacts->store();
-
-        $placeId = $id . ':place';
-        $placeName = "Sede $name";
-        $place = new ocm_place();
-        $place->setAttribute('_id', $placeId);
-        $place->setAttribute('name', $placeName);
-        $place->setAttribute('type', 'Palazzo');
-        $place->setAttribute('opening_hours_specification', $hoursName);
-        $place->setAttribute('help', $contactsName);
-        $place->store();
-
-        $organization = new ocm_organization();
-        $organization->setAttribute('_id', $id);
-        $nodeUrl = $node->attribute('url_alias');
-        eZURI::transformURI($nodeUrl, false, 'full');
-        $organization->setAttribute('_original_url', $nodeUrl);
-        $organization->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
-        $organization->setAttribute('legal_name', $this->getAttributeContent('titolo', $dataMap));
-        $organization->setAttribute('abstract', $this->getAttributeContent('abstract', $dataMap));
-        $organization->setAttribute('description', $this->getAttributeContent('description', $dataMap));
-        $organization->setAttribute('image', $this->getAttributeContent('image', $dataMap));
-        $organization->setAttribute('main_function', $this->getAttributeContent('competenze', $dataMap));
-// @todo
-//        $area = $this->getAttributeContent('area', $dataMap);
-//        $servizio = $this->getAttributeContent('servizio', $dataMap);
-//        $organization->setAttribute('hold_employment', $this->getAttributeContent('orario', $dataMap));
-
-        $type = $node->attribute('class_identifier') === 'area' ? 'Area' : 'Ufficio';
-        $organization->setAttribute('type', $type);
-        $organization->setAttribute('has_spatial_coverage', $placeName);
-        $organization->setAttribute('has_online_contact_point', $contactsId);
-        $organization->setAttribute('attachments', $this->getAttributeContent(['file', 'ubicazione'], $dataMap, '|'));
-        $organization->setAttribute('more_information', $this->getAttributeContent(['riferimenti_utili'], $dataMap));
-        $organization->store();
-
-    }
-
-    protected function getAttributeContent($attributeIdentifier, $dataMap, $separator = ' ')
-    {
-        if (!is_array($attributeIdentifier)) {
-            $attributeIdentifier = [$attributeIdentifier];
-        }
-        $data = [];
-        foreach ($attributeIdentifier as $aid) {
-            if (isset($dataMap[$aid]) && $dataMap[$aid]->hasContent()) {
-                $attribute = $dataMap[$aid];
-                $converter = AttributeConverterLoader::load(
-                    $attribute->attribute('object')->attribute('class_identifier'),
-                    $attribute->attribute('contentclass_attribute_identifier'),
-                    $attribute->attribute('data_type_string')
-                );
-                $content = $converter->get($attribute);
-                $data[] = $content['content'];
-            }
-        }
-
-        return implode($separator, $data);
     }
 
     /**

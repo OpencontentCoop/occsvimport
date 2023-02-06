@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_place extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -32,6 +34,64 @@ class ocm_place extends eZPersistentObject implements ocm_interface
     public static function getIdColumnLabel(): string
     {
         return "Identificatore luogo*";
+    }
+
+    protected function getComunwebFieldMapper(): array
+    {
+        return [
+            'name' => function(Content $content){
+                return $content->data['ita-IT']['title']['content'] ?? '';
+            },
+            'de_name' => function(Content $content){
+                return $content->data['ger-DE']['title']['content'] ?? '';
+            },
+            'caption' => function(Content $content){
+                return $content->data['ita-IT']['abstract']['content'] ?? '';
+            },
+            'de_caption' => function(Content $content){
+                return $content->data['ger-DE']['abstract']['content'] ?? '';
+            },
+            'image___name' => OCMigrationOpencity::getMapperHelper('image/name'),
+            'image___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+            'geo' => false,
+            'image' => OCMigrationOpencity::getMapperHelper('galleria'),
+            'help' => function(Content $content){
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $data = [];
+                foreach (['telefono', 'url', 'email',] as $identifier){
+                    if (isset($dataMap[$identifier])){
+                        $type = $identifier;
+                        if ($identifier == 'telefono'){
+                            $type = 'Telefono';
+                        }elseif (stripos($identifier, 'email') !== false){
+                            $type = 'Email';
+                        }elseif ($identifier == 'url'){
+                            $type = 'Sito web';
+                        }
+                        $value = $dataMap[$identifier]->toString();
+                        if (!empty($value)) {
+                            $data[] = [
+                                'type' => $type,
+                                'value' => $value,
+                                'contact' => '',
+                            ];
+                        }
+                    }
+                }
+                $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                $contacts->store();
+
+                return $contactsName;
+            },
+        ];
     }
 
     public function toSpreadsheet(): array

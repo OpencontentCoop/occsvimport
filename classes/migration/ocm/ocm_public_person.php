@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_public_person extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -33,6 +35,101 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     public static function getIdColumnLabel(): string
     {
         return "Identificatore persona pubblica*";
+    }
+
+    protected function getOpencityFieldMapperFromEmployee(): array
+    {
+        return [
+            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
+            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'abstract' => false,
+            'image' => false,
+            'bio' => false,
+            'has_contact_point' => $this->getOpencityFieldMapperFromPolitico()['has_online_contact_point'],
+            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'situazione_patrimoniale' => false,
+            'dichiarazioni_patrimoniali_soggetto' => false,
+            'dichiarazioni_patrimoniali_parenti' => false,
+            'dichiarazione_redditi' => false,
+            'spese_elettorali' => false,
+            'spese_elettorali_files' => false,
+            'variazioni_situazione_patrimoniale',
+            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'eventuali_incarichi' => false,
+            'dichiarazione_incompatibilita' => false,
+            'notes' => false,
+        ];
+    }
+
+    protected function getOpencityFieldMapperFromPolitico(): array
+    {
+        return [
+            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
+            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'abstract' => false,
+            'image' => false,
+            'bio' => false,
+            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+
+                $hoursName = false;
+                $ricevimento = OCMigrationOpencity::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+                if (!empty($ricevimento)) {
+                    $hoursId = $id . ':hours';
+                    $hoursName = "Ricevimento di $name";
+                    $hours = new ocm_opening_hours_specification();
+                    $hours->setAttribute('_id', $hoursId);
+                    $hours->setAttribute('name', $hoursName);
+                    $hours->setAttribute('stagionalita', "Unico");
+                    $hours->setAttribute('note', $ricevimento);
+                    $hours->store();
+                }
+
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $data = [];
+                foreach (['phone', 'mobile_phone', 'email', 'fax', ] as $identifier){
+                    if (isset($dataMap[$identifier])){
+                        $type = $identifier;
+                        if ($identifier == 'phone' || $identifier == 'mobile_phone'){
+                            $type = 'Telefono';
+                        }elseif ($identifier == 'fax'){
+                            $type = 'Fax';
+                        }elseif (stripos($identifier, 'email') !== false){
+                            $type = 'Email';
+                        }
+                        $data[] = [
+                            'type' => $type,
+                            'value' => $dataMap[$identifier]->toString(),
+                            'contact' => '',
+                        ];
+                    }
+                }
+                $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                if ($hoursName) {
+                    $contacts->setAttribute('phone_availability_time', $hoursName);
+                }
+                $contacts->store();
+
+                return $contactsName;
+            },
+            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'situazione_patrimoniale' => false,
+            'dichiarazioni_patrimoniali_soggetto' => false,
+            'dichiarazioni_patrimoniali_parenti' => false,
+            'dichiarazione_redditi' => false,
+            'spese_elettorali' => false,
+            'spese_elettorali_files' => false,
+            'variazioni_situazione_patrimoniale',
+            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'eventuali_incarichi' => false,
+            'dichiarazione_incompatibilita' => false,
+            'notes' => false,
+        ];
     }
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
