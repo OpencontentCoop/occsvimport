@@ -55,7 +55,7 @@ class ocm_place extends eZPersistentObject implements ocm_interface
             'image___url' => OCMigrationOpencity::getMapperHelper('image/url'),
             'geo' => false,
             'image' => OCMigrationOpencity::getMapperHelper('galleria'),
-            'help' => function(Content $content){
+            'help' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
@@ -87,7 +87,7 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                     }
                 }
                 $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
-                $contacts->store();
+                $contacts->storeThis($options['is_update']);
 
                 return $contactsName;
             },

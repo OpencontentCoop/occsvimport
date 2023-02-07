@@ -37,6 +37,18 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         return "Identificatore persona pubblica*";
     }
 
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        if ($node->classIdentifier() === 'employee'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromEmployee(), $options);
+        }
+        if ($node->classIdentifier() === 'politico'){
+            return $this->fromNode($node, $this->getOpencityFieldMapperFromPolitico(), $options);
+        }
+
+        return null;
+    }
+
     protected function getOpencityFieldMapperFromEmployee(): array
     {
         return [
@@ -95,18 +107,23 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 foreach (['phone', 'mobile_phone', 'email', 'fax', ] as $identifier){
                     if (isset($dataMap[$identifier])){
                         $type = $identifier;
-                        if ($identifier == 'phone' || $identifier == 'mobile_phone'){
+                        if ($identifier == 'phone'){
                             $type = 'Telefono';
+                        }elseif ($identifier == 'mobile_phone'){
+                            $type = 'Cellulare';
                         }elseif ($identifier == 'fax'){
                             $type = 'Fax';
                         }elseif (stripos($identifier, 'email') !== false){
                             $type = 'Email';
                         }
-                        $data[] = [
-                            'type' => $type,
-                            'value' => $dataMap[$identifier]->toString(),
-                            'contact' => '',
-                        ];
+                        $value = $dataMap[$identifier]->toString();
+                        if (!empty($value)) {
+                            $data[] = [
+                                'type' => $type,
+                                'value' => $value,
+                                'contact' => '',
+                            ];
+                        }
                     }
                 }
                 $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
@@ -132,134 +149,166 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        $map = [
-            'employee' => [
-                'given_name' => ['nome'],
-                'family_name' => ['cognome'],
-                'curriculum' => ['curriculum_vitae'],
-                'altre_cariche' => ['assunzione_cariche'],
-                '_constraint' => [
-                ],
-            ],
-            'politico' => [
-                'bio' => ['abstract'],
-                '_constraint' => [
-                ],
-            ],
-        ];
-
-        $object = $node->object();
-        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
-        /** @var eZContentObjectAttribute[] $dataMap */
-        $dataMap = $node->attribute('data_map');
-        $this->setAttribute('_id', $object->attribute('remote_id'));
-
-        $nodeUrl = $node->attribute('url_alias');
-        eZURI::transformURI($nodeUrl, false, 'full');
-        $this->setAttribute('_original_url', $nodeUrl);
-        $this->setAttribute('_parent_name', $node->attribute('parent')->attribute('name'));
-
-        $alreadyDone = [];
-        foreach (static::$fields as $identifier) {
-            [$id] = explode('___', $identifier);
-            if (isset($alreadyDone[$id])) {
-                continue;
-            }
-
-            if (isset($map[$node->classIdentifier()][$id])) {
-                foreach ($map[$node->classIdentifier()][$id] as $mapToId) {
-                    $data = static::getAttributeString($mapToId, $dataMap, $content, $options);
-                    foreach ($data as $name => $value) {
-                        $this->appendAttribute($id, $value);
-                    }
-                }
-                $alreadyDone[$id] = true;
-            }
-
-            if (!isset($alreadyDone[$id])) {
-                $data = static::getAttributeString($id, $dataMap, $content, $options);
-                foreach ($data as $name => $value) {
-                    $this->setAttribute($name, $value);
-                }
-                $alreadyDone[$id] = true;
-            }
-
-            if (isset($map[$node->classIdentifier()]['_defaults'][$id]) && empty($this->attribute($id))) {
-                $this->setAttribute($id, $map[$node->classIdentifier()]['_defaults'][$id]);
-            }
-            if (isset($map[$node->classIdentifier()]['_constraint'][$id])) {
-                $this->setAttribute($id, $map[$node->classIdentifier()]['_constraint'][$id]);
-            }
+        if ($node->classIdentifier() === 'dipendente'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromDipendente(), $options);
+        }
+        if ($node->classIdentifier() === 'politico'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
         }
 
-        $contactPoint = $this->appendContactPointFromOpencityNode($node, $options);
-        if ($contactPoint instanceof ocm_online_contact_point) {
-            $this->setAttribute('has_contact_point', $contactPoint->attribute('name'));
-        }
-
-        return $this;
+        return null;
     }
 
-    protected function appendContactPointFromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
+    protected function getComunwebFieldMapperFromDipendente(): array
     {
-        $dataMap = $node->dataMap();
-        $object = $node->object();
-        $content = \Opencontent\Opendata\Api\Values\Content::createFromEzContentObject($object);
-        $contact = [];
-        if (self::hasAttributeStringContent($dataMap, 'phone')){
-            $contact[] = [
-                'type' => 'Telefono',
-                'value' => $dataMap['phone']->toString(),
-                'contact' => '',
-            ];
-        }
-        if (self::hasAttributeStringContent($dataMap, 'mobile_phone')){
-            $contact[] = [
-                'type' => 'Telefono',
-                'value' => $dataMap['mobile_phone']->toString(),
-                'contact' => '',
-            ];
-        }
-        if (self::hasAttributeStringContent($dataMap, 'fax')){
-            $contact[] = [
-                'type' => 'Fax',
-                'value' => $dataMap['fax']->toString(),
-                'contact' => '',
-            ];
-        }
-        if (self::hasAttributeStringContent($dataMap, 'email')){
-            $contact[] = [
-                'type' => 'Email',
-                'value' => $dataMap['email']->toString(),
-                'contact' => '',
-            ];
-        }
+        return [
+            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
+            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'abstract' => false,
+            'image' => false,
+            'bio' => false,
+            'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
 
-        if (!empty($contact)){
-            $contactPoint = new ocm_online_contact_point();
-            $contactPoint->setAttribute('name', 'Contatti di ' . $node->attribute('name'));
-            $contactPoint->setAttribute('contact', json_encode($contact));
-            $contactPoint->setAttribute('_id', 'contact_' . $this->attribute('_id'));
-
-            if (self::hasAttributeStringContent($dataMap, 'ricevimento')){
-                $openingHour = new ocm_opening_hours_specification();
-                $openingHour->setAttribute('_id', 'hours_' . $this->attribute('_id'));
-                $openingHour->setAttribute('name', 'Ricevimento di ' . $node->attribute('name'));
-                $data = static::getAttributeString('ricevimento', $dataMap, $content, $options);
-                foreach ($data as $name => $value) {
-                    $openingHour->appendAttribute('note', $value);
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $data = [];
+                foreach (['telefono', 'cellulare', 'email', 'fax', ] as $identifier){
+                    if (isset($dataMap[$identifier])){
+                        $type = $identifier;
+                        if ($identifier == 'telefono'){
+                            $type = 'Telefono';
+                        }elseif ($identifier == 'cellulare'){
+                            $type = 'Cellulare';
+                        }elseif ($identifier == 'fax'){
+                            $type = 'Fax';
+                        }elseif (stripos($identifier, 'email') !== false){
+                            $type = 'Email';
+                        }
+                        $value = $dataMap[$identifier]->toString();
+                        if (!empty($value)) {
+                            $data[] = [
+                                'type' => $type,
+                                'value' => $value,
+                                'contact' => '',
+                            ];
+                        }
+                    }
                 }
-                $openingHour->storeThis($options['is_update']);
-                $contactPoint->setAttribute('phone_availability_time', $openingHour->attribute('name'));
-            }
+                $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                $contacts->storeThis($options['is_update']);
 
-            $contactPoint->storeThis($options['is_update']);
-            return $contactPoint;
-        }
+                return $contactsName;
+            },
+            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'situazione_patrimoniale' => false,
+            'dichiarazioni_patrimoniali_soggetto' => false,
+            'dichiarazioni_patrimoniali_parenti' => false,
+            'dichiarazione_redditi' => false,
+            'spese_elettorali' => false,
+            'spese_elettorali_files' => false,
+            'variazioni_situazione_patrimoniale',
+            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'eventuali_incarichi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+//                $object = eZContentObject::fetch($content->metadata['id']);
+//                if ($object instanceof eZContentObject){
+//                    $incarichi = $object->reverseRelatedObjectList(false, eZContentObjectTreeNode::classAttributeIDByIdentifier('conferimento_incarico/dipendente'));
+//                    print_r($incarichi);
+//                }
+                return '';
+            },
+            'dichiarazione_incompatibilita' => false,
+            'notes' => false,
+        ];
+    }
 
-        return false;
+    protected function getComunwebFieldMapperFromPolitico(): array
+    {
+        return [
+            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
+            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'abstract' => false,
+            'image' => false,
+            'bio' => false,
+            'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
+                $name = $content->metadata['name']['ita-IT'];
+
+                $hoursName = false;
+                $ricevimento = OCMigrationOpencity::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+                if (!empty($ricevimento)) {
+                    $hoursId = $id . ':hours';
+                    $hoursName = "Ricevimento di $name";
+                    $hours = new ocm_opening_hours_specification();
+                    $hours->setAttribute('_id', $hoursId);
+                    $hours->setAttribute('name', $hoursName);
+                    $hours->setAttribute('stagionalita', "Unico");
+                    $hours->setAttribute('note', $ricevimento);
+                    $hours->storeThis($options['is_update']);
+                }
+
+                $contactsId = $id . ':contacts';
+                $contactsName = "Contatti $name";
+                $contacts = new ocm_online_contact_point();
+                $contacts->setAttribute('_id', $contactsId);
+                $contacts->setAttribute('name', $contactsName);
+                $data = [];
+                foreach (['phone', 'mobile_phone', 'email', 'fax', ] as $identifier){
+                    if (isset($dataMap[$identifier])){
+                        $type = $identifier;
+                        if ($identifier == 'phone'){
+                            $type = 'Telefono';
+                        }elseif ($identifier == 'mobile_phone'){
+                            $type = 'Cellulare';
+                        }elseif ($identifier == 'fax'){
+                            $type = 'Fax';
+                        }elseif (stripos($identifier, 'email') !== false){
+                            $type = 'Email';
+                        }
+                        $value = $dataMap[$identifier]->toString();
+                        if (!empty($value)) {
+                            $data[] = [
+                                'type' => $type,
+                                'value' => $value,
+                                'contact' => '',
+                            ];
+                        }
+                    }
+                }
+                $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                if ($hoursName) {
+                    $contacts->setAttribute('phone_availability_time', $hoursName);
+                }
+                $contacts->storeThis($options['is_update']);
+
+                return $contactsName;
+            },
+            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'situazione_patrimoniale' => false,
+            'dichiarazioni_patrimoniali_soggetto' => false,
+            'dichiarazioni_patrimoniali_parenti' => false,
+            'dichiarazione_redditi' => false,
+            'spese_elettorali' => false,
+            'spese_elettorali_files' => false,
+            'variazioni_situazione_patrimoniale',
+            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'eventuali_incarichi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+//                $object = eZContentObject::fetch($content->metadata['id']);
+//                if ($object instanceof eZContentObject){
+//                    $incarichi = $object->reverseRelatedObjectList(false, eZContentObjectTreeNode::classAttributeIDByIdentifier('conferimento_incarico/dipendente'));
+//                    print_r($incarichi);
+//                }
+                return '';
+            },
+            'dichiarazione_incompatibilita' => false,
+            'notes' => false,
+        ];
     }
 
     public function toSpreadsheet(): array

@@ -49,10 +49,13 @@ trait ocm_trait
             $this->setAttribute($identifier, call_user_func($callFunction,
                 $content,
                 $firstLocalizedContentData,
-                $firstLocalizedContentLocale
+                $firstLocalizedContentLocale,
+                $options
             ));
         }
-        $this->setAttribute('_id', $object->attribute('remote_id'));
+        if (!empty($mapper)) {
+            $this->setAttribute('_id', $object->attribute('remote_id'));
+        }
         $nodeUrl = $node->attribute('url_alias');
         eZURI::transformURI($nodeUrl, false, 'full');
         $this->setAttribute('_original_url', $nodeUrl);
@@ -460,6 +463,9 @@ trait ocm_trait
             if ($item instanceof ocm_interface) {
                 $doStore = false;
             }
+        }
+        if (empty($this->attribute('_id'))){
+            $doStore = false;
         }
         if ($doStore) {
             eZPersistentObject::storeObject($this);

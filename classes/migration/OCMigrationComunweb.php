@@ -114,6 +114,42 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 'update' => $rows,
             ]]);
         }
+
+        if (empty($namesFilter) || in_array('ocm_public_person', $namesFilter)) {
+            $rows = 0;
+            $nodes = $this->getNodesByClassIdentifierList(['dipendente', 'politico',], ['amministrazione_trasparente']);
+            foreach ($nodes as $node) {
+                if ($this->createFromNode($node, new ocm_public_person(), [
+                    'matrix_converter' => 'json',
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->info(' - ' . $node->attribute('name'));
+                }
+            }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_public_person' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
+        }
+
+        if (empty($namesFilter) || in_array('ocm_time_indexed_role', $namesFilter)) {
+            $nodes = $this->getNodesByClassIdentifierList(['dipendente', 'politico',], ['amministrazione_trasparente']);
+            $rows = 0;
+            foreach ($nodes as $node) {
+                if ($this->createFromNode($node, new ocm_time_indexed_role(), [
+                    'matrix_converter' => 'multiline',
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->info(' - ' . $node->attribute('name'));
+                }
+            }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_time_indexed_role' => [
+                'status' => 'success',
+                'update' => $rows,
+            ]]);
+        }
     }
 
     private function hasAttachments(eZContentObjectTreeNode $node)

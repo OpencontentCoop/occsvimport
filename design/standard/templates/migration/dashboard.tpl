@@ -27,7 +27,7 @@
 <div class="container my-5 bg-white rounded p-5">
     <div class="row">
         <div class="col-12">
-            <h1>Assistente migrazione <code>{$context|wash()}</code></h1>
+            <h1>Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
             {if $migration_spreadsheet}
             {else}
                 {if $context}

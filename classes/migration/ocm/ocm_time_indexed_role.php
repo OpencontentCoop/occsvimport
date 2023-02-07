@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -33,6 +35,103 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         return $this;
     }
 
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        if ($node->classIdentifier() === 'dipendente'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromDipendente(), $options);
+        }
+        if ($node->classIdentifier() === 'politico'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
+        }
+
+        return null;
+    }
+
+    protected function getComunwebFieldMapperFromDipendente(): array
+    {
+        return [
+            'label' => false,
+            'person' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return $content->metadata['name']['ita-IT'];
+            },
+            'role' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return 'Dipendente';
+            },
+            'type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return 'Amministrativo';
+            },
+            'for_entity' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $data = [];
+                foreach (['area', 'servizio', 'ufficio', 'struttura'] as $identifier)
+                if (isset($firstLocalizedContentData[$identifier]['content'][0]['name']['ita-IT'])){
+                    $data[] = $firstLocalizedContentData[$identifier]['content'][0]['name']['ita-IT'];
+                };
+                return implode(PHP_EOL, $data);
+            },
+            'compensi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return ''; // non migrabile la sorgente è una matrice
+            },
+            'importi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return ''; // non migrabile la sorgente è un multi binary
+            },
+            'start_time' => false,
+            'end_time' => false,
+            'data_insediamento' => false,
+            'atto_nomina' => OCMigration::getMapperHelper('atti'),
+            'competences' => false,
+            'delegations' => false,
+            'organizational_position' => false,
+            'incarico_dirigenziale' => false,
+            'ruolo_principale' => false,
+            'priorita' => false,
+            'notes' => false,
+        ];
+    }
+
+    protected function getComunwebFieldMapperFromPolitico(): array
+    {
+        return [
+            'label' => false,
+            'person' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return $content->metadata['name']['ita-IT'];
+            },
+            'role' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return 'Membro';
+            },
+            'type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return 'Politico';
+            },
+            'for_entity' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $data = [];
+                $object = eZContentObject::fetch($content->metadata['id']);
+                if ($object instanceof eZContentObject){
+                    $organiPolitici = $object->reverseRelatedObjectList(false, 0, false, ['RelatedClassIdentifiers' => ['organo_politico']]);
+                    foreach ($organiPolitici as $organoPolitico){
+                        $data[] = $organoPolitico->attribute('name');
+                    }
+                }
+
+                return implode(PHP_EOL, $data);
+            },
+            'compensi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return ''; // non migrabile la sorgente è una multi binary
+            },
+            'importi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                return ''; // non migrabile la sorgente è un multi binary
+            },
+            'start_time' => OCMigration::getMapperHelper('data_iniziomandato'),
+            'end_time' => OCMigration::getMapperHelper('data_finemandato'),
+            'data_insediamento' => OCMigration::getMapperHelper('decorrenza_carica'),
+            'atto_nomina' => OCMigration::getMapperHelper('atti'),
+            'competences' => false,
+            'delegations' => false,
+            'organizational_position' => false,
+            'incarico_dirigenziale' => false,
+            'ruolo_principale' => false,
+            'priorita' => false,
+            'notes' => OCMigration::getMapperHelper('nota'),
+        ];
+    }
 
     public static function getSpreadsheetTitle(): string
     {

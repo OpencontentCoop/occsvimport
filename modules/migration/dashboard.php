@@ -4,6 +4,7 @@ $module = $Params['Module'];
 $tpl = eZTemplate::factory();
 $http = eZHTTPTool::instance();
 
+$tpl->setVariable('db_name', eZDB::instance()->DB);
 $tpl->setVariable('ezxform_token', ezxFormToken::getToken());
 $tpl->setVariable('error_spreadsheet', false);
 $tpl->setVariable('context', OCMigration::discoverContext());
