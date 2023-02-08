@@ -6,6 +6,16 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
 {
     use ocm_trait;
 
+    public static function canPush(): bool
+    {
+        return OCMigration::discoverContext() === 'opencity';
+    }
+
+    public static function canExport(): bool
+    {
+        return OCMigration::discoverContext() === 'opencity';
+    }
+
     public static $fields = [
         'name',
         'de_name',
@@ -22,8 +32,8 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
             'de_name' => function(Content $content){
                 return $content->data['ger-DE']['name']['content'] ?? '';
             },
-            'contact' => OCMigrationOpencity::getMapperHelper('contact'),
-            'phone_availability_time' => OCMigrationOpencity::getMapperHelper('phone_availability_time'),
+            'contact' => OCMigration::getMapperHelper('contact'),
+            'phone_availability_time' => OCMigration::getMapperHelper('phone_availability_time'),
         ];
     }
 

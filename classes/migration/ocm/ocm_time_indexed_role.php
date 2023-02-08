@@ -43,8 +43,16 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         if ($node->classIdentifier() === 'politico'){
             return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
         }
+        if ($node->classIdentifier() === 'ruolo'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromRuolo(), $options);
+        }
 
-        return null;
+        return $this->fromNode($node, [], $options);
+    }
+
+    protected function getComunwebFieldMapperFromRuolo(): array
+    {
+        return [];
     }
 
     protected function getComunwebFieldMapperFromDipendente(): array
@@ -105,7 +113,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
                 $data = [];
                 $object = eZContentObject::fetch($content->metadata['id']);
                 if ($object instanceof eZContentObject){
-                    $organiPolitici = $object->reverseRelatedObjectList(false, 0, false, ['RelatedClassIdentifiers' => ['organo_politico']]);
+                    $organiPolitici = $object->reverseRelatedObjectList(false, 0, false, ['AllRelations' => true, 'RelatedClassIdentifiers' => ['organo_politico']]);
                     foreach ($organiPolitici as $organoPolitico){
                         $data[] = $organoPolitico->attribute('name');
                     }

@@ -288,6 +288,11 @@ class OCMigrationSpreadsheet
             );
             $itemCount = count($items);
 
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$className => [
+                'status' => 'success',
+                'update' => 'Pushing ' . $itemCount . ' contents',
+            ]]);
+
             if ($cli) {
                 $cli->output("Push $itemCount $className items in sheet $sheetTitle");
             }
@@ -344,9 +349,10 @@ class OCMigrationSpreadsheet
                 'range' => $range,
             ];
         } catch (Throwable $e) {
+            $message =  ($e instanceof \Google\Service\Exception) ? json_decode($e->getMessage())->error->message : $e->getMessage();
             $executionInfo[$className] = [
                 'status' => 'error',
-                'message' => $e->getMessage(),
+                'message' => $message,
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
@@ -568,10 +574,15 @@ class OCMigrationSpreadsheet
 
         self::setCurrentStatus('export', 'running', $options, []);
 
-        OCMigration::factory()->fillData(
-            $options['class_filter'] ?? [],
-            $options['update']
-        );
+        try {
+            OCMigration::factory()->fillData(
+                $options['class_filter'] ?? [],
+                $options['update']
+            );
+        }catch (Throwable $e){
+            self::setCurrentStatus('import', 'error', $options, $e->getMessage());
+            return ['status' => 'error']; //@todo
+        }
 
         $options['info'] = [];
         self::setCurrentStatus('export', 'done', $options);

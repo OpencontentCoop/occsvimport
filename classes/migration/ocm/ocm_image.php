@@ -36,8 +36,8 @@ class ocm_image extends eZPersistentObject implements ocm_interface
             'de_caption' => function(Content $content){
                 return $content->data['ger-DE']['caption']['content'] ?? '';
             },
-            'image___name' => OCMigrationOpencity::getMapperHelper('image/name'),
-            'image___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+            'image___name' => OCMigration::getMapperHelper('image/name'),
+            'image___url' => OCMigration::getMapperHelper('image/url'),
             'tags' => false,
             'license' => false,
             'proprietary_license' => false,

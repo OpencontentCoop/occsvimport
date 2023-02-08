@@ -6,6 +6,16 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
 {
     use ocm_trait;
 
+    public static function canPush(): bool
+    {
+        return OCMigration::discoverContext() === 'opencity';
+    }
+
+    public static function canExport(): bool
+    {
+        return OCMigration::discoverContext() === 'opencity';
+    }
+
     public static $fields = [
         'name',
         'de_name',
@@ -43,15 +53,15 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
                 return $content->data['ger-DE']['note']['content'] ?? '';
             },
             'stagionalita' => false,
-            'closure___reason' => OCMigrationOpencity::getMapperHelper('closure/reason'),
-            'closure___day' => OCMigrationOpencity::getMapperHelper('closure/day'),
-            'opening_hours___monday' => OCMigrationOpencity::getMapperHelper('opening_hours/monday'),
-            'opening_hours___tuesday' => OCMigrationOpencity::getMapperHelper('opening_hours/tuesday'),
-            'opening_hours___wednesday' => OCMigrationOpencity::getMapperHelper('opening_hours/wednesday'),
-            'opening_hours___thursday' => OCMigrationOpencity::getMapperHelper('opening_hours/thursday'),
-            'opening_hours___friday' => OCMigrationOpencity::getMapperHelper('opening_hours/friday'),
-            'opening_hours___saturday' => OCMigrationOpencity::getMapperHelper('opening_hours/saturday'),
-            'opening_hours___sunday' => OCMigrationOpencity::getMapperHelper('opening_hours/sunday'),
+            'closure___reason' => OCMigration::getMapperHelper('closure/reason'),
+            'closure___day' => OCMigration::getMapperHelper('closure/day'),
+            'opening_hours___monday' => OCMigration::getMapperHelper('opening_hours/monday'),
+            'opening_hours___tuesday' => OCMigration::getMapperHelper('opening_hours/tuesday'),
+            'opening_hours___wednesday' => OCMigration::getMapperHelper('opening_hours/wednesday'),
+            'opening_hours___thursday' => OCMigration::getMapperHelper('opening_hours/thursday'),
+            'opening_hours___friday' => OCMigration::getMapperHelper('opening_hours/friday'),
+            'opening_hours___saturday' => OCMigration::getMapperHelper('opening_hours/saturday'),
+            'opening_hours___sunday' => OCMigration::getMapperHelper('opening_hours/sunday'),
         ];
     }
 

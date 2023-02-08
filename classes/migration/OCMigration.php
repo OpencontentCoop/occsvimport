@@ -59,9 +59,18 @@ class OCMigration extends eZPersistentObject
      * @param array $classIdentifiers
      * @return eZContentObjectTreeNode[]
      */
-    protected function getNodesByClassIdentifierList(array $classIdentifiers, $escludeNodeNameList = []): array
+    protected function getNodesByClassIdentifierList(array $classIdentifiers, $escludePathList = [], $escludeRemoteIdPrefix = []): array
     {
-        $this->info('Fetching ' . implode(', ', $classIdentifiers) . '... ', false);
+        $exclusion = '';
+        if (!empty($escludePathList)){
+            $exclusion .= ' excluding path ' . implode(', ', $escludePathList);
+        }
+        if (!empty($escludeRemoteIdPrefix)){
+            $exclusion .= ' excluding remote_id prefix ' . implode(', ', $escludeRemoteIdPrefix);
+        }
+
+        $this->debug('Fetching ' . implode(', ', $classIdentifiers) . $exclusion . ' ... ');
+
         /** @var eZContentObjectTreeNode[] $nodes */
         $nodes = eZContentObjectTreeNode::subTreeByNodeID([
             'MainNodeOnly' => true,
@@ -70,14 +79,23 @@ class OCMigration extends eZPersistentObject
             'SortBy' => [['path_string', true]]
         ], 1);
 
-        if (!empty($escludeNodeNameList)){
+        if (!empty($escludePathList) || !empty($escludeRemoteIdPrefix)){
+            $this->debug(count($nodes) . ' node founds without exclusions ', false);
             $_nodes = [];
             foreach ($nodes as $node){
                 $do = true;
-                foreach ($escludeNodeNameList as $escludeNodeName){
-                    if (stripos($node->attribute('path_identification_string'), $escludeNodeName) !== false){
+                foreach ($escludePathList as $escludePath){
+                    if (stripos($node->attribute('path_identification_string'), $escludePath) !== false){
                         $do = false;
                         break;
+                    }
+                }
+                if ($do) {
+                    foreach ($escludeRemoteIdPrefix as $remoteIdPrefix) {
+                        if (strpos($node->object()->attribute('remote_id'), $remoteIdPrefix) !== false) {
+                            $do = false;
+                            break;
+                        }
                     }
                 }
                 if ($do){
@@ -120,9 +138,10 @@ class OCMigration extends eZPersistentObject
         $classes = OCMigration::getAvailableClasses();
         foreach ($classes as $class) {
             $fields = $class::definition()['fields'];
-
+            $columnsByFields = [];
             $tableCreateSql = "CREATE TABLE $class (";
             foreach ($fields as $field => $definition) {
+                $columnsByFields[] = $field;
                 if ($field === '_id') {
                     $tableCreateSql .= "$field varchar(255) NOT NULL default ''";
                 } else {
@@ -147,6 +166,21 @@ class OCMigration extends eZPersistentObject
                 $db->query($tableKeySql);
             } else {
                 if ($cli) $cli->output('Table ' . $class . ' already exists');
+
+                //check columns consistency
+                $columnsQuery = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name   = '{$class}';";
+                $columns = array_column($db->arrayQuery($columnsQuery), 'column_name');
+                $missingColumns = array_diff($columnsByFields, $columns);
+                if (!empty($missingColumns)){
+                    $appendColumnQueryParts = [];
+                    if ($cli) $cli->warning('Add missing columns to table ' . $class . ': ' . PHP_EOL . ' - ' . implode(PHP_EOL . ' - ', $missingColumns));
+                    foreach ($missingColumns as $missingColumn){
+                        $appendColumnQueryParts[] = "ADD COLUMN $missingColumn text default ''";
+                    }
+                    $appendColumnQuery = "ALTER TABLE $class " . implode(', ', $appendColumnQueryParts) . ';';
+                    $db->query($appendColumnQuery);
+                }
+
                 if ($truncate){
                     if ($cli) $cli->output('Truncate ' . $class);
                     $db->query('TRUNCATE TABLE ' . $class);
@@ -183,7 +217,8 @@ class OCMigration extends eZPersistentObject
                 return function (
                     Content $content,
                     $firstLocalizedContentData,
-                    $firstLocalizedContentLocale
+                    $firstLocalizedContentLocale,
+                    $options
                 ) use ($field, $subField) {
 
                     $localizedFields = [];
@@ -259,6 +294,24 @@ class OCMigration extends eZPersistentObject
                             return '';
 
                         case eZXMLTextType::DATA_TYPE_STRING:
+                            if (isset($options['remove_ezxml_embed'])) {
+                                /** @var eZContentObjectAttribute $attribute */
+                                $attribute = eZContentObjectAttribute::fetch($fieldInfo['id'], $fieldInfo['version']);
+                                if ($attribute instanceof eZContentObjectAttribute) {
+                                    /** @var eZXMLText $attributeContent */
+                                    $attributeContent = $attribute->content();
+
+                                    // remove embed
+                                    $outputHandler = new eZXHTMLXMLOutput(
+                                        $attributeContent->XMLData, false, $attribute
+                                    );
+                                    unset($outputHandler->OutputTags['embed']);
+                                    $text = $outputHandler->outputText();
+                                    $text = str_replace('<div class=""></div>', '', $text);
+                                    $text = str_replace('<div class="embed"></div>', '', $text);
+                                    return $text;
+                                }
+                            }
                             return $contentValue;
 
                         case eZGmapLocationType::DATA_TYPE_STRING:
@@ -387,5 +440,48 @@ class OCMigration extends eZPersistentObject
         }
 
         return $data;
+    }
+
+    protected function fillByType(array $namesFilter, bool $isUpdate, string $ocmClass, array $classIdentifiers, array $escludePathList = [], array $escludeRemoteIdPrefix = [])
+    {
+        if (empty($namesFilter) || in_array($ocmClass, $namesFilter)) {
+            $nodes = $this->getNodesByClassIdentifierList($classIdentifiers, $escludePathList, $escludeRemoteIdPrefix);
+            $count = count($nodes);
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$ocmClass => [
+                'status' => 'success',
+                'update' => 'Evaluating ' . $count . ' contents',
+            ]]);
+            $rows = 0;
+            foreach ($nodes as $index => $node) {
+                $index++;
+                $this->debug(" $index/$count " . $node->classIdentifier() . ' ', false);
+                if ($this->createFromNode($node, new $ocmClass, [
+                    'is_update' => $isUpdate,
+                ])->storeThis($isUpdate)) {
+                    $rows++;
+                    $this->debug($node->attribute('name'));
+                }else{
+                    $this->debug('');
+                }
+                if ($index % 100 === 0){
+                    OCMigrationSpreadsheet::appendMessageToCurrentStatus([$ocmClass => [
+                        'status' => 'success',
+                        'update' => 'Evaluated ' . $index . ' of '. $count . ' contents',
+                    ]]);
+                }
+            }
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$ocmClass => [
+                'status' => 'success',
+                'update' => $rows . '/' . $count,
+            ]]);
+        }
+    }
+
+    protected function createFromNode(
+        eZContentObjectTreeNode $node,
+        ocm_interface $item,
+        array $options = []
+    ): ocm_interface {
+        throw new Exception('Implement ' . __METHOD__);
     }
 }

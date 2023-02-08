@@ -51,10 +51,10 @@ class ocm_place extends eZPersistentObject implements ocm_interface
             'de_caption' => function(Content $content){
                 return $content->data['ger-DE']['abstract']['content'] ?? '';
             },
-            'image___name' => OCMigrationOpencity::getMapperHelper('image/name'),
-            'image___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+            'image___name' => OCMigration::getMapperHelper('image/name'),
+            'image___url' => OCMigration::getMapperHelper('image/url'),
             'geo' => false,
-            'image' => OCMigrationOpencity::getMapperHelper('galleria'),
+            'image' => OCMigration::getMapperHelper('galleria'),
             'help' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];

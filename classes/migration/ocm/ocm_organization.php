@@ -42,20 +42,27 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             return $this->fromNode($node, $this->getComunwebAmministrativaFieldMapper(), $options);
         }elseif (in_array($node->classIdentifier(), ['organo_politico'])){
             return $this->fromNode($node, $this->getComunwebPoliticaFieldMapper(), $options);
+        }elseif (in_array($node->classIdentifier(), ['sindaco'])){
+            return $this->fromNode($node, $this->getComunwebSindacoFieldMapper(), $options);
         }
+
         return null;
+    }
+    protected function getComunwebSindacoFieldMapper(): array
+    {
+        throw new Exception('NYI');
     }
 
     protected function getComunwebAmministrativaFieldMapper(): array
     {
         return [
-            'legal_name' => OCMigrationOpencity::getMapperHelper('titolo'),
+            'legal_name' => OCMigration::getMapperHelper('titolo'),
             'alt_name' => false,
             'topics' => false,
-            'abstract' => OCMigrationOpencity::getMapperHelper('abstract'),
-            'description' => OCMigrationOpencity::getMapperHelper('description'),
+            'abstract' => OCMigration::getMapperHelper('abstract'),
+            'description' => OCMigration::getMapperHelper('description'),
             'image' => false,
-            'main_function' => OCMigrationOpencity::getMapperHelper('competenze'),
+            'main_function' => OCMigration::getMapperHelper('competenze'),
             'type' => function(Content $content){
                 return $content->metadata['classIdentifier'] === 'area' ? 'Area' : 'Ufficio';
             },
@@ -71,7 +78,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hours->setAttribute('_id', $hoursId);
                 $hours->setAttribute('name', $hoursName);
                 $hours->setAttribute('stagionalita', "Unico");
-                $hours->setAttribute('note', OCMigrationOpencity::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $hours->setAttribute('note', OCMigration::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
@@ -124,35 +131,35 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             },
             'attachments' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
                 $data = [];
-//                $file = OCMigrationOpencity::getMapperHelper('file')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                $file = OCMigration::getMapperHelper('file')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
 //                if (!empty($file)){
 //                    $data[] = $file;
 //                }
-//                $ubicazione = OCMigrationOpencity::getMapperHelper('ubicazione')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                $ubicazione = OCMigration::getMapperHelper('ubicazione')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
 //                if (!empty($ubicazione)){
 //                    $data[] = $ubicazione;
 //                }
 
                 return implode(PHP_EOL, $data);
             },
-            'more_information' => OCMigrationOpencity::getMapperHelper('riferimenti_utili'),
+            'more_information' => OCMigration::getMapperHelper('riferimenti_utili'),
             'identifier' => false,
             'tax_code_e_invoice_service' => false,
-            'has_logo___name' => OCMigrationOpencity::getMapperHelper('image/name'),
-            'has_logo___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+            'has_logo___name' => OCMigration::getMapperHelper('image/name'),
+            'has_logo___url' => OCMigration::getMapperHelper('image/url'),
         ];
     }
 
     protected function getComunwebPoliticaFieldMapper(): array
     {
         return [
-            'legal_name' => OCMigrationOpencity::getMapperHelper('titolo'),
+            'legal_name' => OCMigration::getMapperHelper('titolo'),
             'alt_name' => false,
             'topics' => false,
-            'abstract' => OCMigrationOpencity::getMapperHelper('abstract'),
-            'description' => OCMigrationOpencity::getMapperHelper('descrizione'),
+            'abstract' => OCMigration::getMapperHelper('abstract'),
+            'description' => OCMigration::getMapperHelper('descrizione'),
             'image' => false,
-            'main_function' => OCMigrationOpencity::getMapperHelper('competenze'),
+            'main_function' => OCMigration::getMapperHelper('competenze'),
             'type' => function(Content $content){
                 $name = $content->metadata['name']['ita-IT'];
                 $type = 'Struttura politica';
@@ -179,7 +186,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hours->setAttribute('_id', $hoursId);
                 $hours->setAttribute('name', $hoursName);
                 $hours->setAttribute('stagionalita', "Unico");
-                $hours->setAttribute('note', OCMigrationOpencity::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $hours->setAttribute('note', OCMigration::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
@@ -211,15 +218,15 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             },
             'attachments' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
                 $data = [];
-//                $file = OCMigrationOpencity::getMapperHelper('curriculum')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+//                $file = OCMigration::getMapperHelper('curriculum')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
 //                if (!empty($file)){
 //                    $data[] = $file;
 //                }
                 return implode(PHP_EOL, $data);
             },
-            'more_information' => OCMigrationOpencity::getMapperHelper('nota'),
-            'has_logo___name' => OCMigrationOpencity::getMapperHelper('image/name'),
-            'has_logo___url' => OCMigrationOpencity::getMapperHelper('image/url'),
+            'more_information' => OCMigration::getMapperHelper('nota'),
+            'has_logo___name' => OCMigration::getMapperHelper('image/name'),
+            'has_logo___url' => OCMigration::getMapperHelper('image/url'),
         ];
     }
 
@@ -245,19 +252,19 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
     {
         return [
             'legal_name' => false,
-            'alt_name' => OCMigrationOpencity::getMapperHelper('org_acronym'),
+            'alt_name' => OCMigration::getMapperHelper('org_acronym'),
             'topics' => false,
             'abstract' => false,
             'description' => false,
             'image' => false,
             'main_function' => false,
-            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'hold_employment' => OCMigration::getMapperHelper('is_part_of'),
             'type' => function(){ return 'Area'; },
             'has_spatial_coverage' => false,
             'has_online_contact_point' => false,
-            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'attachments' => OCMigration::getMapperHelper('allegati'),
             'more_information' => false,
-            'identifier' => OCMigrationOpencity::getMapperHelper('ipacode'),
+            'identifier' => OCMigration::getMapperHelper('ipacode'),
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
@@ -268,19 +275,19 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
     {
         return [
             'legal_name' => false,
-            'alt_name' => OCMigrationOpencity::getMapperHelper('org_acronym'),
+            'alt_name' => OCMigration::getMapperHelper('org_acronym'),
             'topics' => false,
             'abstract' => false,
             'description' => false,
             'image' => false,
             'main_function' => false,
-            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'hold_employment' => OCMigration::getMapperHelper('is_part_of'),
             'type' => function(){ return 'Area'; },
             'has_spatial_coverage' => false,
             'has_online_contact_point' => false,
-            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'attachments' => OCMigration::getMapperHelper('allegati'),
             'more_information' => false,
-            'identifier' => OCMigrationOpencity::getMapperHelper('a_o_o_identifier'),
+            'identifier' => OCMigration::getMapperHelper('a_o_o_identifier'),
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
@@ -291,19 +298,19 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
     {
         return [
             'legal_name' => false,
-            'alt_name' => OCMigrationOpencity::getMapperHelper('acronym'),
+            'alt_name' => OCMigration::getMapperHelper('acronym'),
             'topics' => false,
             'abstract' => false,
             'description' => false,
             'image' => false,
             'main_function' => false,
-            'hold_employment' => OCMigrationOpencity::getMapperHelper('is_part_of'),
+            'hold_employment' => OCMigration::getMapperHelper('is_part_of'),
             'type' => function(){ return 'Ufficio'; },
             'has_spatial_coverage' => false,
             'has_online_contact_point' => false,
-            'attachments' => OCMigrationOpencity::getMapperHelper('allegati'),
+            'attachments' => OCMigration::getMapperHelper('allegati'),
             'more_information' => false,
-            'identifier' => OCMigrationOpencity::getMapperHelper('office_identifier'),
+            'identifier' => OCMigration::getMapperHelper('office_identifier'),
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
@@ -321,7 +328,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             'image' => false,
             'main_function' => false,
             'hold_employment' => false,
-            'type' => OCMigrationOpencity::getMapperHelper('type_political_body'),
+            'type' => OCMigration::getMapperHelper('type_political_body'),
             'has_spatial_coverage' => false,
             'has_online_contact_point' => false,
             'attachments' => false,

@@ -24,7 +24,8 @@
 </head>
 <body class="bg-primary">
 
-<div class="container my-5 bg-white rounded p-5">
+<div class="container my-5 bg-white rounded p-5 position-relative">
+    <div id="loader" style="display:none; position: absolute;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
     <div class="row">
         <div class="col-12">
             <h1>Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
@@ -129,8 +130,6 @@
     </div>
 </div>
 
-<div id="loader" class="d-none"></div>
-
 <script type="text/javascript">
     var BaseUrl = "{'/migration/dashboard'|ezurl(no)}";
 </script>
@@ -202,7 +201,12 @@
 
           if (typeof data.message === 'object' && data.message){
             $.each(data.message, function (i, v){
-              $('#result_'+i).html('<span class="badge badge-primary">' + data.action + '</span> '+moment(data.timestamp).format('DD/MM/YYYY HH:mm') + ' status: <span class="badge badge-secondary">' + v.status + '</span> update: <span class="badge badge-secondary">' + v.update + '</span>')
+              var updateMessage = v.update ?? 0;
+              var errorMessage = '';
+              if (typeof v.message === 'string'){
+                errorMessage = '<div class="alert alert-danger p-1 my-1">'+v.message+'</div>';
+              }
+              $('#result_'+i).html('<span class="badge badge-primary">' + data.action + '</span> '+moment(data.timestamp).format('DD/MM/YYYY HH:mm') + ' status: <span class="badge badge-secondary">' + v.status + '</span> update: <span class="badge badge-secondary">' + updateMessage + '</span>' + errorMessage)
             })
           }else{
             $.each(data.options.class_filter, function (){
@@ -211,13 +215,16 @@
           }
         }
 
+        var loader = $('#loader');
         var checkStatus = function (cb, context) {
+          loader.show();
           $.getJSON(BaseUrl+'?status', function (data) {
             console.log(data);
             parseStatus(data);
             if ($.isFunction(cb)) {
               cb.call(context, data);
             }
+            loader.hide();
           })
         };
 

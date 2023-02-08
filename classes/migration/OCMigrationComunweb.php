@@ -14,157 +14,106 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
 
     public function fillData(array $namesFilter = [], $isUpdate = false)
     {
-        if (empty($namesFilter) || in_array('ocm_image', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['image'], ['classificazioni']);
-            $rows = 0;
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_image(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_image' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_pagina_sito', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['pagina_sito'], ['classificazioni', 'amministrazione_trasparente']);
-            $rows = 0;
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_pagina_sito(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_pagina_sito' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_folder', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['folder'], ['classificazioni', 'amministrazione_trasparente']);
-            $rows = 0;
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_folder(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_folder' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_place', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['luogo'], ['classificazioni', 'amministrazione_trasparente']);
-            $rows = 0;
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_place(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_place' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_organization', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['area', 'servizio', 'ufficio'], ['classificazioni', 'amministrazione_trasparente']);
-            $rows = 0;
-            foreach ($nodes as $node){
-                if ($this->createFromNode($node, new ocm_organization(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-
-            $nodes = $this->getNodesByClassIdentifierList(['organo_politico'], ['amministrazione_trasparente']);
-            foreach ($nodes as $node){
-                if ($this->createFromNode($node, new ocm_organization(), [
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                    $this->hasAttachments($node);
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_organization' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_public_person', $namesFilter)) {
-            $rows = 0;
-            $nodes = $this->getNodesByClassIdentifierList(['dipendente', 'politico',], ['amministrazione_trasparente']);
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_public_person(), [
-                    'matrix_converter' => 'json',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_public_person' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
-
-        if (empty($namesFilter) || in_array('ocm_time_indexed_role', $namesFilter)) {
-            $nodes = $this->getNodesByClassIdentifierList(['dipendente', 'politico',], ['amministrazione_trasparente']);
-            $rows = 0;
-            foreach ($nodes as $node) {
-                if ($this->createFromNode($node, new ocm_time_indexed_role(), [
-                    'matrix_converter' => 'multiline',
-                    'is_update' => $isUpdate,
-                ])->storeThis($isUpdate)) {
-                    $rows++;
-                    $this->info(' - ' . $node->attribute('name'));
-                }
-            }
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus(['ocm_time_indexed_role' => [
-                'status' => 'success',
-                'update' => $rows,
-            ]]);
-        }
+        $escludePathList = [
+            'classificazioni',
+            'amministrazione_trasparente'
+        ];
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_file', ['file', 'file_pdf'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_pagina_sito', ['pagina_sito'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_folder', ['folder'], $escludePathList);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['luogo'], $escludePathList);
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_organization',
+            ['area', 'servizio', 'ufficio', 'organo_politico', 'sindaco'],
+            $escludePathList
+        );
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_public_person', ['dipendente', 'politico',], $escludePathList);
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_time_indexed_role',
+            ['dipendente', 'politico', 'ruolo'],
+            $escludePathList
+        );
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_document',
+            [
+                'accordo',
+                'bilancio_di_settore',
+                'bando',
+                'circolare',
+                'concorso',
+                'concessioni',
+                'convenzione',
+                'decreto_sindacale',
+                'deliberazione',
+                'determinazione',
+                'documento',
+                'graduatoria',
+                'interpellanza',
+                'interrogazione',
+                'modello',
+                'modulo',
+                'modulistica',
+                'mozione',
+                'normativa',
+                'ordinanza',
+                'ordine_del_giorno',
+                'parere',
+                'piano_progetto',
+                'procedura',
+                'protocollo',
+                'rapporto',
+                'regolamento',
+                'statuto',
+                'trattamento',
+            ],
+            $escludePathList,
+            ['at_']
+        );
+        //servizio_sul_territorio
+        //procedimento
     }
 
-    private function hasAttachments(eZContentObjectTreeNode $node)
+    /**
+     * @param eZContentObject|eZContentObjectTreeNode $nodeOrObject
+     * @return ?string
+     */
+    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file'): ?string
     {
-        $count = $node->subTreeCount([
+        $dataMap = $nodeOrObject->dataMap();
+        if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
+            $attribute = $dataMap[$attributeIdentifier];
+            /** @var \eZBinaryFile $file */
+            $file = $attribute->content();
+            $url = 'content/download/' . $attribute->attribute('contentobject_id')
+                . '/' . $attribute->attribute('id')
+                . '/' . $attribute->attribute('version')
+                . '/' . urlencode($file->attribute('original_filename'));
+            eZURI::transformURI($url, true, 'full');
+            return $url;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param eZContentObjectTreeNode $node
+     * @return eZContentObjectTreeNode[]
+     */
+    public static function getAttachmentsByNode(eZContentObjectTreeNode $node): array
+    {
+        return $node->subTree([
             'Depth' => 1,
             'DepthOperator' => 'eq',
             'ClassFilterType' => 'include',
-            'ClassFilterArray' => ['file_pdf'],
+            'ClassFilterArray' => ['file', 'file_pdf'],
         ]);
-        if ($count > 0) {
-            $this->info('  - ' . $count . ' attachments');
-        }
-
-        return $count > 0;
     }
 
     /**

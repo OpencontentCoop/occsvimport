@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_document extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -34,8 +36,508 @@ class ocm_document extends eZPersistentObject implements ocm_interface
         'legal_notes',
         'reference_doc',
         'keyword',
-        'related_public_services',
+        'has_service',
+        'anno_protocollazione',
+        'help',
+        'tipo_di_risposta',
+        'interroganti',
+        'gruppo_politico',
+        'data_invio_uffici',
+        'data_giunta',
+        'data_risposta_consigliere',
+        'giorni_interrogazione',
+        'data_consiglio',
+        'giorni_adozione',
+        'announcement_type',
+        'data_di_scadenza_delle_iscrizioni',
+        'data_di_conclusione',
     ];
+
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        $attachments = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            $data = [];
+            $object = eZContentObject::fetch($content->metadata['id']);
+            if ($object instanceof eZContentObject){
+
+                $attributes = ['file_avviso', 'ammissione', 'criteri_file', 'tracce_file', 'graduatoria', ];
+                foreach ($attributes as $attribute) {
+                    $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl($object, $attribute);
+                    if ($fileByAttribute) {
+                        $data[] = $fileByAttribute;
+                    }
+                }
+
+                /** @var eZContentObject[] $embedList */
+                $embedList = $object->relatedContentObjectList();
+                foreach ($embedList as $embed){
+                    if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])){
+                        ocm_file::removeById($embed->attribute('remote_id'));
+                        $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                        if ($url){
+                            $data[] = $url;
+                        }
+                    }
+                }
+            }
+            $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+            foreach ($attachments as $attachment){
+                ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                $url = OCMigrationComunweb::getFileAttributeUrl($attachment);
+                if ($url){
+                    $data[] = $url;
+                }
+            }
+
+            return implode(PHP_EOL, $data);
+        };
+
+        $hasOrganization = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            $data = [];
+            $idList = ['servizio', 'ufficio', 'struttura',];
+            foreach ($idList as $id){
+                if (isset($firstLocalizedContentData[$id])){
+                    foreach ($firstLocalizedContentData[$id]['content'] as $item){
+                        if ($item instanceof Content) {
+                            $data[] = $item->metadata['name']['ita-IT'];
+                        }else{
+                            $data[] = $item['name']['ita-IT'];
+                        }
+                    }
+                }
+            }
+
+            return implode(PHP_EOL, array_unique($data));
+        };
+
+        $options['remove_ezxml_embed'] = true;
+
+        switch ($node->classIdentifier()){
+            case 'accordo':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Accordi';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
+            case 'bilancio_di_settore':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Bilancio consuntivo';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
+            case 'bando':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'document_type' => function () {
+                        return 'Bando di gara';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $fase = OCMigration::getMapperHelper('fase')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return $fase;
+                    },
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo_bando'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo_bando'),
+                    'announcement_type' => OCMigration::getMapperHelper('tipologia_bando'),
+                ]; break;
+            case 'circolare':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Circolare';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('modulistica'),
+                ]; break;
+            case 'concorso':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Bando di concorso';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $criteri = OCMigration::getMapperHelper('criteri')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $tracce = OCMigration::getMapperHelper('tracce')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $assunti = OCMigration::getMapperHelper('assunti')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (!empty($assunti)){
+                            $assunti = "<p>Numero assunti:$assunti</p>";
+                        }
+                        $spese = OCMigration::getMapperHelper('spese')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (!empty($spese)){
+                            $spese = "<p>Numero assunti:$spese</p>";
+                        }
+
+                        return $criteri.$tracce.$assunti.$spese;
+                    },
+                ]; break;
+            case 'concessioni':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => OCMigration::getMapperHelper('numero'),
+                    'document_type' => function () {
+                        return 'Concessione';
+                    },
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                ]; break;
+            case 'convenzione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'abstract' => OCMigration::getMapperHelper('short_description'),
+                    'document_type' => function () {
+                        return 'Convenzione';
+                    },
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'publication_end_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                ]; break;
+            case 'decreto_sindacale':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero/$anno";
+                    },
+                    'document_type' => function () {
+                        return 'Decreto sindacale';
+                    },
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'publication_end_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'data_di_firma' => OCMigration::getMapperHelper('data'),
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
+                ]; break;
+            case 'deliberazione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero/$anno";
+                    },
+                    'abstract' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $informazioni_esecutivita = OCMigration::getMapperHelper('informazioni_esecutivita')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (!empty($informazioni_esecutivita)){
+                            $informazioni_esecutivita = '<p><b>Informazioni riguardanti l\'esecutività della delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        }
+                        $stato = OCMigration::getMapperHelper('stato')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (!empty($stato)){
+                            $stato = '<p><b>Stato in cui si trova la delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        }
+                        $pubblicazione = OCMigration::getMapperHelper('pubblicazione')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (!empty($pubblicazione)){
+                            $pubblicazione = '<p><b>Informazioni sulla pubblicazione della delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        }
+
+                        return $informazioni_esecutivita.$stato.$pubblicazione;
+                    },
+                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $organo = OCMigration::getMapperHelper('organo_competente')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        if (stripos($organo, 'consi')){
+                            return 'Deliberazione del Consiglio comunale';
+                        }
+                        if (stripos($organo, 'giunt')){
+                            return 'Deliberazione della Giunta comunale';
+                        }
+                        if (stripos($organo, 'commiss')){
+                            return 'Deliberazione del Commissario ad acta';
+                        }
+                        return 'Deliberazione di altri Organi';
+                    },
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'publication_end_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'data_di_firma' => OCMigration::getMapperHelper('data'),
+                    'start_time' => OCMigration::getMapperHelper('data_esecutivita'),
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
+                ]; break;
+            case 'determinazione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero/$anno";
+                    },
+                    'document_type' => function () {
+                        return 'Determinazione';
+                    },
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'publication_end_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'data_di_firma' => OCMigration::getMapperHelper('data_firma'),
+                    'start_time' => OCMigration::getMapperHelper('data_efficacia'),
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
+                ]; break;
+            case 'documento':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return '';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                    'other_information' => OCMigration::getMapperHelper('iter_approvazione'),
+                ]; break;
+            case 'graduatoria':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Graduatoria';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('short_description'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                ]; break;
+//            case 'interpellanza':
+//            case 'interrogazione':
+//            case 'modello':
+            case 'modulo':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'has_code' => OCMigration::getMapperHelper('codice'),
+                    'document_type' => function () {
+                        return 'Modulistica';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                    'other_information' => OCMigration::getMapperHelper('iter_approvazione'),
+                ]; break;
+//            case 'modulistica':
+//            case 'mozione':
+//            case 'normativa':
+            case 'ordinanza':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero/$anno";
+                    },
+                    'document_type' => function () {
+                        return 'Ordinanza';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'publication_end_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $isUrgenza = OCMigration::getMapperHelper('urgenza')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $urgenza = $isUrgenza ? '<p>Ordinanza emanata in deroga alla legislazione vigente</p>' : '';
+                        $motivo_non_pubblicazione = OCMigration::getMapperHelper('motivo_non_pubblicazione')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return $urgenza.$motivo_non_pubblicazione;
+                    },
+                    'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
+                ]; break;
+//            case 'ordine_del_giorno':
+//            case 'parere':
+            case 'piano_progetto':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'has_code' => OCMigration::getMapperHelper('codice'),
+                    'document_type' => function () {
+                        return 'Piano/Progetto';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
+//            case 'procedura':
+//            case 'protocollo':
+//            case 'rapporto':
+            case 'regolamento':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'has_code' => OCMigration::getMapperHelper('codice'),
+                    'document_type' => function () {
+                        return 'Regolamento';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
+            case 'statuto':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Statuto';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                ]; break;
+//            case 'trattamento':
+            default:
+                $mapper = [];
+        }
+
+        return $this->fromNode($node, $mapper, $options);
+    }
+
 
     public static function getSpreadsheetTitle(): string
     {
@@ -106,6 +608,8 @@ class ocm_document extends eZPersistentObject implements ocm_interface
             "Data di scadenza delle iscrizioni" => $this->attribute('data_di_scadenza_delle_iscrizioni'),
             "Data di conclusione del bando/progetto" => $this->attribute('data_di_conclusione'),
             "Servizi" => $this->attribute('related_public_services'),
+            'Pagina contenitore' => $this->attribute('_parent_name'),
+            'Url originale' => $this->attribute('_original_url'),
         ];
     }
 

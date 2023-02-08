@@ -52,13 +52,13 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     protected function getOpencityFieldMapperFromEmployee(): array
     {
         return [
-            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
-            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'given_name' => OCMigration::getMapperHelper('nome'),
+            'family_name' => OCMigration::getMapperHelper('cognome'),
             'abstract' => false,
             'image' => false,
             'bio' => false,
             'has_contact_point' => $this->getOpencityFieldMapperFromPolitico()['has_online_contact_point'],
-            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'curriculum' => OCMigration::getMapperHelper('curriculum_vitae'),
             'situazione_patrimoniale' => false,
             'dichiarazioni_patrimoniali_soggetto' => false,
             'dichiarazioni_patrimoniali_parenti' => false,
@@ -66,7 +66,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             'spese_elettorali' => false,
             'spese_elettorali_files' => false,
             'variazioni_situazione_patrimoniale',
-            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => false,
             'dichiarazione_incompatibilita' => false,
             'notes' => false,
@@ -76,17 +76,17 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     protected function getOpencityFieldMapperFromPolitico(): array
     {
         return [
-            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
-            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'given_name' => OCMigration::getMapperHelper('nome'),
+            'family_name' => OCMigration::getMapperHelper('cognome'),
             'abstract' => false,
             'image' => false,
             'bio' => false,
-            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale){
+            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
 
                 $hoursName = false;
-                $ricevimento = OCMigrationOpencity::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+                $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";
@@ -134,15 +134,15 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 
                 return $contactsName;
             },
-            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'curriculum' => OCMigration::getMapperHelper('curriculum_vitae'),
             'situazione_patrimoniale' => false,
             'dichiarazioni_patrimoniali_soggetto' => false,
             'dichiarazioni_patrimoniali_parenti' => false,
             'dichiarazione_redditi' => false,
             'spese_elettorali' => false,
             'spese_elettorali_files' => false,
-            'variazioni_situazione_patrimoniale',
-            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'variazioni_situazione_patrimoniale' => false,
+            'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => false,
             'dichiarazione_incompatibilita' => false,
             'notes' => false,
@@ -157,15 +157,23 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         if ($node->classIdentifier() === 'politico'){
             return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
         }
+        if ($node->classIdentifier() === 'Ruolo'){
+            return $this->fromNode($node, $this->getComunwebFieldMapperFromRuolo(), $options);
+        }
 
         return null;
+    }
+
+    protected function getComunwebFieldMapperFromRuolo(): array
+    {
+        throw new Exception('NYI');
     }
 
     protected function getComunwebFieldMapperFromDipendente(): array
     {
         return [
-            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
-            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'given_name' => OCMigration::getMapperHelper('nome'),
+            'family_name' => OCMigration::getMapperHelper('cognome'),
             'abstract' => false,
             'image' => false,
             'bio' => false,
@@ -206,15 +214,15 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 
                 return $contactsName;
             },
-            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'curriculum' => OCMigration::getMapperHelper('curriculum_vitae'),
             'situazione_patrimoniale' => false,
             'dichiarazioni_patrimoniali_soggetto' => false,
             'dichiarazioni_patrimoniali_parenti' => false,
             'dichiarazione_redditi' => false,
             'spese_elettorali' => false,
             'spese_elettorali_files' => false,
-            'variazioni_situazione_patrimoniale',
-            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'variazioni_situazione_patrimoniale' => false,
+            'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
 //                $object = eZContentObject::fetch($content->metadata['id']);
 //                if ($object instanceof eZContentObject){
@@ -231,8 +239,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     protected function getComunwebFieldMapperFromPolitico(): array
     {
         return [
-            'given_name' => OCMigrationOpencity::getMapperHelper('nome'),
-            'family_name' => OCMigrationOpencity::getMapperHelper('cognome'),
+            'given_name' => OCMigration::getMapperHelper('nome'),
+            'family_name' => OCMigration::getMapperHelper('cognome'),
             'abstract' => false,
             'image' => false,
             'bio' => false,
@@ -241,7 +249,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
 
                 $hoursName = false;
-                $ricevimento = OCMigrationOpencity::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale);
+                $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";
@@ -289,15 +297,15 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 
                 return $contactsName;
             },
-            'curriculum' => OCMigrationOpencity::getMapperHelper('curriculum_vitae'),
+            'curriculum' => OCMigration::getMapperHelper('curriculum_vitae'),
             'situazione_patrimoniale' => false,
             'dichiarazioni_patrimoniali_soggetto' => false,
             'dichiarazioni_patrimoniali_parenti' => false,
             'dichiarazione_redditi' => false,
             'spese_elettorali' => false,
             'spese_elettorali_files' => false,
-            'variazioni_situazione_patrimoniale',
-            'altre_cariche' => OCMigrationOpencity::getMapperHelper('assunzione_cariche'),
+            'variazioni_situazione_patrimoniale' => false,
+            'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
 //                $object = eZContentObject::fetch($content->metadata['id']);
 //                if ($object instanceof eZContentObject){
