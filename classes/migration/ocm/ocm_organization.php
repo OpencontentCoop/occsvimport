@@ -68,6 +68,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             },
             'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
                 $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
 
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
@@ -79,6 +80,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hours->setAttribute('name', $hoursName);
                 $hours->setAttribute('stagionalita', "Unico");
                 $hours->setAttribute('note', OCMigration::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
@@ -108,6 +110,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 }
                 $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
                 $contacts->setAttribute('phone_availability_time', $hoursName);
+                $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
 
                 return $contactsName;
@@ -124,7 +127,12 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $place->setAttribute('name', $placeName);
                 $place->setAttribute('type', 'Palazzo');
                 $place->setAttribute('opening_hours_specification', $hoursName);
+
                 $place->setAttribute('help', $contactsName);
+
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
+                $place->setNodeReference($node);
                 $place->storeThis($options['is_update']);
 
                 return $placeName;
@@ -178,6 +186,9 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 return $type;
             },
             'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
+
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
                 $hoursId = $id . ':hours';
@@ -187,6 +198,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hours->setAttribute('name', $hoursName);
                 $hours->setAttribute('stagionalita', "Unico");
                 $hours->setAttribute('note', OCMigration::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
@@ -195,11 +207,14 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $contacts->setAttribute('_id', $contactsId);
                 $contacts->setAttribute('name', $contactsName);
                 $contacts->setAttribute('phone_availability_time', $hoursName);
+                $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
 
                 return $contactsName;
             },
             'has_spatial_coverage' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
                 $placeId = $id . ':place';
@@ -212,6 +227,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $place->setAttribute('type', 'Palazzo');
                 $place->setAttribute('opening_hours_specification', $hoursName);
                 $place->setAttribute('help', $contactsName);
+                $place->setNodeReference($node);
                 $place->storeThis($options['is_update']);
 
                 return $placeName;

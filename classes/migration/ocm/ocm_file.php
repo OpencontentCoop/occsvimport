@@ -58,7 +58,7 @@ class ocm_file extends eZPersistentObject implements ocm_interface
 
     public static function getImportPriority(): int
     {
-        return 100;
+        return -100;
     }
 
     public static function getSpreadsheetTitle(): string

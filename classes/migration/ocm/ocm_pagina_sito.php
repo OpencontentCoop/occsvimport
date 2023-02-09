@@ -76,7 +76,7 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
 
     public static function getImportPriority(): int
     {
-        return 10;
+        return -120;
     }
 
 

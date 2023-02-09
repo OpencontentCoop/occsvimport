@@ -56,12 +56,17 @@ trait ocm_trait
         if (!empty($mapper)) {
             $this->setAttribute('_id', $object->attribute('remote_id'));
         }
+        $this->setNodeReference($node);
+
+        return $this;
+    }
+
+    public function setNodeReference(eZContentObjectTreeNode $node)
+    {
         $nodeUrl = $node->attribute('url_alias');
         eZURI::transformURI($nodeUrl, false, 'full');
         $this->setAttribute('_original_url', $nodeUrl);
         $this->setAttribute('_parent_name', $node->fetchParent()->attribute('url_alias'));
-
-        return $this;
     }
 
     protected static $capabilities = [

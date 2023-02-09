@@ -180,7 +180,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
-
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $dataMap = $object->dataMap();
                 $contactsId = $id . ':contacts';
                 $contactsName = "Contatti $name";
                 $contacts = new ocm_online_contact_point();
@@ -210,6 +211,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                     }
                 }
                 $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                $node = $object->mainNode();
+                $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
 
                 return $contactsName;

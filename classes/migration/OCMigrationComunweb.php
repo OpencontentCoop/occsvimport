@@ -76,6 +76,39 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
             $escludePathList,
             ['at_']
         );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_article',
+            ['avviso',],
+            $escludePathList,
+            ['at_'],
+            ['standard']
+        );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_event',
+            ['event',],
+            $escludePathList,
+            ['at_'],
+            ['standard'],
+            true,
+            2
+        );
+
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_private_organization',
+            ['associazione',],
+            $escludePathList,
+            [],
+            ['standard']
+        );
+
         //servizio_sul_territorio
         //procedimento
     }

@@ -87,6 +87,8 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                     }
                 }
                 $contacts->setAttribute('contact', json_encode(['ita-IT' => $data]));
+                $node = $object->mainNode();
+                $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
 
                 return $contactsName;

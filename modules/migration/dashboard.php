@@ -25,6 +25,9 @@ foreach ($classes as $class) {
         $classHash[$class] = $class::getSpreadsheetTitle();
     }
 }
+$classHash = array_flip($classHash);
+ksort($classHash);
+$classHash = array_flip($classHash);
 $tpl->setVariable('class_hash', $classHash);
 
 if ($http->hasPostVariable('migration_spreadsheet')) {
@@ -46,8 +49,8 @@ if ($http->hasPostVariable('remove_migration_spreadsheet')) {
     return;
 }
 
-if ($http->hasGetVariable('datatable')) {
-    $class = $http->getVariable('datatable');
+if ($http->hasVariable('datatable')) {
+    $class = $http->variable('datatable');
     $rows = [];
     $rowCount = 0;
     $length = 100;//@todo $http->getVariable('length', 10);
@@ -58,7 +61,7 @@ if ($http->hasGetVariable('datatable')) {
         $rows = $class::fetchObjectList($class::definition(), null, null, ['_id' => 'asc'], ['limit' => $length, 'offset' => $start], false);
     }
     $data = [
-        'draw' => isset($_GET['draw']) ? ++$_GET['draw'] : 0,
+        'draw' => $http->hasVariable('draw') ? ($http->variable('draw') + 1) : 0,
         'recordsTotal' => $rowCount,
         'recordsFiltered' => $rowCount,
         'data' => $rows,
@@ -81,22 +84,15 @@ if ($http->hasGetVariable('fields')) {
     $class = $http->getVariable('fields');
     $data = [];
     if (in_array($class, $classes)) {
-        foreach ($class::$fields as $field) {
+        foreach ($class::definition()['fields'] as $field) {
             $data[] = [
-                'data' => $field,
-                'title' => str_replace('_', ' ', $field),
-                'name' => $field,
+                'data' => $field['name'],
+                'title' => trim(str_replace('_', ' ', $field['name'])),
+                'name' => $field['name'],
                 'searchable' => false,
                 'sortable' => false,
             ];
         }
-        $data[] = [
-            'data' => '_id',
-            'title' => 'ID',
-            'name' => '_id',
-            'searchable' => false,
-            'sortable' => false,
-        ];
     }
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
@@ -128,6 +124,13 @@ if ($http->hasGetVariable('action')) {
             'options' => [],
         ]);
     }
+    eZExecution::cleanExit();
+}
+
+if ($http->hasGetVariable('configure')) {
+    $className = $http->getVariable('configure');
+    echo '<pre>';
+    print_r(OCMigrationSpreadsheet::instance()->configureSheet($className));
     eZExecution::cleanExit();
 }
 

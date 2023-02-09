@@ -74,7 +74,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
                 if (isset($firstLocalizedContentData[$identifier]['content'][0]['name']['ita-IT'])){
                     $data[] = $firstLocalizedContentData[$identifier]['content'][0]['name']['ita-IT'];
                 };
-                return implode(PHP_EOL, $data);
+                return implode(PHP_EOL, array_unique($data));
             },
             'compensi' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 return ''; // non migrabile la sorgente è una matrice
@@ -190,7 +190,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 
     public static function getImportPriority(): int
     {
-        return 100;
+        return 110;
     }
 
 

@@ -68,7 +68,7 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
 
     public static function getImportPriority(): int
     {
-        return 10;
+        return -110;
     }
 
 

@@ -172,12 +172,27 @@ class OCMigrationSpreadsheet
         }
 
         if ($action === 'reset') {
-            self::setCurrentStatus('unknown', 'unknown', []);
+            self::setCurrentStatus('', '', [], []);
         } else {
             $command = 'bash extension/occsvimport/bin/bash/migration/run.sh ' . eZSiteAccess::current()['name'] . ' ' . $action . ' ' . $only . ' ' . $update;
             eZDebug::writeError($command);
             exec($command);
             sleep(2);
+        }
+
+        if ($action !== 'reset') {
+            self::setCurrentStatus($action, 'running', $options);
+            $executionInfo = [];
+            foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+                $executionInfo[$className] = [
+                    'status' => 'running',
+                    'action' => $action,
+                    'update' => "Wait for $action...",
+                    'sheet' => '',
+                    'range' => '',
+                ];
+            }
+            self::appendMessageToCurrentStatus($executionInfo);
         }
 
         return self::getCurrentStatus($action);
@@ -201,6 +216,31 @@ class OCMigrationSpreadsheet
         return self::$instance;
     }
 
+    public function configureSheet($className)
+    {
+        $sheetTitle = $className::getSpreadsheetTitle();
+        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+//        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+//        $range = "{$sheetTitle}!R1C1:R1C{$colCount}";
+//        $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
+//
+//        //$rule = new Google_Service_Sheets_AddConditionalFormatRuleRequest();
+//        $deleteRequest =  new \Google\Service\Sheets\DeleteConditionalFormatRuleRequest();
+//        $deleteRequest->setSheetId($sheet->getProperties()->getSheetId());
+//        $deleteRequest->setIndex(0);
+//        $request = new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest();
+//        $request->setRequests(['deleteConditionalFormatRuleRequest' => $deleteRequest]);
+//        $response = json_encode($request, JSON_PRETTY_PRINT);
+
+        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
+        foreach ($response->sheets as $sheetData){
+            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
+                return $sheetData;
+            }
+        }
+        return null;
+    }
+
     /**
      * @throws Exception
      */
@@ -216,14 +256,14 @@ class OCMigrationSpreadsheet
 
         OCMigration::createTableIfNeeded($cli);
 
-        self::setCurrentStatus('push', 'running', $options, []);
+        self::setCurrentStatus('push', 'running', $options);
 
         $executionInfo = [];
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
             $executionInfo = array_merge($executionInfo, $this->pushByType($className, $cli, $options));
+            self::appendMessageToCurrentStatus($executionInfo);
         }
-
-        self::setCurrentStatus('push', 'done', $options, $executionInfo);
+        self::setCurrentStatus('push', 'done', $options);
 
         return $executionInfo;
     }
@@ -246,6 +286,7 @@ class OCMigrationSpreadsheet
         if (!$className::canPush()) {
             $executionInfo[$className] = [
                 'status' => 'skipped',
+                'action' => 'push',
                 'message' => '',
                 'class' => $className,
             ];
@@ -274,6 +315,11 @@ class OCMigrationSpreadsheet
                 }
             }
 
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$className => [
+                'status' => 'running',
+                'update' => 'Preparing contents',
+            ]]);
+
             $items = $className::fetchObjectList(
                 $className::definition(),
                 null,
@@ -287,11 +333,6 @@ class OCMigrationSpreadsheet
                 $customCond
             );
             $itemCount = count($items);
-
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$className => [
-                'status' => 'success',
-                'update' => 'Pushing ' . $itemCount . ' contents',
-            ]]);
 
             if ($cli) {
                 $cli->output("Push $itemCount $className items in sheet $sheetTitle");
@@ -330,7 +371,7 @@ class OCMigrationSpreadsheet
                 $startAtRow = $this->getLastRowIndex($sheetTitle);
                 $endAtRow = $startAtRow + $itemCount;
                 $range = "$sheetTitle!R{$startAtRow}C1:R{$endAtRow}C$colCount";
-                $updateRows = $this->googleSheetService->spreadsheets_values->append(
+                $updateRows = (int)$this->googleSheetService->spreadsheets_values->append(
                     $this->spreadsheetId,
                     $range,
                     $body,
@@ -339,12 +380,13 @@ class OCMigrationSpreadsheet
             }
 
             if ($cli) {
-                $cli->output('Pushed ' . $updateRows . ' rows in sheet ' . $sheetTitle);
+                $cli->output('Written ' . $updateRows . ' rows in sheet ' . $sheetTitle);
             }
 
             $executionInfo[$className] = [
                 'status' => 'success',
-                'update' => $updateRows,
+                'action' => 'push',
+                'update' => 'Written ' . $updateRows . ' rows in range ' . $range,
                 'sheet' => $sheetTitle,
                 'range' => $range,
             ];
@@ -352,6 +394,7 @@ class OCMigrationSpreadsheet
             $message =  ($e instanceof \Google\Service\Exception) ? json_decode($e->getMessage())->error->message : $e->getMessage();
             $executionInfo[$className] = [
                 'status' => 'error',
+                'action' => 'push',
                 'message' => $message,
                 'sheet' => $sheetTitle,
             ];
@@ -374,11 +417,12 @@ class OCMigrationSpreadsheet
             throw new Exception('Wrong context');
         }
 
-        self::setCurrentStatus('pull', 'running', $options, []);
+        self::setCurrentStatus('pull', 'running', $options);
 
         $executionInfo = [];
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
             $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli));
+            self::appendMessageToCurrentStatus($executionInfo);
         }
 
         self::setCurrentStatus('pull', 'done', $options, $executionInfo);
@@ -393,6 +437,7 @@ class OCMigrationSpreadsheet
         if (!$className::canPull()) {
             $executionInfo[$className] = [
                 'status' => 'skipped',
+                'action' => 'pull',
                 'message' => '',
                 'class' => $className,
             ];
@@ -418,12 +463,14 @@ class OCMigrationSpreadsheet
 
             $executionInfo[$className] = [
                 'status' => 'success',
+                'action' => 'pull',
                 'update' => $count,
                 'sheet' => $sheetTitle,
             ];
         } catch (Throwable $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
+                'action' => 'pull',
                 'message' => $e->getMessage(),
                 'sheet' => $sheetTitle,
             ];
@@ -472,6 +519,7 @@ class OCMigrationSpreadsheet
         if (!$className::canImport()) {
             $executionInfo[$className] = [
                 'status' => 'skipped',
+                'action' => 'pull',
                 'message' => '',
                 'class' => $className,
             ];
@@ -526,6 +574,7 @@ class OCMigrationSpreadsheet
                     $executionInfo['errors'][$className][$item->attribute('_id')] =
                         [
                             'message' => $e->getMessage(),
+                            'action' => 'pull',
                             'trace' => $e->getTraceAsString(),
                             'payload' => $payload ?? null,
                         ];
@@ -534,6 +583,7 @@ class OCMigrationSpreadsheet
 
             $executionInfo[$className] = [
                 'status' => $count != $itemCount ? 'warning' : 'success',
+                'action' => 'pull',
                 'process' => $itemCount,
                 'create' => $created,
                 'update' => $updated,
@@ -542,6 +592,7 @@ class OCMigrationSpreadsheet
         } catch (Throwable $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
+                'action' => 'pull',
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'class' => $className,

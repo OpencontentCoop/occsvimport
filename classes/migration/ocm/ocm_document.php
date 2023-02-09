@@ -60,7 +60,7 @@ class ocm_document extends eZPersistentObject implements ocm_interface
             $object = eZContentObject::fetch($content->metadata['id']);
             if ($object instanceof eZContentObject){
 
-                $attributes = ['file_avviso', 'ammissione', 'criteri_file', 'tracce_file', 'graduatoria', ];
+                $attributes = ['file_avviso', 'ammissione', 'criteri_file', 'tracce_file', 'graduatoria', 'risposta', ];
                 foreach ($attributes as $attribute) {
                     $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl($object, $attribute);
                     if ($fileByAttribute) {
@@ -94,7 +94,7 @@ class ocm_document extends eZPersistentObject implements ocm_interface
 
         $hasOrganization = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
             $data = [];
-            $idList = ['servizio', 'ufficio', 'struttura',];
+            $idList = ['area', 'servizio', 'ufficio', 'struttura',];
             foreach ($idList as $id){
                 if (isset($firstLocalizedContentData[$id])){
                     foreach ($firstLocalizedContentData[$id]['content'] as $item){
@@ -413,9 +413,85 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                     'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                 ]; break;
-//            case 'interpellanza':
-//            case 'interrogazione':
-//            case 'modello':
+            case 'interrogazione':
+            case 'interpellanza':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero";
+                    },
+                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        return ucfirst($content->metadata->classIdentifier);
+                    },
+                    'full_description' => OCMigration::getMapperHelper('soggetti'),
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'other_information' => OCMigration::getMapperHelper('note'),
+                    'data_invio_uffici' => OCMigration::getMapperHelper('data_invio_uffici'),
+                    'data_giunta' => OCMigration::getMapperHelper('data_giunta'),
+                    'data_risposta_consigliere' => OCMigration::getMapperHelper('data_risposta_consigliere'),
+                    'giorni_interrogazione' => OCMigration::getMapperHelper('giorni_interrogazione'),
+                    'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
+                    'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
+                ]; break;
+            case 'mozione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+                        $anno = OCMigration::getMapperHelper('anno')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero";
+                    },
+                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        return ucfirst($content->metadata->classIdentifier);
+                    },
+                    'full_description' => OCMigration::getMapperHelper('soggetti'),
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'data_invio_uffici' => OCMigration::getMapperHelper('data_invio_uffici'),
+                    'data_giunta' => OCMigration::getMapperHelper('data_giunta'),
+                    'data_risposta_consigliere' => OCMigration::getMapperHelper('data_risposta_consigliere'),
+                    'giorni_interrogazione' => OCMigration::getMapperHelper('giorni_interrogazione'),
+                    'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
+                    'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
+                    'other_information' => OCMigration::getMapperHelper('note_aggiuntive'),
+                ]; break;
+            case 'modello':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Modulistica';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                    'other_information' => OCMigration::getMapperHelper('note'),
+                ]; break;
             case 'modulo':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -432,11 +508,46 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                     'publication_start_time' => OCMigration::getMapperHelper('data'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                    'other_information' => OCMigration::getMapperHelper('iter_approvazione'),
                 ]; break;
-//            case 'modulistica':
-//            case 'mozione':
-//            case 'normativa':
+            case 'modulistica':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'has_code' => OCMigration::getMapperHelper('codice'),
+                    'document_type' => function () {
+                        return 'Modulistica';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
+            case 'normativa':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Normativa';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('link'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ]; break;
             case 'ordinanza':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
@@ -477,8 +588,44 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
                 ]; break;
-//            case 'ordine_del_giorno':
-//            case 'parere':
+            case 'ordine_del_giorno':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $numero = OCMigration::getMapperHelper('numero')(
+                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                        );
+
+                        return "$numero";
+                    },
+                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        return 'Ordine del giorno';
+                    },
+                    'full_description' => OCMigration::getMapperHelper('soggetti'),
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'data_invio_uffici' => OCMigration::getMapperHelper('data_invio_uffici'),
+                    'data_giunta' => OCMigration::getMapperHelper('data_giunta'),
+                    'data_risposta_consigliere' => OCMigration::getMapperHelper('data_risposta_consigliere'),
+                    'giorni_interrogazione' => OCMigration::getMapperHelper('giorni_interrogazione'),
+                    'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
+                    'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
+                    'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
+                ]; break;
+            case 'parere':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('title'),
+                    'document_type' => function () {
+                        return 'Parere';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('description'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'other_information' => OCMigration::getMapperHelper('firma'),
+                ]; break;
             case 'piano_progetto':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -497,9 +644,9 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
                 ]; break;
-//            case 'procedura':
-//            case 'protocollo':
-//            case 'rapporto':
+//            case 'procedura': // solo consorzio 5
+//            case 'protocollo': // solo asia 1 borgochiese 2 condino 2 consorzio 4 dambel 1 molveno 1 nagotorbole 2
+//            case 'rapporto': // non usato
             case 'regolamento':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -530,7 +677,7 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                     'file' => OCMigration::getMapperHelper('file'),
                     'attachments' => $attachments,
                 ]; break;
-//            case 'trattamento':
+//            case 'trattamento': // npn utilizzato
             default:
                 $mapper = [];
         }
