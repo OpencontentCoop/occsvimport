@@ -297,6 +297,9 @@ trait ocm_trait
             'ruoli' => 'Ruoli',
             'incarichi' => 'Tipi di incarichi',
             'notizie' => 'Tipi di notizia',
+            'organizzazioni-private' => "Tipi di organizzazione privata",
+            'attivita' => "Tipo di attività",
+            'content-type' => 'Tipi di contenuto',
         ];
         if (!isset($identifiers[$identifier])){
             throw new Exception("Invalid voc identifier $identifier");

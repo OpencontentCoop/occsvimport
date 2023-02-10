@@ -161,6 +161,47 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         ];
     }
 
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            "Data di costituzione"
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Punti di contatt*' => [
+                'strict' => false,
+                'ref' => ocm_online_contact_point::getRangeRef()
+            ],
+            'Immagini' => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+            "Argomenti" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Allegati" => [
+                'strict' => true,
+                'ref' => ocm_document::getRangeRef()
+            ],
+            "Sedi" => [
+                'strict' => true,
+                'ref' => ocm_place::getRangeRef()
+            ],
+            "Tipo di attività" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('attivita'),
+            ],
+            "Categoria di organizzazione privata" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('organizzazioni-private'),
+            ],
+        ];
+    }
+
     public static function getColumnName(): string
     {
         return 'Nome*';

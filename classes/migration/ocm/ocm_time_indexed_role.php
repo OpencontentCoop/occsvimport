@@ -178,6 +178,42 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            "Data inizio incarico*",
+            "Data conclusione incarico",
+            "Data insediamento",
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Ruolo*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('ruoli'),
+            ],
+            "Tipo di incarico*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('incarichi'),
+            ],
+            "Unità organizzativa*" => [
+                'strict' => true,
+                'ref' => ocm_organization::getRangeRef()
+            ],
+            "Persona che ha il ruolo*" => [
+                'strict' => true,
+                'ref' => ocm_public_person::getRangeRef()
+            ],
+            "Atto di nomina" => [
+                'strict' => true,
+                'ref' => ocm_document::getRangeRef()
+            ],
+        ];
+    }
+
+
     public static function getColumnName(): string
     {
         return 'Titolo dell\'incarico';

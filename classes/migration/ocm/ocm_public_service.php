@@ -6,12 +6,12 @@ class ocm_public_service extends eZPersistentObject implements ocm_interface
 
     public static function canPush(): bool
     {
-        return OCMigration::discoverContext() === 'opencity';
+        return false;
     }
 
     public static function canExport(): bool
     {
-        return OCMigration::discoverContext() === 'opencity';
+        return false;
     }
 
     public static $fields = [

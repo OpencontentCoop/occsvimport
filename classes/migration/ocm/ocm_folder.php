@@ -61,6 +61,16 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Tipo di contenuto" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('content-type'),
+            ],
+        ];
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         // TODO: Implement fromSpreadsheet() method.

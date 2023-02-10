@@ -69,6 +69,16 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Rimappare in" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('content-type'),
+            ],
+        ];
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         // TODO: Implement fromSpreadsheet() method.

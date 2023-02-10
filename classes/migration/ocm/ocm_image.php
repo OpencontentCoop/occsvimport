@@ -87,6 +87,16 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Licenza di utilizzo*' => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('licenze'),
+            ],
+        ];
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         $item = new static();

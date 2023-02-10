@@ -151,7 +151,7 @@ class ocm_event extends eZPersistentObject implements ocm_interface
             'event_abstract' => false,
             'description' => OCMigration::getMapperHelper('text'),
             'image_file' => OCMigration::getMapperHelper('image/url'),
-            'image' => false, //@todo
+            'image' => function(){return '';}, //@todo
             'video' => false,
             'sub_event_of' => OCMigration::getMapperHelper('iniziativa'),
             'target_audience' => false,
@@ -227,6 +227,56 @@ class ocm_event extends eZPersistentObject implements ocm_interface
             "Numero massimo di posti" => $this->attribute('maximum_attendee_capacity'),
             "Parole chiave" => $this->attribute('event_content_keyword'),
             "Valutazione dell'evento" => $this->attribute('aggregate_rating'),
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Tipo di evento*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('eventi'),
+            ],
+            "Argomenti*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Immagini" => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+            "Iniziativa di cui fa parte" => [
+                'strict' => false,
+                'ref' => ocm_event::getRangeRef()
+            ],
+            "Contatti*" => [
+                'strict' => false,
+                'ref' => ocm_online_contact_point::getRangeRef()
+            ],
+            "Luogo dell'evento" => [
+                'strict' => false,
+                'ref' => ocm_place::getRangeRef()
+            ],
+            "Partecipano" => [
+                'strict' => false,
+                'ref' => ocm_public_person::getRangeRef()
+            ],
+            "Organizzato da" => $organizations = [
+                'strict' => false,
+                'ref' => ocm_private_organization::getRangeRef()
+            ],
+            "Patrocinato da" => $organizations,
+            "Sponsorizzato da" => $organizations,
+            "Persone o organizzazioni" => $organizations,
+            "Servizio di traduzione curato da" => $organizations,
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*",
+            "Descrizione"
         ];
     }
 

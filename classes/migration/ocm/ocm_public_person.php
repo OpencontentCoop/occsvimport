@@ -352,6 +352,20 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Punti di contatt*' => [
+                'strict' => false,
+                'ref' => ocm_online_contact_point::getRangeRef()
+            ],
+            'Immagini' => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+        ];
+    }
+
     public static function getColumnName(): string
     {
         return 'Nome completo';
