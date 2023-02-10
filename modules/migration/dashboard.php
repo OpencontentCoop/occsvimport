@@ -129,8 +129,11 @@ if ($http->hasGetVariable('action')) {
 
 if ($http->hasGetVariable('configure')) {
     $className = $http->getVariable('configure');
-    echo '<pre>';
-    print_r(OCMigrationSpreadsheet::instance()->configureSheet($className));
+    $addConditionalFormatRules = !$http->hasGetVariable('no-format');
+    $addDateValidations = $http->hasGetVariable('dates');
+    $addRangeValidations = $http->hasGetVariable('ranges');
+    $result = OCMigrationSpreadsheet::instance()->configureSheet($className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations);
+    echo '<pre>'.$result;
     eZExecution::cleanExit();
 }
 

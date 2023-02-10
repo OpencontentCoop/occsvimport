@@ -28,6 +28,11 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         'related_service',
     ];
 
+    public static function getSortField(): string
+    {
+        return 'title';
+    }
+
     public static function getSpreadsheetTitle(): string
     {
         return 'Avvisi - Notizie - Comunicati';

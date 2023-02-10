@@ -131,6 +131,11 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         return 'Identificativo*';
     }
 
+    public static function getSortField(): string
+    {
+        return 'legal_name';
+    }
+
     public function toSpreadsheet(): array
     {
         return [

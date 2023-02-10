@@ -8,6 +8,8 @@ interface ocm_interface
 
     public static function getColumnName(): string;
 
+    public static function getSortField(): string;
+
     public function toSpreadsheet(): array;
 
     public static function fromSpreadsheet($row): ocm_interface;

@@ -356,6 +356,11 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getSortField(): string
+    {
+        return 'legal_name';
+    }
+
     public function toSpreadsheet(): array
     {
         return [

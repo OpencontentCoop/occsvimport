@@ -151,6 +151,11 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         return 'Identificativo incarico*';
     }
 
+    public static function getSortField(): string
+    {
+        return 'person';
+    }
+
     public function toSpreadsheet(): array
     {
         return [

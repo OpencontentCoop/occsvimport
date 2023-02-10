@@ -9,6 +9,11 @@ trait ocm_trait
 {
     protected static $parentNodes = [];
 
+    public static function getSortField(): string
+    {
+        return 'name';
+    }
+
     protected function getOpencityFieldMapper(): array
     {
         return array_fill_keys(static::$fields, false);

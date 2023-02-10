@@ -322,6 +322,11 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getSortField(): string
+    {
+        return 'family_name';
+    }
+
     public function toSpreadsheet(): array
     {
         return [

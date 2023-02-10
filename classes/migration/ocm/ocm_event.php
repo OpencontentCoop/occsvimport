@@ -43,6 +43,11 @@ class ocm_event extends eZPersistentObject implements ocm_interface
         'aggregate_rating',
     ];
 
+    public static function getSortField(): string
+    {
+        return 'event_title';
+    }
+
     public static function getSpreadsheetTitle(): string
     {
         return 'Eventi';

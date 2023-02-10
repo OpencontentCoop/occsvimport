@@ -216,7 +216,7 @@ class OCMigrationSpreadsheet
         return self::$instance;
     }
 
-    public function configureSheet($className)
+    public function configureSheet($className, $addConditionalFormatRules = true, $addDateValidations = true, $addRangeValidations = true)
     {
         $sheetTitle = $className::getSpreadsheetTitle();
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
@@ -233,8 +233,6 @@ class OCMigrationSpreadsheet
 //        }
 
         $responses = [];
-        $addConditionalFormatRules = true;
-        $addDataValidations = true;
 
         $addConditionalFormatRulesRequests = [];
         if ($addConditionalFormatRules) {
@@ -327,12 +325,12 @@ class OCMigrationSpreadsheet
         }
 
         $setDataValidationRequests = [];
-        if ($addDataValidations){
+        if ($addDateValidations) {
             $dateValidationHeaders = $className::getDateValidationHeaders();
-            if (!empty($dateValidationHeaders)){
+            if (!empty($dateValidationHeaders)) {
                 $dateRanges = [];
                 foreach ($headers as $index => $header) {
-                    if (in_array($header, $dateValidationHeaders)){
+                    if (in_array($header, $dateValidationHeaders)) {
                         $setDataValidationRequests[] = new Google_Service_Sheets_Request([
                             'setDataValidation' => [
                                 'range' => [
@@ -351,15 +349,15 @@ class OCMigrationSpreadsheet
                                 ],
                             ]
                         ]);
-
                     }
                 }
             }
-
+        }
+        if ($addRangeValidations) {
             $rangeValidationHash = $className::getRangeValidationHash();
-            if (!empty($rangeValidationHash)){
+            if (!empty($rangeValidationHash)) {
                 foreach ($headers as $index => $header) {
-                    if (isset($rangeValidationHash[$header])){
+                    if (isset($rangeValidationHash[$header])) {
                         $userEnteredValue = $this->getColumnRange($rangeValidationHash[$header]['ref']);
                         if ($userEnteredValue) {
                             $setDataValidationRequests[] = new Google_Service_Sheets_Request([
@@ -387,26 +385,26 @@ class OCMigrationSpreadsheet
                     }
                 }
             }
-            if (!empty($setDataValidationRequests)) {
-                try {
-                    $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
-                        'requests' => $setDataValidationRequests
-                    ]);
-                    $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
-                        $this->spreadsheetId,
-                        $batchUpdateRequest
-                    )->toSimpleObject();
-                } catch (Exception $e) {
-                    $responses[] = json_decode($e->getMessage());
-                }
+        }
+
+        if (!empty($setDataValidationRequests)) {
+            try {
+                $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
+                    'requests' => $setDataValidationRequests
+                ]);
+                $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
+                    $this->spreadsheetId,
+                    $batchUpdateRequest
+                )->toSimpleObject();
+            } catch (Exception $e) {
+                $responses[] = json_decode($e->getMessage());
             }
         }
 
-
         return htmlentities(json_encode([
-            $responses,
-            $addConditionalFormatRulesRequests,
-            $setDataValidationRequests,
+            'reponses' => $responses,
+            'format' => $addConditionalFormatRulesRequests,
+            'validations' =>$setDataValidationRequests,
         ], JSON_PRETTY_PRINT));
     }
 
@@ -529,7 +527,7 @@ class OCMigrationSpreadsheet
                 $className::definition(),
                 null,
                 null,
-                ['_id' => 'asc'],
+                [$className::getSortField() => 'asc'],
                 null,
                 true,
                 false,
