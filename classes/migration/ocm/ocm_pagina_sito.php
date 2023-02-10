@@ -40,6 +40,11 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         return 'Pagine del sito';
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Nome';
+    }
+
     public static function getIdColumnLabel(): string
     {
         return "ID";

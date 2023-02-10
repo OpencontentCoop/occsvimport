@@ -220,25 +220,230 @@ class OCMigrationSpreadsheet
     {
         $sheetTitle = $className::getSpreadsheetTitle();
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
-//        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
-//        $range = "{$sheetTitle}!R1C1:R1C{$colCount}";
-//        $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
-//
-//        //$rule = new Google_Service_Sheets_AddConditionalFormatRuleRequest();
-//        $deleteRequest =  new \Google\Service\Sheets\DeleteConditionalFormatRuleRequest();
-//        $deleteRequest->setSheetId($sheet->getProperties()->getSheetId());
-//        $deleteRequest->setIndex(0);
-//        $request = new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest();
-//        $request->setRequests(['deleteConditionalFormatRuleRequest' => $deleteRequest]);
-//        $response = json_encode($request, JSON_PRETTY_PRINT);
+        $headers = $this->getHeaders($sheetTitle);
+        $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
 
-        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
-        foreach ($response->sheets as $sheetData){
-            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
-                return $sheetData;
+        $currentRules = [];
+//        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
+//        foreach ($response->sheets as $sheetData){
+//            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
+//                $currentRules = $sheetData;
+//                break;
+//            }
+//        }
+
+        $responses = [];
+        $addConditionalFormatRules = true;
+        $addDataValidations = true;
+
+        $addConditionalFormatRulesRequests = [];
+        if ($addConditionalFormatRules) {
+            $requiredRanges = [];
+            foreach ($headers as $index => $header) {
+                if (strpos($header, '*') !== false) {
+                    $requiredRanges[] = [
+                        'sheetId' => $sheet->getProperties()->getSheetId(),
+                        'startColumnIndex' => $index,
+                        'endColumnIndex' => $index + 1,
+                        'startRowIndex' => (self::$dataStartAtRow - 1),
+                        'endRowIndex' => $rowCount,
+                    ];
+                }
+            }
+            if (!empty($requiredRanges)) {
+                $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
+                    'addConditionalFormatRule' => [
+                        'rule' => [
+                            'ranges' => $requiredRanges,
+                            'booleanRule' => [
+                                'condition' => [
+                                    'type' => 'BLANK',
+                                ],
+                                'format' => [
+                                    'backgroundColorStyle' => ['rgbColor' => ['red' => 1]]
+                                ]
+                            ]
+                        ],
+                        'index' => 0
+                    ]
+                ]);
+            }
+
+            $internalLinkConditionalFormatHeaders = $className::getInternalLinkConditionalFormatHeaders();
+            if (!empty($internalLinkConditionalFormatHeaders)){
+                $internalLinkRanges = [];
+                foreach ($headers as $index => $header) {
+                    if (in_array($header, $internalLinkConditionalFormatHeaders)){
+                        $internalLinkRanges[] = [
+                            'sheetId' => $sheet->getProperties()->getSheetId(),
+                            'startColumnIndex' => $index,
+                            'endColumnIndex' => $index + 1,
+                            'startRowIndex' => (self::$dataStartAtRow - 1),
+                            'endRowIndex' => $rowCount,
+                        ];
+                    }
+                }
+                if (!empty($internalLinkRanges)) {
+                    $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
+                        'addConditionalFormatRule' => [
+                            'rule' => [
+                                'ranges' => $internalLinkRanges,
+                                'booleanRule' => [
+                                    'condition' => [
+                                        'type' => 'TEXT_CONTAINS',
+                                        'values' => [
+                                            ['userEnteredValue' => '<a href="/'],
+                                        ]
+                                    ],
+                                    'format' => [
+                                        'backgroundColorStyle' => ['rgbColor' => [
+                                            'red' => 1,
+                                            'green' => 0.549,
+                                            'blue' => 0
+                                        ]]
+                                    ]
+                                ]
+                            ],
+                            'index' => 0
+                        ]
+                    ]);
+                }
+            }
+
+            if (!empty($addConditionalFormatRulesRequests)) {
+                try {
+                    $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
+                        'requests' => $addConditionalFormatRulesRequests
+                    ]);
+                    $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
+                        $this->spreadsheetId,
+                        $batchUpdateRequest
+                    )->toSimpleObject();
+                } catch (Exception $e) {
+                    $responses[] = $e->getMessage();
+                }
+            }
+
+        }
+
+        $setDataValidationRequests = [];
+        if ($addDataValidations){
+            $dateValidationHeaders = $className::getDateValidationHeaders();
+            if (!empty($dateValidationHeaders)){
+                $dateRanges = [];
+                foreach ($headers as $index => $header) {
+                    if (in_array($header, $dateValidationHeaders)){
+                        $setDataValidationRequests[] = new Google_Service_Sheets_Request([
+                            'setDataValidation' => [
+                                'range' => [
+                                    'sheetId' => $sheet->getProperties()->getSheetId(),
+                                    'startColumnIndex' => $index,
+                                    'endColumnIndex' => $index + 1,
+                                    'startRowIndex' => (self::$dataStartAtRow - 1),
+                                    'endRowIndex' => $rowCount,
+                                ],
+                                'rule' => [
+                                    'strict' => true,
+                                    'condition' => [
+                                        'type' => 'DATE_IS_VALID',
+                                        'values' => []
+                                    ],
+                                ],
+                            ]
+                        ]);
+
+                    }
+                }
+            }
+
+            $rangeValidationHash = $className::getRangeValidationHash();
+            if (!empty($rangeValidationHash)){
+                foreach ($headers as $index => $header) {
+                    if (isset($rangeValidationHash[$header])){
+                        $userEnteredValue = $this->getColumnRange($rangeValidationHash[$header]['ref']);
+                        if ($userEnteredValue) {
+                            $setDataValidationRequests[] = new Google_Service_Sheets_Request([
+                                'setDataValidation' => [
+                                    'range' => [
+                                        'sheetId' => $sheet->getProperties()->getSheetId(),
+                                        'startColumnIndex' => $index,
+                                        'endColumnIndex' => $index + 1,
+                                        'startRowIndex' => (self::$dataStartAtRow - 1),
+                                        'endRowIndex' => $rowCount,
+                                    ],
+                                    'rule' => [
+                                        'strict' => $rangeValidationHash[$header]['strict'],
+                                        'showCustomUi' => true,
+                                        'condition' => [
+                                            'type' => 'ONE_OF_RANGE',
+                                            'values' => [
+                                                ['userEnteredValue' => $userEnteredValue]
+                                            ]
+                                        ],
+                                    ],
+                                ]
+                            ]);
+                        }
+                    }
+                }
+            }
+            if (!empty($setDataValidationRequests)) {
+                try {
+                    $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
+                        'requests' => $setDataValidationRequests
+                    ]);
+                    $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
+                        $this->spreadsheetId,
+                        $batchUpdateRequest
+                    )->toSimpleObject();
+                } catch (Exception $e) {
+                    $responses[] = json_decode($e->getMessage());
+                }
             }
         }
-        return null;
+
+
+        return htmlentities(json_encode([
+            $responses,
+            $addConditionalFormatRulesRequests,
+            $setDataValidationRequests,
+        ], JSON_PRETTY_PRINT));
+    }
+
+    private function getHeaders($sheetTitle): array
+    {
+        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+        $range = "{$sheetTitle}!R1C1:R1C{$colCount}";
+        $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
+        return $firstRow[0];
+    }
+
+    private function getColumnRange(array $ref): ?string
+    {
+        $sheet = $ref['sheet'];
+        $column = $ref['column'];
+        $startAt = $ref['start'];
+
+        $headers = $this->getHeaders($sheet);
+        $alphabeth = range('A', 'Z');
+        $letter = false;
+        foreach ($headers as $index => $header){
+            $prefix = '';
+            if ($index > 25){
+                $index = $index - 25;
+                $prefix = 'A';
+            }
+            if ($column == $header){
+                $letter = $prefix.$alphabeth[$index];
+            }
+        }
+
+        if ($letter){
+            return '=\'' . $sheet . '\'!$' . $letter . '$' . $startAt . ':$' . $letter . '$1000';
+        }
+
+        return false;
     }
 
     /**

@@ -47,6 +47,11 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
         return "Identificatore punto di contatto*";
     }
 
+    public static function getColumnName(): string
+    {
+        return "Titolo punto di contatto*";
+    }
+
     public function toSpreadsheet(): array
     {
         $contacts = json_decode($this->attribute('contact'), true);
@@ -71,6 +76,39 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
         $data['Url originale'] = $this->attribute('_original_url');
 
         return $data;
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        $contactType = [
+            'strict' => true,
+            'ref' => self::getVocabolaryRangeRef('contatti'),
+        ];
+        $contact = [
+            'strict' => true,
+            'ref' => self::getVocabolaryRangeRef('tipi-contatto'),
+        ];
+        return [
+            'Orari disponibilità telefonica' => [
+                'strict' => false,
+                'ref' => ocm_opening_hours_specification::getRangeRef()
+            ],
+            'Tipologia di contatto 1*' => $contactType,
+            'Tipologia di contatto 2' => $contactType,
+            'Tipologia di contatto 3' => $contactType,
+            'Tipologia di contatto 4' => $contactType,
+            'Tipologia di contatto 5' => $contactType,
+            'Tipo di contatto 1' => $contact,
+            'Tipo di contatto 2' => $contact,
+            'Tipo di contatto 3' => $contact,
+            'Tipo di contatto 4' => $contact,
+            'Tipo di contatto 5' => $contact,
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [];
     }
 
     private function formatContentValue($value)

@@ -380,6 +380,41 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Nome dell\'unità organizzativa*';
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Punti di contatto*' => [
+                'strict' => false,
+                'ref' => ocm_online_contact_point::getRangeRef()
+            ],
+            'Immagini*' => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+            "Argomento*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Orario per il pubblico" => [
+                'strict' => true,
+                'ref' => ocm_opening_hours_specification::getRangeRef()
+            ],
+            "Sede/i*" => [
+                'strict' => true,
+                'ref' => ocm_place::getRangeRef()
+            ],
+            "Tipo di organizzazione*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('organizzazioni'),
+            ],
+        ];
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         return new static();

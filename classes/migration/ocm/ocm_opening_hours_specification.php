@@ -35,6 +35,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         'opening_hours___sunday',
     ];
 
+
     protected function getOpencityFieldMapper(): array
     {
         return [
@@ -85,6 +86,11 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         return "Identificatore*";
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome*";
+    }
+
     public function toSpreadsheet(): array
     {
         return [
@@ -106,6 +112,31 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             'Motivo di chiusura' => $this->attribute('closure___reason'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+        ];
+    }
+
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            'Valido dal*',
+            'Valido fino al',
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            'Note',
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            'Stagionalità*' => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('stagionalita'),
+            ],
         ];
     }
 

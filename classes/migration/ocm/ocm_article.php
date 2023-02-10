@@ -33,6 +33,11 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         return 'Avvisi - Notizie - Comunicati';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Titolo della notizia*";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return 'Identificativo dell\'articolo*';
@@ -159,6 +164,56 @@ class ocm_article extends eZPersistentObject implements ocm_interface
             "Dataset" => $this->attribute('dataset'),
             "Tempo di lettura" => $this->attribute('reading_time'),
             "Riferimento al servizio pubblico" => $this->attribute('related_service'),
+        ];
+    }
+
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            "Data della notizia*",
+            "Data di scadenza"
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Tipo di notizia*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('notizie'),
+            ],
+            "Argomenti*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Immagini" => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+            "Persone" => [
+                'strict' => false,
+                'ref' => ocm_public_person::getRangeRef()
+            ],
+            "Luoghi" => [
+                'strict' => false,
+                'ref' => ocm_place::getRangeRef()
+            ],
+            "A cura di*" => [
+                'strict' => false,
+                'ref' => ocm_organization::getRangeRef()
+            ],
+            "Documenti allegati" => [
+                'strict' => false,
+                'ref' => ocm_document::getRangeRef()
+            ],
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*",
+            "Testo completo della notizia*"
         ];
     }
 

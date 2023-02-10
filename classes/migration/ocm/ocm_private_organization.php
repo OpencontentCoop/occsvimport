@@ -161,6 +161,11 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         ];
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Nome*';
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         // TODO: Implement fromSpreadsheet() method.

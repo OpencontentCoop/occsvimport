@@ -178,6 +178,11 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Titolo dell\'incarico';
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         return new static();

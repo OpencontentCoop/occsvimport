@@ -56,6 +56,11 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         return 'Immagini';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome*";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return "ID*";

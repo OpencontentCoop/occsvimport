@@ -691,6 +691,11 @@ class ocm_document extends eZPersistentObject implements ocm_interface
         return 'Documenti';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Titolo*";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return "Identificativo del documento*";
@@ -759,6 +764,85 @@ class ocm_document extends eZPersistentObject implements ocm_interface
             'Url originale' => $this->attribute('_original_url'),
         ];
     }
+
+    public static function getDateValidationHeaders(): array
+    {
+        return [
+            "Data di inizio validità",
+            "Data di fine validità",
+            "Data di inizio pubblicazione",
+            "Data di fine pubblicazione",
+            "Data di rimozione",
+            "Data di firma",
+            "Data di invio agli uffici",
+            "Data di passaggio in Giunta",
+            "Data di risposta al consigliere",
+            "Data trattazione/risposta in Consiglio",
+            "Data di scadenza delle iscrizioni",
+            "Data di conclusione del bando/progetto"
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Tipo di documento*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('documenti'),
+            ],
+            "Argomento*" => [
+                'strict' => false,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Licenza di distribuzione*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('licenze'),
+            ],
+            "Formati disponibili*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('formati'),
+            ],
+            "Ufficio responsabile del documento*" => [
+                'strict' => false,
+                'ref' => ocm_organization::getRangeRef()
+            ],
+            "Documenti collegati" => [
+                'strict' => false,
+                'ref' => ocm_document::getRangeRef()
+            ],
+            "Evento della vita" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('life-events'),
+            ],
+            "Evento aziendale" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('business-events'),
+            ],
+            "Immagine" => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef()
+            ],
+            "Interroganti" => [
+                'strict' => false,
+                'ref' => ocm_public_person::getRangeRef()
+            ],
+            "Servizi" => [
+                'strict' => false,
+                'ref' => ocm_public_service::getRangeRef()
+            ],
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*",
+            "Descrizione",
+            "Ulteriori informazioni",
+            "Riferimenti normativi",
+        ];
+    }
+
 
     public static function fromSpreadsheet($row): ocm_interface
     {

@@ -66,6 +66,11 @@ class ocm_file extends eZPersistentObject implements ocm_interface
         return 'File e file allegati';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome del file";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return 'ID';

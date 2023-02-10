@@ -254,4 +254,57 @@ trait ocm_trait
     {
         eZPersistentObject::removeObject(static::definition(), ["_id" => $id]);
     }
+
+    public static function getDateValidationHeaders(): array
+    {
+        return [];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [];
+    }
+
+    public static function getRangeRef(): array
+    {
+        return [
+            'sheet' => static::getSpreadsheetTitle(),
+            'column' => static::getColumnName(),
+            'start' => 3,
+        ];
+    }
+
+    public static function getVocabolaryRangeRef($identifier): array
+    {
+        $identifiers = [
+            'argomenti' => 'Argomenti',
+            'formati' => 'Formati',
+            'licenze' => 'Licenze',
+            'life-events' => 'Life Events',
+            'business-events' => 'Business',
+            'eventi' => 'Events',
+            'documenti' => 'Tipologia di documento',
+            'stagionalita' => 'Stagionalità',
+            'organizzazioni' => 'Tipo di struttura organizzativa ',
+            'luoghi' => 'Tipi di luogo',
+            'contatti' => 'Tipologia di contatto',
+            'tipi-contatto' => 'Tipo di contatto',
+            'ruoli' => 'Ruoli',
+            'incarichi' => 'Tipi di incarichi',
+            'notizie' => 'Tipi di notizia',
+        ];
+        if (!isset($identifiers[$identifier])){
+            throw new Exception("Invalid voc identifier $identifier");
+        }
+        return [
+            'sheet' => 'Vocabolari controllati',
+            'column' => $identifiers[$identifier],
+            'start' => 2,
+        ];
+    }
 }

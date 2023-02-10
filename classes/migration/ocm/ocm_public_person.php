@@ -352,6 +352,11 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Nome completo';
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         return new static();

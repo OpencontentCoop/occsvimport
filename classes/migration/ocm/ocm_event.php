@@ -53,6 +53,11 @@ class ocm_event extends eZPersistentObject implements ocm_interface
         return 'Identificativo evento*';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Titolo dell'evento*";
+    }
+
     protected function getOpencityFieldMapper(): array
     {
         return [

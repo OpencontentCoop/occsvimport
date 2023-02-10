@@ -37,6 +37,11 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
         return 'Cartelle';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return "ID";

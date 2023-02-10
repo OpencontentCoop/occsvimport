@@ -29,6 +29,11 @@ class ocm_banner extends eZPersistentObject implements ocm_interface
         return 'Banner';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome";
+    }
+
     public static function getIdColumnLabel(): string
     {
         return 'Identificativo del banner*';

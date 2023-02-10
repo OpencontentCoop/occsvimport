@@ -6,6 +6,8 @@ interface ocm_interface
 
     public static function getIdColumnLabel(): string;
 
+    public static function getColumnName(): string;
+
     public function toSpreadsheet(): array;
 
     public static function fromSpreadsheet($row): ocm_interface;

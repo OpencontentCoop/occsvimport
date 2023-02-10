@@ -122,6 +122,11 @@ class ocm_public_service extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getColumnName(): string
+    {
+        return 'Titolo del servizio*';
+    }
+
     public static function fromSpreadsheet($row): ocm_interface
     {
         // TODO: Implement fromSpreadsheet() method.

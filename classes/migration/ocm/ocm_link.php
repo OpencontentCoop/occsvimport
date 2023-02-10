@@ -35,6 +35,11 @@ class ocm_link extends eZPersistentObject implements ocm_interface
         return 'Identificativo del link*';
     }
 
+    public static function getColumnName(): string
+    {
+        return "Nome";
+    }
+
     public function toSpreadsheet(): array
     {
         return [
