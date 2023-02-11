@@ -250,7 +250,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
-
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
                 $hoursName = false;
                 $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
@@ -261,6 +262,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                     $hours->setAttribute('name', $hoursName);
                     $hours->setAttribute('stagionalita', "Unico");
                     $hours->setAttribute('note', $ricevimento);
+                    $hours->setNodeReference($node);
                     $hours->storeThis($options['is_update']);
                 }
 
@@ -296,6 +298,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 if ($hoursName) {
                     $contacts->setAttribute('phone_availability_time', $hoursName);
                 }
+                $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
 
                 return $contactsName;
@@ -368,6 +371,10 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 'strict' => false,
                 'ref' => ocm_image::getRangeRef()
             ],
+//            'Incarichi*' => [
+//                'strict' => false,
+//                'ref' => ocm_time_indexed_role::getRangeRef()
+//            ],
         ];
     }
 

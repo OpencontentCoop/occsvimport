@@ -51,6 +51,27 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    protected function getComunwebFieldMapper(): array
+    {
+        return [
+            'name' => function(Content $content){
+                return $content->data['ita-IT']['name']['content'] ?? '';
+            },
+            'de_name' => function(Content $content){
+                return $content->data['ger-DE']['name']['content'] ?? '';
+            },
+            'caption' => function(Content $content){
+                return $content->data['ita-IT']['caption']['content'] ?? '';
+            },
+            'de_caption' => function(Content $content){
+                return $content->data['ger-DE']['caption']['content'] ?? '';
+            },
+            'image___name' => OCMigration::getMapperHelper('image/name'),
+            'image___url' => OCMigration::getMapperHelper('image/url'),
+            'tags' => false,
+        ];
+    }
+
     public static function getSpreadsheetTitle(): string
     {
         return 'Immagini';

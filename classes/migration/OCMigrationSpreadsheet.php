@@ -129,6 +129,7 @@ class OCMigrationSpreadsheet
                 'pid' => getmypid(),
             ])
         );
+//        eZDebug::writeError($siteData->attribute('value'), __METHOD__);
         $siteData->store();
     }
 
@@ -145,6 +146,7 @@ class OCMigrationSpreadsheet
                     json_encode($status)
                 );
                 $siteData->store();
+//                eZDebug::writeError($siteData->attribute('value'), __METHOD__);
             }
         }
     }
@@ -178,19 +180,27 @@ class OCMigrationSpreadsheet
             eZDebug::writeError($command);
             exec($command);
             sleep(2);
-        }
 
-        if ($action !== 'reset') {
-            self::setCurrentStatus($action, 'running', $options);
             $executionInfo = [];
             foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-                $executionInfo[$className] = [
-                    'status' => 'running',
-                    'action' => $action,
-                    'update' => "In attesa di eseguire l'azione: $action...",
-                    'sheet' => '',
-                    'range' => '',
-                ];
+                $canMethod = 'can' . ucfirst($action);
+                if (method_exists($className, $canMethod) && $className::$canMethod()) {
+                    $executionInfo[$className] = [
+                        'status' => 'pending',
+                        'action' => $action,
+                        'update' => "In attesa di eseguire l'azione: $action...",
+                        'sheet' => '',
+                        'range' => '',
+                    ];
+                }else{
+                    $executionInfo[$className] = [
+                        'status' => 'success',
+                        'action' => $action,
+                        'update' => "Azione non eseguita per configurazione del sistema",
+                        'sheet' => '',
+                        'range' => '',
+                    ];
+                }
             }
             self::appendMessageToCurrentStatus($executionInfo);
         }
@@ -460,6 +470,7 @@ class OCMigrationSpreadsheet
     public function push(eZCLI $cli = null, array $options = []): array
     {
         if (self::getCurrentStatus('push')['status'] == 'running'){
+            if ($cli) $cli->output('Already running');
             return [];
         }
 
@@ -623,6 +634,7 @@ class OCMigrationSpreadsheet
     public function pull(eZCLI $cli = null, array $options = [])
     {
         if (self::getCurrentStatus('pull')['status'] == 'running'){
+            if ($cli) $cli->output('Already running');
             return [];
         }
 
@@ -822,6 +834,7 @@ class OCMigrationSpreadsheet
     public static function export(eZCLI $cli = null, array $options = [])
     {
         if (self::getCurrentStatus('export')['status'] == 'running'){
+            if ($cli) $cli->output('Already running');
             return [];
         }
 

@@ -83,7 +83,8 @@ class OCMigration extends eZPersistentObject
             'MainNodeOnly' => true,
             'ClassFilterType' => 'include',
             'ClassFilterArray' => $classIdentifiers,
-            'SortBy' => [['path_string', true]]
+            'SortBy' => [['path_string', true]],
+            'Limitation' => [],
         ];
 
         if (!empty($restrictSections)){
@@ -288,7 +289,6 @@ class OCMigration extends eZPersistentObject
                     $firstLocalizedContentLocale,
                     $options
                 ) use ($field, $subField) {
-
                     $localizedFields = [];
                     foreach ($content->data as $locale => $data){
                         $localizedFields[$locale] = $data[$field]['content'] ?? [];

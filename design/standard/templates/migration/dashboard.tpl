@@ -213,7 +213,7 @@
           }
 
           if (data.options) {
-            console.log(data.options)
+            // console.log(data.options)
             $.each(data.options, function (index, value) {
               if (index === 'class_filter') {
                 $('.actions input[name="Only"]').each(function () {
@@ -262,7 +262,7 @@
         var checkStatus = function (cb, context) {
           loader.show();
           $.getJSON(BaseUrl+'?status', function (data) {
-            console.log(data);
+            console.log(data.action, data.status, data);
             parseStatus(data);
             if ($.isFunction(cb)) {
               cb.call(context, data);
