@@ -8,7 +8,7 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
 
     public static function canPush(): bool
     {
-        return OCMigration::discoverContext() === 'opencity';
+        return true;
     }
 
     public static function canExport(): bool

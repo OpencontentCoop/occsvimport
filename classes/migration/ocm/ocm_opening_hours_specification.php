@@ -8,7 +8,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
 
     public static function canPush(): bool
     {
-        return OCMigration::discoverContext() === 'opencity';
+        return true;
     }
 
     public static function canExport(): bool

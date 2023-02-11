@@ -23,8 +23,8 @@
 </head>
 <body class="bg-primary">
 
+<div id="loader" style="display:none; position: fixed;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
 <div class="container my-5 bg-white rounded p-5 position-relative">
-    <div id="loader" style="display:none; position: absolute;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
     <div class="row">
         <div class="col-12">
             <h1>Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
@@ -67,25 +67,25 @@
                             <tr>
                                 <td><a href="#" class="btn btn-sm btn-info" id="CheckAll">Inverti selezione</a></td>
                                 <td></td>
-                                <td></td>
                             </tr>
                         {foreach $class_hash as $class => $name}
                             <tr>
-                                <td width="1" style="vertical-align: middle;white-space:nowrap">
+                                <td width="1" style="white-space:nowrap">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" checked="checked" value="{$class}" name="Only" id="{$class}">
-                                        <label class="form-check-label text-nowrap" for="{$class}">
+                                        <label class="form-check-label text-nowrap h5" style="cursor:pointer" for="{$class}">
                                             {$name|wash()}
                                         </label>
                                     </div>
+
+                                    <p class="mt-5">
+                                        <a href="#" title="Ripristina formattazioni condizionali" class="btn btn-outline-primary btn-sm" data-configuration="format" data-configure="{$class}"><span class="glyphicon glyphicon-adjust"></span></a>
+                                        <a href="#" title="Ripristina validazione date" class="btn btn-outline-primary btn-sm" data-configuration="date-validation" data-configure="{$class}"><span class="glyphicon glyphicon-calendar"></span></a>
+                                        <a href="#" title="Ripristina validazione vocabolari e relazioni" class="btn btn-outline-primary btn-sm" data-configuration="range-validation" data-configure="{$class}"><span class="glyphicon glyphicon-link"></span></a>
+                                    </p>
                                 </td>
                                 <td>
                                     <div class="col result" id="result_{$class}"></div>
-                                </td>
-                                <td width="1">
-                                    <p><a href="#" title="Ripristina formattazioni condizionali" class="btn btn-primary btn-sm" data-configuration="format" data-configure="{$class}"><span class="glyphicon glyphicon-adjust"></span></a></p>
-                                    <p><a href="#" title="Ripristina validazione date" class="btn btn-primary btn-sm" data-configuration="date-validation" data-configure="{$class}"><span class="glyphicon glyphicon-resize-small"></span></a></p>
-                                    <p><a href="#" title="Ripristina validazione vocabolari e relazioni" class="btn btn-primary btn-sm" data-configuration="range-validation" data-configure="{$class}"><span class="glyphicon glyphicon-link"></span></a></p>
                                 </td>
                             </tr>
                         {/foreach}
@@ -97,7 +97,7 @@
                         <div class="bg-light p-2 rounded border mx-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" checked="checked" value="update" name="isUpdate" id="isUpdate">
-                                <label class="form-check-label" for="isUpdate">
+                                <label class="form-check-label h5" for="isUpdate" style="cursor:pointer">
                                     <b>Non sovrascrivere i dati già elaborati</b>
                                 </label>
                             </div>
