@@ -109,6 +109,8 @@ class ocm_article extends eZPersistentObject implements ocm_interface
             return '';
         };
 
+        $options['remove_ezxml_embed'] = true;
+
         return [
             'title' => OCMigration::getMapperHelper('titolo'),
             'content_type' => function(){
