@@ -393,7 +393,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
     public static function getRangeValidationHash(): array
     {
         return [
-            'Punti di contatto*' => [
+            'Contatti*' => [
                 'strict' => false,
                 'ref' => ocm_online_contact_point::getRangeRef()
             ],
