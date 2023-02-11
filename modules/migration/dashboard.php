@@ -56,9 +56,9 @@ if ($http->hasVariable('datatable')) {
     $length = 100;//@todo $http->getVariable('length', 10);
     $start = 0; //@todo $http->getVariable('start', 0);
     if (in_array($class, $classes)) {
-        /** @var eZPersistentObject $class */
+        /** @var eZPersistentObject|ocm_interface $class */
         $rowCount =(int)$class::count($class::definition());
-        $rows = $class::fetchObjectList($class::definition(), null, null, ['_id' => 'asc'], ['limit' => $length, 'offset' => $start], false);
+        $rows = $class::fetchObjectList($class::definition(), null, null, [$class::getSortField() => 'asc'], ['limit' => $length, 'offset' => $start], false);
     }
     $data = [
         'draw' => $http->hasVariable('draw') ? ($http->variable('draw') + 1) : 0,
