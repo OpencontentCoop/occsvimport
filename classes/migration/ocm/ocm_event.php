@@ -274,6 +274,10 @@ class ocm_event extends eZPersistentObject implements ocm_interface
             "Sponsorizzato da" => $organizations,
             "Persone o organizzazioni" => $organizations,
             "Servizio di traduzione curato da" => $organizations,
+            "Destinatari*" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('popolazione'),
+            ]
         ];
     }
 
