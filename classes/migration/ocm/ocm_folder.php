@@ -64,6 +64,10 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
     public static function getRangeValidationHash(): array
     {
         return [
+            "Rimappare in" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('content-type'),
+            ],
             "Tipo di contenuto" => [
                 'strict' => true,
                 'ref' => self::getVocabolaryRangeRef('content-type'),

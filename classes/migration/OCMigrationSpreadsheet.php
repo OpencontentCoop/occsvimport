@@ -187,7 +187,7 @@ class OCMigrationSpreadsheet
                 $executionInfo[$className] = [
                     'status' => 'running',
                     'action' => $action,
-                    'update' => "Wait for $action...",
+                    'update' => "In attesa di eseguire l'azione: $action...",
                     'sheet' => '',
                     'range' => '',
                 ];
@@ -520,7 +520,7 @@ class OCMigrationSpreadsheet
 
             OCMigrationSpreadsheet::appendMessageToCurrentStatus([$className => [
                 'status' => 'running',
-                'update' => 'Preparing contents',
+                'update' => 'Preparazione dei contenuti...',
             ]]);
 
             $items = $className::fetchObjectList(
@@ -589,7 +589,7 @@ class OCMigrationSpreadsheet
             $executionInfo[$className] = [
                 'status' => 'success',
                 'action' => 'push',
-                'update' => 'Written ' . $updateRows . ' rows in range ' . $range,
+                'update' => 'Scritte ' . $updateRows . ' righe nel range ' . $range,
                 'sheet' => $sheetTitle,
                 'range' => $range,
             ];

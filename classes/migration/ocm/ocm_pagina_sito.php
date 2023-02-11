@@ -76,6 +76,10 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
                 'strict' => true,
                 'ref' => self::getVocabolaryRangeRef('content-type'),
             ],
+            "Tipo di contenuto" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('content-type'),
+            ],
         ];
     }
 

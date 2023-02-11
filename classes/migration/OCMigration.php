@@ -69,11 +69,14 @@ class OCMigration extends eZPersistentObject
         int $publishedBeforeOrAt = null
     ): array
     {
+        $this->debug('Fetching ' . implode(', ', $classIdentifiers) . $exclusionMessage . ' ... ');
+        $exclusionMessage .= ' *recupero dei contenuti di tipo: ' . implode(', ', $classIdentifiers);
+
         if (!empty($escludePathList)){
-            $exclusionMessage .= ' *excluding path ' . implode(', ', $escludePathList);
+            $exclusionMessage .= ' *escludendo i percorsi: ' . implode(', ', $escludePathList);
         }
         if (!empty($escludeRemoteIdPrefix)){
-            $exclusionMessage .= ' *excluding remote_id prefix ' . implode(', ', $escludeRemoteIdPrefix);
+            $exclusionMessage .= ' *escludendo i prefissi di remote_id: ' . implode(', ', $escludeRemoteIdPrefix);
         }
 
         $params = [
@@ -85,13 +88,16 @@ class OCMigration extends eZPersistentObject
 
         if (!empty($restrictSections)){
             $sectionIdList = [];
+            $sectionIdName = [];
             foreach ($restrictSections as $restrictSection){
                 if (is_numeric($restrictSection)){
                     $sectionIdList[] = (int)$restrictSection;
+                    $sectionIdName[] = (int)$restrictSection;
                 }else{
                     $section = eZSection::fetchByIdentifier($restrictSection);
                     if ($section instanceof eZSection){
                         $sectionIdList[] = (int)$section->attribute('id');
+                        $sectionIdName[] = $section->attribute('name');
                     }
                 }
             }
@@ -100,12 +106,12 @@ class OCMigration extends eZPersistentObject
                     'and',
                     ['section', 'in', $sectionIdList]
                 ];
-                $exclusionMessage .= ' *including only sections ' . implode(', ', $sectionIdList);
+                $exclusionMessage .= ' *includendo solo le sezioni: ' . implode(', ', $sectionIdName);
             }
         }
 
         if ($publishedAfter && $publishedBeforeOrAt) {
-            $exclusionMessage .= ' *including only contents published between ' . date('j/n/Y', $publishedAfter) . ' and ' . date('j/n/Y', $publishedBeforeOrAt);
+            $exclusionMessage .= ' *includendo solo i contenuti pubblicati tra il ' . date('j/n/Y', $publishedAfter) . ' e il ' . date('j/n/Y', $publishedBeforeOrAt);
             if (isset($params['AttributeFilter'])){
                 $params['AttributeFilter'][] = ['published', '>', $publishedAfter];
                 $params['AttributeFilter'][] = ['published', '<=', $publishedBeforeOrAt];
@@ -118,7 +124,6 @@ class OCMigration extends eZPersistentObject
             }
         }
 
-        $this->debug('Fetching ' . implode(', ', $classIdentifiers) . $exclusionMessage . ' ... ');
         $nodesGroupedByName = [];
         /** @var eZContentObjectTreeNode[] $nodes */
         $nodes = eZContentObjectTreeNode::subTreeByNodeID($params, 1);
@@ -560,7 +565,7 @@ class OCMigration extends eZPersistentObject
             OCMigrationSpreadsheet::appendMessageToCurrentStatus([$ocmClass => [
                 'status' => 'running',
                 'action' => 'export',
-                'update' => 'Evaluating ' . $count . ' contents... ' . $exclusionMessage,
+                'update' => 'Scansione di ' . $count . ' contenuti... ' . $exclusionMessage,
             ]]);
             $rows = 0;
             foreach ($nodes as $index => $node) {
@@ -585,7 +590,7 @@ class OCMigration extends eZPersistentObject
             OCMigrationSpreadsheet::appendMessageToCurrentStatus([$ocmClass => [
                 'status' => 'success',
                 'action' => 'export',
-                'update' => 'Exported ' . $rows . ' of '. $count . ' evaluated contents ' . $exclusionMessage,
+                'update' => 'Esportati ' . $rows . ' di '. $count . ' contenuti scansionati ' . $exclusionMessage,
             ]]);
         }
     }
