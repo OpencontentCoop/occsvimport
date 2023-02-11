@@ -375,11 +375,14 @@ class OCMigration extends eZPersistentObject
                                     );
                                     unset($outputHandler->OutputTags['embed']);
                                     $text = $outputHandler->outputText();
-                                    $text = str_replace('<div class=""></div>', '', $text);
                                     $text = str_replace('<div class="embed"></div>', '', $text);
-                                    return $text;
+                                    $contentValue = $text;
                                 }
                             }
+                            if (isset($options['ezxml_strip_tags'])) {
+                                $contentValue = strip_tags($contentValue);
+                            }
+                            $contentValue = str_replace('<div class=""></div>', '', $contentValue);
                             return $contentValue;
 
                         case eZGmapLocationType::DATA_TYPE_STRING:

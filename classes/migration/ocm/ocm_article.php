@@ -109,8 +109,6 @@ class ocm_article extends eZPersistentObject implements ocm_interface
             return '';
         };
 
-        $options['remove_ezxml_embed'] = true;
-
         return [
             'title' => OCMigration::getMapperHelper('titolo'),
             'content_type' => function(){
@@ -144,6 +142,12 @@ class ocm_article extends eZPersistentObject implements ocm_interface
             'reading_time' => false,
             'related_service' => false,
         ];
+    }
+
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        $options['remove_ezxml_embed'] = true;
+        return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
     }
 
     public function toSpreadsheet(): array

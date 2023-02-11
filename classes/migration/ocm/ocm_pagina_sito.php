@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Api\Values\Content;
+
 class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
 {
     use ocm_trait;
@@ -33,6 +35,7 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         'image___url',
         'gps',
         'riferimento',
+        'files',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -50,6 +53,50 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         return "ID";
     }
 
+    protected function getComunwebFieldMapper(): array
+    {
+        $attachments = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            $data = [];
+            $object = eZContentObject::fetch($content->metadata['id']);
+            if ($object instanceof eZContentObject){
+
+                /** @var eZContentObject[] $embedList */
+                $embedList = $object->relatedContentObjectList();
+                foreach ($embedList as $embed){
+                    if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])){
+                        ocm_file::removeById($embed->attribute('remote_id'));
+                        $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                        if ($url){
+                            $data[] = $url;
+                        }
+                    }
+                }
+            }
+            $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+            foreach ($attachments as $attachment){
+                ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                $url = OCMigrationComunweb::getFileAttributeUrl($attachment);
+                if ($url){
+                    $data[] = $url;
+                }
+            }
+
+            return implode(PHP_EOL, $data);
+        };
+
+        $mapper = array_fill_keys(static::$fields, false);
+        $mapper['files'] = $attachments;
+
+        return $mapper;
+    }
+
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    {
+        $options['remove_ezxml_embed'] = true;
+//        $options['ezxml_strip_tags'] = true;
+        return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
+    }
+
     public function toSpreadsheet(): array
     {
         $address = json_decode($this->attribute('gps'), true);
@@ -64,6 +111,7 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
             'Indirizzo' => $address['address'],
             "Latitudine e longitudine" => $address['latitude'] . ' ' . $address['longitude'],
             'Riferimento' => $this->attribute('riferimento'),
+            "File allegati" => $this->attribute('files'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
         ];
