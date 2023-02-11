@@ -292,7 +292,7 @@ trait ocm_trait
             'licenze' => 'Licenze',
             'life-events' => 'Life Events',
             'business-events' => 'Business',
-            'eventi' => 'Events',
+            'eventi' => 'Tematiche eventi',
             'documenti' => 'Tipologia di documento',
             'stagionalita' => 'Stagionalità',
             'organizzazioni' => 'Tipo di struttura organizzativa ',
@@ -305,6 +305,7 @@ trait ocm_trait
             'organizzazioni-private' => "Tipi di organizzazione privata",
             'attivita' => "Tipo di attività",
             'content-type' => 'Tipi di contenuto',
+            'popolazione' => 'Fasce generali di popolazione'
         ];
         if (!isset($identifiers[$identifier])){
             throw new Exception("Invalid voc identifier $identifier");
