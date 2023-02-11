@@ -67,6 +67,7 @@
                             <tr>
                                 <td><a href="#" class="btn btn-sm btn-info" id="CheckAll">Inverti selezione</a></td>
                                 <td></td>
+                                <td></td>
                             </tr>
                         {foreach $class_hash as $class => $name}
                             <tr>
@@ -80,6 +81,11 @@
                                 </td>
                                 <td>
                                     <div class="col result" id="result_{$class}"></div>
+                                </td>
+                                <td width="1">
+                                    <p><a href="#" title="Ripristina formattazioni condizionali" class="btn btn-primary btn-sm" data-configuration="format" data-configure="{$class}"><span class="glyphicon glyphicon-adjust"></span></a></p>
+                                    <p><a href="#" title="Ripristina validazione date" class="btn btn-primary btn-sm" data-configuration="date-validation" data-configure="{$class}"><span class="glyphicon glyphicon-resize-small"></span></a></p>
+                                    <p><a href="#" title="Ripristina validazione vocabolari e relazioni" class="btn btn-primary btn-sm" data-configuration="range-validation" data-configure="{$class}"><span class="glyphicon glyphicon-link"></span></a></p>
                                 </td>
                             </tr>
                         {/foreach}
@@ -98,13 +104,15 @@
                         </div>
                     </div>
 
+                    <div class="text-center">
                     {if $context}
-                        <a href="#" class="btn btn-info" data-action="export"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Esporta dati</a>
-                        <a href="#" class="btn btn-info" data-action="push"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Scrivi spreadsheet</a>
+                        <a href="#" class="btn btn-primary btn-lg" data-action="export"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-download"></span> Esporta dati</a>
+                        <a href="#" class="btn btn-primary btn-lg" data-action="push"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-upload"></span> Scrivi spreadsheet</a>
                     {else}
-                        <a href="#" class="btn btn-info" data-action="pull"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Leggi spreadsheet</a>
-                        <a href="#" class="btn btn-info" data-action="import"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Importa dati</a>
+                        <a href="#" class="btn btn-primary btn-lg" data-action="pull"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Leggi spreadsheet</a>
+                        <a href="#" class="btn btn-primary btn-lg" data-action="import"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Importa dati</a>
                     {/if}
+                    </div>
                 </div>
             {else}
                 <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
@@ -302,7 +310,22 @@
               parseStatus(data);
             });
           }
-        })
+        });
+
+        $('[data-configure]').on('click', function (e) {
+          e.preventDefault();
+          loader.show();
+          var self = $(this);
+          var className = self.data('configure');
+          var configuration = self.data('configuration');
+          $.getJSON(BaseUrl, {
+            configure: className,
+            configuration: configuration
+          }, function (data) {
+            console.log(data);
+            loader.hide();
+          });
+        });
 
         checkStatus(function () {
           $('.actions').removeClass('d-none');

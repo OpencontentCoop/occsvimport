@@ -218,6 +218,9 @@ class OCMigrationSpreadsheet
 
     public function configureSheet($className, $addConditionalFormatRules = true, $addDateValidations = true, $addRangeValidations = true)
     {
+        if (strpos($className, 'ocm_') === false){
+            return false;
+        }
         $sheetTitle = $className::getSpreadsheetTitle();
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
         $headers = $this->getHeaders($sheetTitle);
@@ -316,7 +319,8 @@ class OCMigrationSpreadsheet
                     $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
                         $this->spreadsheetId,
                         $batchUpdateRequest
-                    )->toSimpleObject();
+                    );
+//                    )->toSimpleObject();
                 } catch (Exception $e) {
                     $responses[] = $e->getMessage();
                 }
@@ -395,17 +399,23 @@ class OCMigrationSpreadsheet
                 $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
                     $this->spreadsheetId,
                     $batchUpdateRequest
-                )->toSimpleObject();
+                );
+//                )->toSimpleObject();
             } catch (Exception $e) {
                 $responses[] = json_decode($e->getMessage());
             }
         }
 
-        return htmlentities(json_encode([
+        return [
+            'args' => func_get_args(),
             'reponses' => $responses,
+            'requests' => [
+                'conditional' => $addConditionalFormatRulesRequests,
+                'validation' => $setDataValidationRequests,
+            ],
             'format' => $addConditionalFormatRulesRequests,
             'validations' =>$setDataValidationRequests,
-        ], JSON_PRETTY_PRINT));
+        ];
     }
 
     private function getHeaders($sheetTitle): array

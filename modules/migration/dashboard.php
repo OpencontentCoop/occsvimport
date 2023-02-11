@@ -128,12 +128,15 @@ if ($http->hasGetVariable('action')) {
 }
 
 if ($http->hasGetVariable('configure')) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
     $className = $http->getVariable('configure');
-    $addConditionalFormatRules = !$http->hasGetVariable('no-format');
-    $addDateValidations = $http->hasGetVariable('dates');
-    $addRangeValidations = $http->hasGetVariable('ranges');
+    $addConditionalFormatRules = $http->getVariable('configuration') === 'format';
+    $addDateValidations = $http->getVariable('configuration') === 'date-validation';
+    $addRangeValidations = $http->getVariable('configuration') === 'range-validation';
+    //$result = var_export([$className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations], true);
     $result = OCMigrationSpreadsheet::instance()->configureSheet($className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations);
-    echo '<pre>'.$result;
+    echo json_encode($result);
     eZExecution::cleanExit();
 }
 
