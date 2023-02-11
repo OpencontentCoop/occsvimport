@@ -668,7 +668,7 @@ class ocm_document extends eZPersistentObject implements ocm_interface
                 ]; break;
             case 'statuto':
                 $mapper = [
-                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'name' => OCMigration::getMapperHelper('name'),
                     'document_type' => function () {
                         return 'Statuto';
                     },
