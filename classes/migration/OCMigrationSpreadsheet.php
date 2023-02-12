@@ -28,7 +28,7 @@ class OCMigrationSpreadsheet
      */
     private $spreadsheet;
 
-    private $dataHash;
+    private $dataHash = [];
 
     private static $dataStartAtRow = 4;
 
@@ -531,6 +531,7 @@ class OCMigrationSpreadsheet
             $startCleanAtRow = self::$dataStartAtRow;
             $range = "$sheetTitle!R{$startCleanAtRow}C1:R{$rowCount}C$colCount";
 
+            $ignoreRows = [];
             $customCond = null;
             if (!$override) {
                 $ignoreRows = array_column($this->getDataHash($sheetTitle), $className::getIdColumnLabel());
@@ -594,7 +595,7 @@ class OCMigrationSpreadsheet
                         $params
                     )->getUpdatedRows();
                 } else {
-                    $startAtRow = $this->getLastRowIndex($sheetTitle);
+                    $startAtRow = count($ignoreRows) + self::$dataStartAtRow;
                     $endAtRow = $startAtRow + $itemCount;
                     $range = "$sheetTitle!R{$startAtRow}C1:R{$endAtRow}C$colCount";
                     $updateRows = (int)$this->googleSheetService->spreadsheets_values->append(
@@ -872,17 +873,12 @@ class OCMigrationSpreadsheet
 
     private function getDataHash($sheetTitle)
     {
-        if ($this->dataHash === null) {
-            $this->dataHash = $this->spreadsheet->getSheetDataHash($sheetTitle);
+        if (!isset($this->dataHash[$sheetTitle])) {
+            $this->dataHash[$sheetTitle] = $this->spreadsheet->getSheetDataHash($sheetTitle);
             // @todo ciclo for su $dataStartAtRow - 2
-            array_shift($this->dataHash); // help text
-            array_shift($this->dataHash); // example
+            array_shift($this->dataHash[$sheetTitle]); // help text
+            array_shift($this->dataHash[$sheetTitle]); // example
         }
-        return $this->dataHash;
-    }
-
-    private function getLastRowIndex($sheetTitle): int
-    {
-        return count($this->getDataHash($sheetTitle)) + self::$dataStartAtRow;
+        return $this->dataHash[$sheetTitle];
     }
 }
