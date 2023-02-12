@@ -30,7 +30,7 @@ ksort($classHash);
 $classHash = array_flip($classHash);
 $tpl->setVariable('class_hash', $classHash);
 
-if ($http->hasPostVariable('migration_spreadsheet')) {
+if ($http->hasPostVariable('migration_spreadsheet') && $http->postVariable('migration_spreadsheet') !== "") {
     try {
         $spreadsheetId = OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri(
             $http->postVariable('migration_spreadsheet')
