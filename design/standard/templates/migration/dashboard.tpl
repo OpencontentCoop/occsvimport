@@ -27,17 +27,17 @@
 <div class="container my-5 bg-white rounded p-5 position-relative">
     <div class="row">
         <div class="col-12">
-            <h1>Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
+            <h1 class="mb-5">Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
             {if $migration_spreadsheet}
+                <h2 class="my-4">Impostazioni spreadsheet</h2>
             {else}
                 {if $context}
-                    <p>Imposta il google spreadsheet per esportare i dati</p>
+                    <h2>Imposta il google spreadsheet per esportare i dati</h2>
                 {else}
-                    <p>Imposta il google spreadsheet per importare i dati</p>
+                    <h2>Imposta il google spreadsheet per importare i dati</h2>
                 {/if}
             {/if}
 
-            <h2 class="my-4">Impostazioni spreadsheet</h2>
             <div class="alert alert-danger{if $error_spreadsheet|not} d-none{/if}">
                 {if $error_spreadsheet}{$error_spreadsheet|wash()}{/if}
             </div>
@@ -65,8 +65,7 @@
                     <td class="container options mb-4">
                         <table class="table">
                             <tr>
-                                <td><a href="#" class="btn btn-sm btn-info" id="CheckAll">Inverti selezione</a></td>
-                                <td></td>
+                                <th colspan="2"><a href="#" class="btn btn-sm btn-link" id="CheckAll" title="Inverti selezione"><span class="glyphicon glyphicon-check"></span> Inverti selezione</a></th>
                             </tr>
                         {foreach $class_hash as $class => $name}
                             <tr>
@@ -117,11 +116,15 @@
             {else}
                 <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
                     <div class="form-group">
-                        <label for="migration_spreadsheet">Inserisci l'url del google spreadsheet</label>
-                        <p class="text-muted">Lo spreadsheet deve essere condiviso con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</p>
-                        <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" />
+                        <ol class="lead">
+                            <li>Crea un nuovo google spreadsheet copiandolo dal <a href="https://link.opencontent.it/new-kit-{$context|wash()}" target="_blank">modello</a></li>
+                            <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
+                            <li>Incolla l'url del tuo google spreadsheet</li>
+                        </ol>
+                        <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
+                        <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" placeholder="Inserisci qui l'url del tuo google spreadsheet"/>
                     </div>
-                    <input type="submit" class="btn btn-success" value="Salva"/>
+                    <input type="submit" class="btn btn-success btn-lg" value="Salva"/>
                     <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
                 </form>
             {/if}
