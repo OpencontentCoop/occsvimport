@@ -117,8 +117,10 @@
                 <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
                     <div class="form-group">
                         <ol class="lead">
-                            <li>Crea un nuovo google spreadsheet copiandolo dal <a href="https://link.opencontent.it/new-kit-{$context|wash()}" target="_blank">modello</a></li>
-                            <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
+                            {if $context}
+                                <li>Crea un nuovo google spreadsheet copiandolo dal <a href="https://link.opencontent.it/new-kit-{$context|wash()}" target="_blank">modello</a></li>
+                                <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
+                            {/if}
                             <li>Incolla l'url del tuo google spreadsheet</li>
                         </ol>
                         <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
