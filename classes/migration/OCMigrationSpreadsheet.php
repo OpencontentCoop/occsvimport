@@ -572,35 +572,38 @@ class OCMigrationSpreadsheet
                 $values[] = array_values($value);
             }
 
-            $body = new Google_Service_Sheets_ValueRange([
-                'values' => $values,
-            ]);
-            $params = [
-                'valueInputOption' => 'USER_ENTERED',
+            $updateRows = 0;
+            if (!empty($values)) {
+                $body = new Google_Service_Sheets_ValueRange([
+                    'values' => $values,
+                ]);
+                $params = [
+                    'valueInputOption' => 'USER_ENTERED',
 //                'valueInputOption' => 'RAW',
-            ];
+                ];
 
-            if ($override) {
-                // cancellare valori non formule
-                $clear = new Google_Service_Sheets_ClearValuesRequest();
-                $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
+                if ($override) {
+                    // cancellare valori non formule
+                    $clear = new Google_Service_Sheets_ClearValuesRequest();
+                    $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
 
-                $updateRows = $this->googleSheetService->spreadsheets_values->update(
-                    $this->spreadsheetId,
-                    $range,
-                    $body,
-                    $params
-                )->getUpdatedRows();
-            } else {
-                $startAtRow = $this->getLastRowIndex($sheetTitle);
-                $endAtRow = $startAtRow + $itemCount;
-                $range = "$sheetTitle!R{$startAtRow}C1:R{$endAtRow}C$colCount";
-                $updateRows = (int)$this->googleSheetService->spreadsheets_values->append(
-                    $this->spreadsheetId,
-                    $range,
-                    $body,
-                    $params
-                )->getUpdates()->getUpdatedRows();
+                    $updateRows = $this->googleSheetService->spreadsheets_values->update(
+                        $this->spreadsheetId,
+                        $range,
+                        $body,
+                        $params
+                    )->getUpdatedRows();
+                } else {
+                    $startAtRow = $this->getLastRowIndex($sheetTitle);
+                    $endAtRow = $startAtRow + $itemCount;
+                    $range = "$sheetTitle!R{$startAtRow}C1:R{$endAtRow}C$colCount";
+                    $updateRows = (int)$this->googleSheetService->spreadsheets_values->append(
+                        $this->spreadsheetId,
+                        $range,
+                        $body,
+                        $params
+                    )->getUpdates()->getUpdatedRows();
+                }
             }
 
             if ($cli) {
