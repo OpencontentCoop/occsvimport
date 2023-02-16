@@ -50,7 +50,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
     }
     protected function getComunwebSindacoFieldMapper(): array
     {
-        throw new Exception('NYI');
+        return []; //@todo
     }
 
     protected function getComunwebAmministrativaFieldMapper(): array
