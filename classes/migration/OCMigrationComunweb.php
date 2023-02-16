@@ -139,8 +139,11 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
      * @param eZContentObjectTreeNode $node
      * @return eZContentObjectTreeNode[]
      */
-    public static function getAttachmentsByNode(eZContentObjectTreeNode $node): array
+    public static function getAttachmentsByNode($node): array
     {
+        if (!$node instanceof eZContentObjectTreeNode){
+            return [];
+        }
         return $node->subTree([
             'Depth' => 1,
             'DepthOperator' => 'eq',

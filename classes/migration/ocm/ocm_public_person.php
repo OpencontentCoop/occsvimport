@@ -157,16 +157,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
         if ($node->classIdentifier() === 'politico'){
             return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
         }
-        if ($node->classIdentifier() === 'Ruolo'){
-            return $this->fromNode($node, $this->getComunwebFieldMapperFromRuolo(), $options);
-        }
 
         return null;
-    }
-
-    protected function getComunwebFieldMapperFromRuolo(): array
-    {
-        throw new Exception('NYI');
     }
 
     protected function getComunwebFieldMapperFromDipendente(): array

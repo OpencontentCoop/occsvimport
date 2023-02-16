@@ -52,7 +52,29 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 
     protected function getComunwebFieldMapperFromRuolo(): array
     {
-        return [];
+        return [
+            'label' => OCMigration::getMapperHelper('titolo'),
+            'person' => OCMigration::getMapperHelper('utente'),
+            'role' => OCMigration::getMapperHelper('ruolo'),
+            'type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                $personClass = $firstLocalizedContentData['utente']['content'][0]['classIdentifier'] ?? false;
+                return $personClass === 'dipendente' ? 'Amministrativo' : 'Politico';
+            },
+            'for_entity' => OCMigration::getMapperHelper('struttura_di_riferimento'),
+            'compensi' => false,
+            'importi' => false,
+            'start_time' => false,
+            'end_time' => false,
+            'data_insediamento' => false,
+            'atto_nomina' => OCMigration::getMapperHelper('atti'),
+            'competences' => false,
+            'delegations' => false,
+            'organizational_position' => false,
+            'incarico_dirigenziale' => false,
+            'ruolo_principale' => false,
+            'priorita' => false,
+            'notes' => false,
+        ];
     }
 
     protected function getComunwebFieldMapperFromDipendente(): array
