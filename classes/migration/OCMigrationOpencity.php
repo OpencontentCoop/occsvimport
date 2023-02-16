@@ -19,7 +19,7 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
         $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_opening_hours_specification', ['opening_hours_specification']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_online_contact_point', ['online_contact_point']);
-        $this->fillByType($namesFilter, $isUpdate, 'ocm_document', ['document']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_document', ['document'], [], ['at_'], ['standard']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['place']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_organization', [
             'administrative_area',
@@ -32,6 +32,12 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
             'politico',
         ]);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_time_indexed_role', ['time_indexed_role']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_article', ['article']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_banner', ['banner']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_event', ['event']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_link', ['link']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_private_organization', ['private_organization']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_public_organization', ['public_organization']);
     }
 
     /**

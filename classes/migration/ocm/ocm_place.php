@@ -126,6 +126,22 @@ class ocm_place extends eZPersistentObject implements ocm_interface
         return 'Nome del luogo*';
     }
 
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            'Descrizione breve*',
+            'Descrizione estesa',
+            "Ulteriori informazioni",
+        ];
+    }
+
+    public static function getMax160CharConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*"
+        ];
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [

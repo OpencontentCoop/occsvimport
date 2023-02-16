@@ -57,7 +57,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             'abstract' => false,
             'image' => false,
             'bio' => false,
-            'has_contact_point' => $this->getOpencityFieldMapperFromPolitico()['has_online_contact_point'],
+            'has_contact_point' => $this->getOpencityFieldMapperFromPolitico()['has_contact_point'],
             'curriculum' => OCMigration::getMapperHelper('curriculum_vitae'),
             'situazione_patrimoniale' => false,
             'dichiarazioni_patrimoniali_soggetto' => false,
@@ -76,12 +76,12 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     protected function getOpencityFieldMapperFromPolitico(): array
     {
         return [
-            'given_name' => OCMigration::getMapperHelper('nome'),
-            'family_name' => OCMigration::getMapperHelper('cognome'),
+            'given_name' => OCMigration::getMapperHelper('given_name'),
+            'family_name' => OCMigration::getMapperHelper('family_name'),
             'abstract' => false,
             'image' => false,
             'bio' => false,
-            'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
 
@@ -349,6 +349,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             "Ulteriori informazioni" => $this->attribute('notes'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+            'Incarichi*' => '=VLOOKUP("'.$this->attribute('family_name').' '.$this->attribute('given_name').'";PersoneIncarichi;1;FALSE)'
         ];
     }
 
@@ -367,6 +368,20 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 //                'strict' => false,
 //                'ref' => ocm_time_indexed_role::getRangeRef()
 //            ],
+        ];
+    }
+
+    public static function getMax160CharConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve"
+        ];
+    }
+
+    public static function getUrlValidationHeaders(): array
+    {
+        return [
+            "Curriculum vitae",
         ];
     }
 

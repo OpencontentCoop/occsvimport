@@ -5,6 +5,11 @@ use Opencontent\Opendata\Api\Values\Content;
 
 class OCMigration extends eZPersistentObject
 {
+    final public static function version()
+    {
+        return '1.1.0';
+    }
+
     /**
      * @param string|null $context
      * @return OCMigrationComunweb|OCMigrationOpencity
@@ -262,6 +267,20 @@ class OCMigration extends eZPersistentObject
     {
         switch ($field) {
 
+            case 'has_logo___name':
+                return function (Content $content, $firstLocalizedContentData) {
+                    $contentValue = $firstLocalizedContentData['has_logo']['content'] ?? false;
+                    return $contentValue ? $contentValue['filename'] : '';
+                };
+
+            case 'has_logo___url':
+                return function (Content $content, $firstLocalizedContentData) {
+                    $contentValue = $firstLocalizedContentData['has_logo']['content'] ?? false;
+                    $url = $contentValue ? $contentValue['url'] : '';
+                    eZURI::transformURI($url, false, 'full');
+                    return $contentValue ? $url : '';
+                };
+
             case 'image/name':
                 return function (Content $content, $firstLocalizedContentData) {
                     $contentValue = $firstLocalizedContentData['image']['content'];
@@ -391,13 +410,15 @@ class OCMigration extends eZPersistentObject
 
                         case OCEventType::DATA_TYPE_STRING:
                             if ($subField === 'ical'){
-                                return $contentValue['input'];
+                                return $contentValue['input']['recurrencePattern'];
                             }
                             if ($subField === 'events'){
                                 $events = $contentValue['events'];
                                 $data = [];
                                 foreach ($events as $event){
-                                    $data[] = $event['start'] . ' ' . $event['end'];
+                                    $data[] = date('j/n/Y H:i', strtotime($event['start']))
+                                        . ' - ' .
+                                        date('j/n/Y H:i', strtotime($event['end']));
                                 }
                                 return implode(PHP_EOL, $data);
                             }

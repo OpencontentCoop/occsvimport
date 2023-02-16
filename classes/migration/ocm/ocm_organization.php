@@ -390,6 +390,23 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         return 'Nome dell\'unità organizzativa*';
     }
 
+    public static function getMax160CharConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*"
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            'Descrizione breve*',
+            'Descrizione',
+            'Competenze*',
+            'Ulteriori informazioni',
+        ];
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
@@ -397,17 +414,13 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 'strict' => false,
                 'ref' => ocm_online_contact_point::getRangeRef()
             ],
-            'Immagini*' => [
+            'Immagine' => [
                 'strict' => false,
                 'ref' => ocm_image::getRangeRef()
             ],
-            "Argomento*" => [
+            "Argomenti" => [
                 'strict' => true,
                 'ref' => self::getVocabolaryRangeRef('argomenti'),
-            ],
-            "Orario per il pubblico" => [
-                'strict' => true,
-                'ref' => ocm_opening_hours_specification::getRangeRef()
             ],
             "Sede/i*" => [
                 'strict' => true,

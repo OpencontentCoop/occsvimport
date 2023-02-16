@@ -18,6 +18,13 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
             'classificazioni',
             'amministrazione_trasparente'
         ];
+        $escludeRemoteIdPrefix = [
+            'at_',
+            'riva_',
+            'ledro_',
+            'levico_',
+            'mori_',
+        ];
         $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image'], $escludePathList);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_file', ['file', 'file_pdf'], $escludePathList);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_pagina_sito', ['pagina_sito'], $escludePathList);
@@ -74,7 +81,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 'trattamento',
             ],
             $escludePathList,
-            ['at_']
+            $escludeRemoteIdPrefix
         );
 
         $this->fillByType(
@@ -83,7 +90,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
             'ocm_article',
             ['avviso',],
             $escludePathList,
-            ['at_'],
+            $escludeRemoteIdPrefix,
             ['standard']
         );
 
@@ -93,7 +100,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
             'ocm_event',
             ['event',],
             $escludePathList,
-            ['at_'],
+            $escludeRemoteIdPrefix,
             ['standard'],
             true,
             2

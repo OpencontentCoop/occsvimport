@@ -7,7 +7,8 @@ class ocm_banner extends eZPersistentObject implements ocm_interface
     public static $fields = [
         'name',
         'description',
-        'image',
+        'image___name',
+        'image___url',
         'internal_location',
         'location',
         'background_color',
@@ -39,19 +40,50 @@ class ocm_banner extends eZPersistentObject implements ocm_interface
         return 'Identificativo del banner*';
     }
 
+    protected function getOpencityFieldMapper(): array
+    {
+        $mapper = array_fill_keys(static::$fields, false);
+        $mapper['image___name'] = OCMigration::getMapperHelper('image/name');
+        $mapper['image___url'] = OCMigration::getMapperHelper('image/url');
+
+        return $mapper;
+    }
+
     public function toSpreadsheet(): array
     {
         return [
             "Identificativo del banner*" => $this->attribute('_id'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
-            'Nome' => $this->attribute('name'),
+            'Nome*' => $this->attribute('name'),
             'Descrizione' => $this->attribute('description'),
-            'Immagine*' => $this->attribute('image'),
+            "Nome dell'immagine" => $this->attribute('image___name'),
+            'Url file immagine*' => $this->attribute('image___url'),
             'Link interno' => $this->attribute('internal_location'),
             'Link esterno' => $this->attribute('location'),
             'Colore di sfondo' => $this->attribute('background_color'),
             'Argomenti' => $this->attribute('topics'),
+        ];
+    }
+
+    public static function getUrlValidationHeaders(): array
+    {
+        return [
+            'Url file immagine*',
+        ];
+    }
+
+    public static function getRangeValidationHash(): array
+    {
+        return [
+            "Argomenti" => [
+                'strict' => false,
+                'ref' => self::getVocabolaryRangeRef('argomenti'),
+            ],
+            "Immagine*" => [
+                'strict' => false,
+                'ref' => ocm_image::getRangeRef(),
+            ],
         ];
     }
 

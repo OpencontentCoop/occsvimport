@@ -108,6 +108,13 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getUrlValidationHeaders(): array
+    {
+        return [
+            'Url al file*'
+        ];
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
