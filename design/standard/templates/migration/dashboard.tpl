@@ -27,7 +27,7 @@
 <div class="container my-5 bg-white rounded p-5 position-relative">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-5">Assistente migrazione<br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
+            <h1 class="mb-5">Assistente migrazione <br /><small><code>{$context|wash()} - {$db_name|wash()}</code></small></h1>
             {if $migration_spreadsheet}
                 <h2 class="my-4">Impostazioni spreadsheet</h2>
             {else}
@@ -157,7 +157,8 @@
 </div>
 
 <script type="text/javascript">
-    var BaseUrl = "{'/migration/dashboard'|ezurl(no)}";
+  console.log('Version {$version}');
+  var BaseUrl = "{'/migration/dashboard'|ezurl(no)}";
 </script>
 {literal}
     <script type="text/javascript">

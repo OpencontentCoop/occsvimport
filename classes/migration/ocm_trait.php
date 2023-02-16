@@ -275,6 +275,16 @@ trait ocm_trait
         return [];
     }
 
+    public static function getMax160CharConditionalFormatHeaders(): array
+    {
+        return [];
+    }
+
+    public static function getUrlValidationHeaders(): array
+    {
+        return [];
+    }
+
     public static function getRangeRef(): array
     {
         return [

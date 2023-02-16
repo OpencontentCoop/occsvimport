@@ -180,6 +180,8 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 
     public function toSpreadsheet(): array
     {
+        $competences = json_decode($this->attribute('competences'), true);
+        $$delegations = json_decode($this->attribute('delegations'), true);
         return [
             "Identificativo incarico*" => $this->attribute('_id'),
             "Titolo dell'incarico" => $this->attribute('label'),
@@ -193,8 +195,8 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
             "Data conclusione incarico" => $this->attribute('end_time'),
             "Data insediamento" => $this->attribute('data_insediamento'),
             "Atto di nomina" => $this->attribute('atto_nomina'),
-            "Competenze" => $this->attribute('competences'),
-            "Deleghe" => $this->attribute('delegations'),
+            "Competenze" => implode(PHP_EOL, $competences['ita-IT']),
+            "Deleghe" => implode(PHP_EOL, $delegations['ita-IT']),
             "Incarichi di posizione organizzativa" => $this->attribute('organizational_position'),
             "Incarico dirigenziale" => $this->attribute('incarico_dirigenziale'),
             "Ruolo principale" => $this->attribute('ruolo_principale'),

@@ -321,6 +321,46 @@ class OCMigrationSpreadsheet
                 }
             }
 
+            $max160CharConditionalFormatHeaders = $className::getMax160CharConditionalFormatHeaders();
+            if (!empty($max160CharConditionalFormatHeaders)){
+                foreach ($headers as $index => $header) {
+                    if (in_array($header, $max160CharConditionalFormatHeaders)){
+                        $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
+                            'addConditionalFormatRule' => [
+                                'rule' => [
+                                    'ranges' => [
+                                        [
+                                            'sheetId' => $sheet->getProperties()->getSheetId(),
+                                            'startColumnIndex' => $index,
+                                            'endColumnIndex' => $index + 1,
+                                            'startRowIndex' => (self::$dataStartAtRow - 1),
+                                            'endRowIndex' => $rowCount,
+                                        ]
+                                    ],
+                                    'booleanRule' => [
+                                        'condition' => [
+                                            'type' => 'CUSTOM_FORMULA',
+                                            'values' => [
+                                                ['userEnteredValue' => '=LEN(REGEXREPLACE('. $this->getColumnLetter($sheetTitle, $header) .'4;"</?\S+[^<>]*>";""))>160'],
+                                            ]
+                                        ],
+                                        'format' => [
+                                            'backgroundColorStyle' => ['rgbColor' => [
+                                                'red' => 1,
+                                                'green' => 0.549,
+                                                'blue' => 0
+                                            ]]
+                                        ]
+                                    ]
+                                ],
+                                'index' => 0
+                            ]
+                        ]);
+
+                    }
+                }
+            }
+
             if (!empty($addConditionalFormatRulesRequests)) {
                 try {
                     $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
@@ -342,7 +382,6 @@ class OCMigrationSpreadsheet
         if ($addDateValidations) {
             $dateValidationHeaders = $className::getDateValidationHeaders();
             if (!empty($dateValidationHeaders)) {
-                $dateRanges = [];
                 foreach ($headers as $index => $header) {
                     if (in_array($header, $dateValidationHeaders)) {
                         $setDataValidationRequests[] = new Google_Service_Sheets_Request([
@@ -399,6 +438,32 @@ class OCMigrationSpreadsheet
                     }
                 }
             }
+
+            $urlValidationHeaders = $className::getUrlValidationHeaders();
+            if (!empty($urlValidationHeaders)) {
+                foreach ($headers as $index => $header) {
+                    if (in_array($header, $urlValidationHeaders)) {
+                        $setDataValidationRequests[] = new Google_Service_Sheets_Request([
+                            'setDataValidation' => [
+                                'range' => [
+                                    'sheetId' => $sheet->getProperties()->getSheetId(),
+                                    'startColumnIndex' => $index,
+                                    'endColumnIndex' => $index + 1,
+                                    'startRowIndex' => (self::$dataStartAtRow - 1),
+                                    'endRowIndex' => $rowCount,
+                                ],
+                                'rule' => [
+                                    'strict' => true,
+                                    'condition' => [
+                                        'type' => 'TEXT_IS_URL',
+                                        'values' => []
+                                    ],
+                                ],
+                            ]
+                        ]);
+                    }
+                }
+            }
         }
 
         if (!empty($setDataValidationRequests)) {
@@ -442,8 +507,19 @@ class OCMigrationSpreadsheet
         $sheet = $ref['sheet'];
         $column = $ref['column'];
         $startAt = $ref['start'];
+        
+        $rowCount = $this->spreadsheet->getByTitle($sheet)->getProperties()->getGridProperties()->getRowCount();
+        $letter = $this->getColumnLetter($sheet, $column);
+        if ($letter){
+            return '=\'' . $sheet . '\'!$' . $letter . '$' . $startAt . ':$' . $letter . '$' . $rowCount;
+        }
 
-        $headers = $this->getHeaders($sheet);
+        return false;
+    }
+
+    private function getColumnLetter($sheetTitle, $column): string
+    {
+        $headers = $this->getHeaders($sheetTitle);
         $alphabeth = range('A', 'Z');
         $letter = false;
         foreach ($headers as $index => $header){
@@ -457,11 +533,7 @@ class OCMigrationSpreadsheet
             }
         }
 
-        if ($letter){
-            return '=\'' . $sheet . '\'!$' . $letter . '$' . $startAt . ':$' . $letter . '$1000';
-        }
-
-        return false;
+        return $letter;
     }
 
     /**

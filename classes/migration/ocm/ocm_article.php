@@ -186,6 +186,13 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function getMax160CharConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve*"
+        ];
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
