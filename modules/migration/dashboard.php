@@ -4,6 +4,7 @@ $module = $Params['Module'];
 $tpl = eZTemplate::factory();
 $http = eZHTTPTool::instance();
 
+$tpl->setVariable('instance', OpenPABase::getCurrentSiteaccessIdentifier());
 $tpl->setVariable('version', OCMigration::version());
 $tpl->setVariable('db_name', eZDB::instance()->DB);
 $tpl->setVariable('ezxform_token', ezxFormToken::getToken());
