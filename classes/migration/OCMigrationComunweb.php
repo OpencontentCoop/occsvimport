@@ -29,7 +29,13 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
         $this->fillByType($namesFilter, $isUpdate, 'ocm_file', ['file', 'file_pdf'], $escludePathList);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_pagina_sito', ['pagina_sito'], $escludePathList);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_folder', ['folder'], $escludePathList);
-        $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['luogo'], $escludePathList);
+        $this->fillByType(
+            $namesFilter,
+            $isUpdate,
+            'ocm_place',
+            ['luogo', 'servizio_sul_territorio'],
+            $escludePathList
+        );
         $this->fillByType(
             $namesFilter,
             $isUpdate,
@@ -136,6 +142,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 . '/' . $attribute->attribute('version')
                 . '/' . urlencode($file->attribute('original_filename'));
             eZURI::transformURI($url, true, 'full');
+            $url = str_replace('http://', 'https://', $url);
             return $url;
         }
 

@@ -94,9 +94,7 @@ class ocm_article extends eZPersistentObject implements ocm_interface
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $placeId = $id . ':place';
                 $placeName = $gps['address'];
-                $place = new ocm_place();
-                $place->setAttribute('_id', $placeId);
-                $place->setAttribute('name', $placeName);
+                $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('has_address', json_encode($gps));
 
                 $object = eZContentObject::fetch((int)$content->metadata['id']);

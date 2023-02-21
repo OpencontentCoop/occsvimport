@@ -30,6 +30,8 @@ class OCMigrationSpreadsheet
 
     private $dataHash = [];
 
+    private $headers = [];
+
     private static $dataStartAtRow = 4;
 
     private static $nullAction = [
@@ -246,6 +248,7 @@ class OCMigrationSpreadsheet
 //        }
 
         $responses = [];
+        $errors = [];
 
         $addConditionalFormatRulesRequests = [];
         if ($addConditionalFormatRules) {
@@ -360,22 +363,6 @@ class OCMigrationSpreadsheet
                     }
                 }
             }
-
-            if (!empty($addConditionalFormatRulesRequests)) {
-                try {
-                    $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
-                        'requests' => $addConditionalFormatRulesRequests
-                    ]);
-                    $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
-                        $this->spreadsheetId,
-                        $batchUpdateRequest
-                    );
-//                    )->toSimpleObject();
-                } catch (Exception $e) {
-                    $responses[] = $e->getMessage();
-                }
-            }
-
         }
 
         $setDataValidationRequests = [];
@@ -466,40 +453,49 @@ class OCMigrationSpreadsheet
             }
         }
 
+        $requests = [];
+        if (!empty($addConditionalFormatRulesRequests)) {
+            $requests = array_merge($requests, $addConditionalFormatRulesRequests);
+        }
         if (!empty($setDataValidationRequests)) {
+            $requests = array_merge($requests, $setDataValidationRequests);
+        }
+
+        if (!empty($requests)) {
             try {
                 $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
-                    'requests' => $setDataValidationRequests
+                    'requests' => $requests
                 ]);
                 $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
                     $this->spreadsheetId,
                     $batchUpdateRequest
                 );
-//                )->toSimpleObject();
             } catch (Exception $e) {
                 $responses[] = json_decode($e->getMessage());
+                $errors[] = $e->getMessage();
             }
         }
 
         return [
+            'errors' => count($errors),
             'args' => func_get_args(),
-            'reponses' => $responses,
-            'requests' => [
-                'conditional' => $addConditionalFormatRulesRequests,
-                'validation' => $setDataValidationRequests,
-            ],
-            'format' => $addConditionalFormatRulesRequests,
-            'validations' =>$setDataValidationRequests,
+            'responses' => $responses,
+            'conditional_requests' => $addConditionalFormatRulesRequests,
+            'validation_requests' => $setDataValidationRequests,
         ];
     }
 
     private function getHeaders($sheetTitle): array
     {
-        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
-        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
-        $range = "{$sheetTitle}!R1C1:R1C{$colCount}";
-        $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
-        return $firstRow[0];
+        if (!isset($this->headers[$sheetTitle])) {
+            $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+            $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+            $range = "{$sheetTitle}!R1C1:R1C{$colCount}";
+            $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
+            $this->headers[$sheetTitle] = $firstRow[0];
+        }
+
+        return $this->headers[$sheetTitle];
     }
 
     private function getColumnRange(array $ref): ?string
@@ -595,8 +591,8 @@ class OCMigrationSpreadsheet
         try {
             $sheet = $this->spreadsheet->getByTitle($sheetTitle);
             $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
-            $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
-            $range = "$sheetTitle!R1C1:R1C$colCount";
+            $allColCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+            $range = "$sheetTitle!R1C1:R1C$allColCount";
             $firstRow = $this->googleSheetService->spreadsheets_values->get($this->spreadsheetId, $range)->getValues();
             $headers = $firstRow[0];
             $colCount = count($headers);
@@ -656,7 +652,8 @@ class OCMigrationSpreadsheet
                 ];
 
                 if ($override) {
-                    // cancellare valori non formule
+                    // cancella tutti i valori non formule di tutto il folgio (escluso header)
+                    $range = "$sheetTitle!R{$startCleanAtRow}C1:R{$rowCount}C{$allColCount}";
                     $clear = new Google_Service_Sheets_ClearValuesRequest();
                     $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
 
@@ -680,8 +677,10 @@ class OCMigrationSpreadsheet
             }
 
             if ($cli) {
-                $cli->output('Written ' . $updateRows . ' rows in sheet ' . $sheetTitle);
+                $cli->output('Written ' . $updateRows . ' rows in sheet ' . $range);
             }
+
+//            self::configureSheet($className);
 
             $executionInfo[$className] = [
                 'status' => 'success',

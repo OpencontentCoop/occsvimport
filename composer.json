@@ -12,7 +12,8 @@
     "minimum-stability": "dev",
     "require": {
         "ezsystems/ezpublish-legacy-installer": "*",
-        "opencontent/googlesheet": "*"
+        "opencontent/googlesheet": "*",
+        "league/html-to-markdown": "*"
     },
     "extra": {
         "ezpublish-legacy-extension-name": "occsvimport"
