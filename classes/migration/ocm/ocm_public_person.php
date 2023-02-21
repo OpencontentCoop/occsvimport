@@ -82,6 +82,10 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
             'image' => false,
             'bio' => false,
             'has_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+
+                $object = eZContentObject::fetch((int)$content->metadata['id']);
+                $node = $object->mainNode();
+
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
 
@@ -90,19 +94,16 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";
-                    $hours = new ocm_opening_hours_specification();
-                    $hours->setAttribute('_id', $hoursId);
-                    $hours->setAttribute('name', $hoursName);
+                    $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                     $hours->setAttribute('stagionalita', "Unico");
                     $hours->setAttribute('note', $ricevimento);
-                    $hours->store();
+                    $hours->setNodeReference($node);
+                    $hours->storeThis($options['is_update']);
                 }
 
                 $contactsId = $id . ':contacts';
                 $contactsName = "Contatti $name";
-                $contacts = new ocm_online_contact_point();
-                $contacts->setAttribute('_id', $contactsId);
-                $contacts->setAttribute('name', $contactsName);
+                $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
                 foreach (['phone', 'mobile_phone', 'email', 'fax', ] as $identifier){
                     if (isset($dataMap[$identifier])){
@@ -130,7 +131,8 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 if ($hoursName) {
                     $contacts->setAttribute('phone_availability_time', $hoursName);
                 }
-                $contacts->store();
+                $contacts->setNodeReference($node);
+                $contacts->storeThis($options['is_update']);
 
                 return $contactsName;
             },
@@ -176,9 +178,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 $dataMap = $object->dataMap();
                 $contactsId = $id . ':contacts';
                 $contactsName = "Contatti $name";
-                $contacts = new ocm_online_contact_point();
-                $contacts->setAttribute('_id', $contactsId);
-                $contacts->setAttribute('name', $contactsName);
+                $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
                 foreach (['telefono', 'cellulare', 'email', 'fax', ] as $identifier){
                     if (isset($dataMap[$identifier])){
@@ -249,9 +249,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";
-                    $hours = new ocm_opening_hours_specification();
-                    $hours->setAttribute('_id', $hoursId);
-                    $hours->setAttribute('name', $hoursName);
+                    $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                     $hours->setAttribute('stagionalita', "Unico");
                     $hours->setAttribute('note', $ricevimento);
                     $hours->setNodeReference($node);
@@ -260,9 +258,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
 
                 $contactsId = $id . ':contacts';
                 $contactsName = "Contatti $name";
-                $contacts = new ocm_online_contact_point();
-                $contacts->setAttribute('_id', $contactsId);
-                $contacts->setAttribute('name', $contactsName);
+                $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
                 foreach (['phone', 'mobile_phone', 'email', 'fax', ] as $identifier){
                     if (isset($dataMap[$identifier])){
@@ -356,7 +352,7 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     public static function getRangeValidationHash(): array
     {
         return [
-            'Punti di contatt*' => [
+            'Punti di contatto*' => [
                 'strict' => false,
                 'ref' => ocm_online_contact_point::getRangeRef()
             ],
@@ -375,6 +371,15 @@ class ocm_public_person extends eZPersistentObject implements ocm_interface
     {
         return [
             "Descrizione breve"
+        ];
+    }
+
+    public static function getInternalLinkConditionalFormatHeaders(): array
+    {
+        return [
+            "Descrizione breve",
+            "Biografia",
+            "Situazione patrimoniale",
         ];
     }
 

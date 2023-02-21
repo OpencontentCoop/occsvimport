@@ -4,6 +4,7 @@ use Opencontent\Opendata\Api\Values\Content;
 use Opencontent\Opendata\Rest\Client\PayloadBuilder;
 use Opencontent\Opendata\Api\AttributeConverter\Base;
 use Opencontent\Opendata\Api\AttributeConverterLoader;
+use League\HTMLToMarkdown\HtmlConverter;
 
 trait ocm_trait
 {
@@ -70,6 +71,7 @@ trait ocm_trait
     {
         $nodeUrl = $node->attribute('url_alias');
         eZURI::transformURI($nodeUrl, false, 'full');
+        $nodeUrl = str_replace('http://', 'https://', $nodeUrl);
         $this->setAttribute('_original_url', $nodeUrl);
         $this->setAttribute('_parent_name', $node->fetchParent()->attribute('url_alias'));
     }
@@ -238,6 +240,31 @@ trait ocm_trait
         );
     }
 
+    /**
+     * @param string $field
+     * @param mixed $value
+     * @param bool $asObject
+     * @return eZPersistentObject|ocm_interface
+     */
+    public static function instanceBy(string $field, string $value, $id, bool $asObject = true)
+    {
+        $conditions = [$field => trim($value)];
+        $instance = eZPersistentObject::fetchObject(
+            static::definition(),
+            null,
+            $conditions,
+            $asObject
+        );
+
+        if (!$instance){
+            $instance = new static();
+            $instance->setAttribute('_id', $id);
+            $instance->setAttribute($field, trim($value));
+        }
+
+        return $instance;
+    }
+
     public function appendAttribute($name, $value, $separator = PHP_EOL)
     {
         $this->setAttribute($name, trim($this->attribute($value) . $separator . $value, $separator));
@@ -325,5 +352,11 @@ trait ocm_trait
             'column' => $identifiers[$identifier],
             'start' => 2,
         ];
+    }
+
+    public function convertToMarkdown(string $html): string
+    {
+        $converter = new HtmlConverter();
+        return $converter->convert($html);
     }
 }

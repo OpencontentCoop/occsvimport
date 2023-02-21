@@ -99,7 +99,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             'Name* [de]' => $this->attribute('de_name'),
             'Valido dal*' => $this->attribute('valid_from'),
             'Valido fino al' => $this->attribute('valid_through'),
-            'Note' => $this->attribute('note'),
+            'Note' => $this->convertToMarkdown($this->attribute('note')),
             'Stagionalità*' => $this->getStagionalita(),
             'Lunedì' => $this->attribute('opening_hours___monday'),
             'Martedì' => $this->attribute('opening_hours___tuesday'),

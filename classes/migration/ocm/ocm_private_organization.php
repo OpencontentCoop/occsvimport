@@ -42,9 +42,7 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
                 $placeId = $id . ':place';
                 $contactsName = "Contatti $name";
                 $placeName = "Sede $name";
-                $place = new ocm_place();
-                $place->setAttribute('_id', $placeId);
-                $place->setAttribute('name', $placeName);
+                $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('help', $contactsName);
                 $place->setAttribute('has_address', json_encode($gps));
                 $place->setNodeReference($node);
@@ -62,9 +60,7 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
             $dataMap = $object->dataMap();
             $contactsId = $id . ':contacts';
             $contactsName = "Contatti $name";
-            $contacts = new ocm_online_contact_point();
-            $contacts->setAttribute('_id', $contactsId);
-            $contacts->setAttribute('name', $contactsName);
+            $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
             $data = [];
             foreach (['telefono', ' numero_telefono1 ', 'email', 'fax', 'casella_postale', 'referente_telefono', 'referente_fax' ] as $identifier){
                 if (isset($dataMap[$identifier])){
@@ -176,7 +172,7 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
     public static function getRangeValidationHash(): array
     {
         return [
-            'Punti di contatt*' => [
+            'Punti di contatto' => [
                 'strict' => false,
                 'ref' => ocm_online_contact_point::getRangeRef()
             ],

@@ -70,24 +70,21 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
                 $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
+                $className = $object->className();
 
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
                 $hoursId = $id . ':hours';
-                $hoursName = "Orari $name";
-                $hours = new ocm_opening_hours_specification();
-                $hours->setAttribute('_id', $hoursId);
-                $hours->setAttribute('name', $hoursName);
+                $hoursName = "Orari $className $name";
+                $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                 $hours->setAttribute('stagionalita', "Unico");
                 $hours->setAttribute('note', OCMigration::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
-                $contactsName = "Contatti $name";
-                $contacts = new ocm_online_contact_point();
-                $contacts->setAttribute('_id', $contactsId);
-                $contacts->setAttribute('name', $contactsName);
+                $contactsName = "Contatti $className $name";
+                $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
                 foreach (['telefoni', 'fax', 'email', 'email2', 'email_certificata', ] as $identifier){
                     if (isset($dataMap[$identifier])){
@@ -122,9 +119,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hoursName = "Orari $name";
                 $contactsName = "Contatti $name";
                 $placeName = "Sede $name";
-                $place = new ocm_place();
-                $place->setAttribute('_id', $placeId);
-                $place->setAttribute('name', $placeName);
+                $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('type', 'Palazzo');
                 $place->setAttribute('opening_hours_specification', $hoursName);
 
@@ -188,24 +183,21 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             'has_online_contact_point' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
+                $className = $object->className();
 
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
                 $hoursId = $id . ':hours';
-                $hoursName = "Orari $name";
-                $hours = new ocm_opening_hours_specification();
-                $hours->setAttribute('_id', $hoursId);
-                $hours->setAttribute('name', $hoursName);
+                $hoursName = "Orari $className $name";
+                $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                 $hours->setAttribute('stagionalita', "Unico");
                 $hours->setAttribute('note', OCMigration::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 
                 $contactsId = $id . ':contacts';
-                $contactsName = "Contatti $name";
-                $contacts = new ocm_online_contact_point();
-                $contacts->setAttribute('_id', $contactsId);
-                $contacts->setAttribute('name', $contactsName);
+                $contactsName = "Contatti $className $name";
+                $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $contacts->setAttribute('phone_availability_time', $hoursName);
                 $contacts->setNodeReference($node);
                 $contacts->storeThis($options['is_update']);
@@ -221,9 +213,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
                 $hoursName = "Orari $name";
                 $contactsName = "Contatti $name";
                 $placeName = "Sede $name";
-                $place = new ocm_place();
-                $place->setAttribute('_id', $placeId);
-                $place->setAttribute('name', $placeName);
+                $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('type', 'Palazzo');
                 $place->setAttribute('opening_hours_specification', $hoursName);
                 $place->setAttribute('help', $contactsName);
@@ -366,7 +356,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         return [
             'Identificativo unità organizzativa*' => $this->attribute('_id'),
             'Nome dell\'unità organizzativa*' => $this->attribute('legal_name'),
-            'Descrizione breve*' => $this->attribute('abstract'),
+            'Descrizione breve*' => $this->convertToMarkdown($this->attribute('abstract')),
             'Descrizione' => $this->attribute('description'),
             'Competenze*' => $this->attribute('main_function'),
             'Tipo di organizzazione*' => $this->attribute('type'),
@@ -429,6 +419,14 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
             "Tipo di organizzazione*" => [
                 'strict' => true,
                 'ref' => self::getVocabolaryRangeRef('organizzazioni'),
+            ],
+            "Unità organizzativa genitore" => [
+                'strict' => true,
+                'ref' => ocm_organization::getRangeRef()
+            ],
+            "Allegati" => [
+                'strict' => true,
+                'ref' => ocm_document::getRangeRef()
             ],
         ];
     }

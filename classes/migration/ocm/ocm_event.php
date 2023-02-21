@@ -135,9 +135,7 @@ class ocm_event extends eZPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
                 $placeId = $id . ':place';
                 $placeName = $luogo_svolgimento ?? $name;
-                $place = new ocm_place();
-                $place->setAttribute('_id', $placeId);
-                $place->setAttribute('name', $placeName);
+                $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('has_address', json_encode($geo));
 
                 $object = eZContentObject::fetch((int)$content->metadata['id']);

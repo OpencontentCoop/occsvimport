@@ -278,6 +278,7 @@ class OCMigration extends eZPersistentObject
                     $contentValue = $firstLocalizedContentData['has_logo']['content'] ?? false;
                     $url = $contentValue ? $contentValue['url'] : '';
                     eZURI::transformURI($url, false, 'full');
+                    $url = str_replace('http://', 'https://', $url);
                     return $contentValue ? $url : '';
                 };
 
@@ -292,6 +293,7 @@ class OCMigration extends eZPersistentObject
                     $contentValue = $firstLocalizedContentData['image']['content'];
                     $url = $contentValue ? $contentValue['url'] : '';
                     eZURI::transformURI($url, false, 'full');
+                    $url = str_replace('http://', 'https://', $url);
                     return $contentValue ? $url : '';
                 };
 
@@ -363,7 +365,9 @@ class OCMigration extends eZPersistentObject
                                 $parts = explode('/', $contentValue);
                                 $name = array_pop($parts);
                                 $parts[] = urlencode($name);
-                                return implode('/', $parts);
+                                $url = implode('/', $parts);
+                                $url = str_replace('http://', 'https://', $url);
+                                return $url;
                             }
                             return '';
 
@@ -374,7 +378,9 @@ class OCMigration extends eZPersistentObject
                                     $fileParts = explode('/', $file['url']);
                                     $fileName = array_pop($fileParts);
                                     $fileParts[] = urlencode($fileName);
-                                    $files[] = implode('/', $fileParts);
+                                    $url = implode('/', $fileParts);
+                                    $url = str_replace('http://', 'https://', $url);
+                                    $files[] = $url;
                                 }
                                 return implode(PHP_EOL, $files);
                             }
@@ -405,7 +411,12 @@ class OCMigration extends eZPersistentObject
                             return $contentValue;
 
                         case eZGmapLocationType::DATA_TYPE_STRING:
-                            $contentValue['address'] = str_replace('amp;', '', $contentValue['address']);
+                            $replace = [
+                                'amp;' => '',
+                                '&agrave;' => 'à',
+                                '&egrave;' => 'è',
+                            ];
+                            $contentValue['address'] = str_replace(array_keys($replace), array_values($replace), $contentValue['address']);
                             return json_encode($contentValue);
 
                         case OCEventType::DATA_TYPE_STRING:
