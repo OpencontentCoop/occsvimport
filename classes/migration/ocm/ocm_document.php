@@ -647,6 +647,22 @@ class ocm_document extends eZPersistentObject implements ocm_interface
 //            case 'procedura': // solo consorzio 5
 //            case 'protocollo': // solo asia 1 borgochiese 2 condino 2 consorzio 4 dambel 1 molveno 1 nagotorbole 2
 //            case 'rapporto': // non usato
+            case 'pubblicazione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return '';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                ]; break;
             case 'regolamento':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),

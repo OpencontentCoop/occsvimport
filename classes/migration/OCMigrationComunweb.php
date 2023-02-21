@@ -79,6 +79,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 'ordine_del_giorno',
                 'parere',
                 'piano_progetto',
+                'pubblicazione',
                 'procedura',
                 'protocollo',
                 'rapporto',
