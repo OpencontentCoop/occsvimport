@@ -28,6 +28,18 @@ class OCMigrationSpreadsheet
      */
     private $spreadsheet;
 
+    /**
+     * @var GoogleSheet
+     */
+    private static $masterSpreadsheet;
+
+    /**
+     * @var string
+     */
+    private static $masterSpreadsheetId;
+
+    private static $masterSpreadsheetUrl;
+
     private $dataHash = [];
 
     private $headers = [];
@@ -217,6 +229,143 @@ class OCMigrationSpreadsheet
         $this->spreadsheetId = self::getConnectedSpreadSheet();
         $this->spreadsheet = new GoogleSheet($this->spreadsheetId);
         //$sheets = $spreadsheet->getSheetTitleList();
+    }
+
+    public static function getMasterSpreadsheet(): ?GoogleSheet
+    {
+        if (self::$masterSpreadsheet === null){
+            $context = OCMigration::discoverContext();
+            if ($context) {
+                $shortUrl = 'https://link.opencontent.it/new-kit-' . $context;
+                $ch = curl_init();
+                $timeout = 0;
+                curl_setopt ($ch, CURLOPT_URL, $shortUrl);
+                curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+                curl_setopt($ch, CURLOPT_HEADER, TRUE);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                // Getting binary data
+                curl_exec($ch);
+                $info = curl_getinfo($ch);
+                $spreadsheetUrl = $info['redirect_url'];
+                self::$masterSpreadsheetId = OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri($spreadsheetUrl);
+                self::$masterSpreadsheet = new GoogleSheet(self::$masterSpreadsheetId);
+                self::$masterSpreadsheetUrl = $spreadsheetUrl;
+            }
+        }
+
+        return self::$masterSpreadsheet;
+    }
+
+    public static function getMasterSpreadsheetHelpTexts($sheetTitle): array
+    {
+        $sheet = self::getMasterSpreadsheet()->getByTitle($sheetTitle);
+        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+        $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
+        $client = new GoogleSheetClient();
+        $firstRows = $client->getGoogleSheetService()->spreadsheets_values->get(self::$masterSpreadsheetId, $range)->getValues();
+
+        $helper = [];
+        foreach ($firstRows[0] as $index => $header){
+            $helper[$header] = $firstRows[1][$index] ?? '';
+        }
+
+        return $helper;
+    }
+
+    public function updateGuide(): ?int
+    {
+        self::getMasterSpreadsheet();
+        $url = str_replace('copy', 'edit', self::$masterSpreadsheetUrl);
+        $data = '=IMPORTRANGE("'.$url.'";"Istruzioni!A1:E50")';
+        $sheetTitle = 'Istruzioni';
+        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+        $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
+        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+        $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        $clear = new Google_Service_Sheets_ClearValuesRequest();
+        $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
+        $body = new Google_Service_Sheets_ValueRange([
+            'values' => [[$data]],
+        ]);
+        $params = [
+            'valueInputOption' => 'USER_ENTERED',
+        ];
+        $range = "$sheetTitle!R1C1:R1C2";
+        $updateRows = (int)$this->googleSheetService->spreadsheets_values->update(
+            $this->spreadsheetId,
+            $range,
+            $body,
+            $params
+        )->getUpdatedRows();
+        return $updateRows;
+    }
+
+    public function updateVocabolaries(): ?int
+    {
+        $sheetTitle = 'Vocabolari controllati';
+
+        $masterSheet = self::getMasterSpreadsheet()->getByTitle($sheetTitle);
+        $masterRowCount = $masterSheet->getProperties()->getGridProperties()->getRowCount();
+        $masterColCount = $masterSheet->getProperties()->getGridProperties()->getColumnCount();
+        $masterRange = "$sheetTitle!R1C1:R{$masterRowCount}C{$masterColCount}";
+        $client = new GoogleSheetClient();
+        $data = $client->getGoogleSheetService()->spreadsheets_values->get(self::$masterSpreadsheetId, $masterRange)->getValues();
+
+        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+        $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
+        $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
+        $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        $clear = new Google_Service_Sheets_ClearValuesRequest();
+        $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
+
+        $rowCount = count($data);
+        $colCount = count($data[0]);
+        $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        $body = new Google_Service_Sheets_ValueRange([
+            'values' => $data,
+        ]);
+        $params = [
+            'valueInputOption' => 'USER_ENTERED',
+        ];
+        $updateRows = (int)$this->googleSheetService->spreadsheets_values->update(
+            $this->spreadsheetId,
+            $range,
+            $body,
+            $params
+        )->getUpdatedRows();
+        return $updateRows;
+    }
+
+
+    public function updateHelper($className): ?int
+    {
+        $sheetTitle = $className::getSpreadsheetTitle();
+        $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle);
+        $headers = $this->getHeaders($sheetTitle);
+        $value = [];
+        foreach ($headers as $header) {
+            $value[$header] = $helper[$header] ?? '';
+        }
+        $values = [array_values($value)];
+
+        $body = new Google_Service_Sheets_ValueRange([
+            'values' => $values,
+        ]);
+        $params = [
+            'valueInputOption' => 'USER_ENTERED',
+        ];
+
+        $colCount = count($headers);
+        $range = "$sheetTitle!R2C1:R2C$colCount";
+        $updateRows = (int)$this->googleSheetService->spreadsheets_values->update(
+            $this->spreadsheetId,
+            $range,
+            $body,
+            $params
+        )->getUpdatedRows();
+
+//        print_r([$values, $headers, $updateRows, $range]);die();
+        return $updateRows;
     }
 
     public static function instance(): self
@@ -633,7 +782,7 @@ class OCMigrationSpreadsheet
 
             $values = [];
             foreach ($items as $item) {
-                $data = $item->toSpreadsheet();
+                $data = $this->getItemToSpreadsheet($item);
                 $value = [];
                 foreach ($headers as $header) {
                     $value[$header] = $data[$header] ?? '';
@@ -704,6 +853,18 @@ class OCMigrationSpreadsheet
 
         OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
         return $executionInfo;
+    }
+
+    private function getItemToSpreadsheet(ocm_interface $item): array
+    {
+        $data = $item->toSpreadsheet();
+        foreach ($data as $key => $value){
+            if (mb_strlen($value) > 49999){
+                $data[$key] = "[Il valore di questo campo supera il limite di caratteri ammessi per una cella.\nSe vuoi che venga importato direttamente dal sito originale non rimuovere né modificare questa cella]\n#" . $item->attribute('_id');
+            }
+        }
+
+        return $data;
     }
 
     public function pull(eZCLI $cli = null, array $options = [])

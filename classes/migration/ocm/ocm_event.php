@@ -162,7 +162,7 @@ class ocm_event extends eZPersistentObject implements ocm_interface
             'has_playbill' => OCMigration::getMapperHelper('file'),
             'attachment' => false,
             'has_online_contact_point' => false,
-            'has_public_event_typology' => OCMigration::getMapperHelper('tipo_evento'),
+            'has_public_event_typology' => false, //OCMigration::getMapperHelper('tipo_evento'),
             'topics' => false,
             'time_interval_events' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
                 return implode(PHP_EOL, $options['time_interval_events'][$content->metadata->id]);

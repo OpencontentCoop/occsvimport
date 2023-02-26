@@ -37,14 +37,34 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
+        $role = false;
         if ($node->classIdentifier() === 'dipendente'){
-            return $this->fromNode($node, $this->getComunwebFieldMapperFromDipendente(), $options);
+            $role = $this->fromNode($node, $this->getComunwebFieldMapperFromDipendente(), $options);
+        } elseif ($node->classIdentifier() === 'politico'){
+            $role = $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
+        } elseif ($node->classIdentifier() === 'ruolo'){
+            $role = $this->fromNode($node, $this->getComunwebFieldMapperFromRuolo(), $options);
         }
-        if ($node->classIdentifier() === 'politico'){
-            return $this->fromNode($node, $this->getComunwebFieldMapperFromPolitico(), $options);
-        }
-        if ($node->classIdentifier() === 'ruolo'){
-            return $this->fromNode($node, $this->getComunwebFieldMapperFromRuolo(), $options);
+
+        if ($role){
+            $forEntities = explode(PHP_EOL, $role->attribute('for_entity'));
+            sort($forEntities);
+            if (count($forEntities) > 1){
+                $isUpdate = $options['is_update'] ?? false;
+                $first = array_shift($forEntities);
+                $role->setAttribute('for_entity', $first);
+                foreach ($forEntities as $index => $forEntity){
+                    $forEntity = trim($forEntity);
+                    if (!empty($forEntity)) {
+                        $duplicateRole = clone $role;
+                        $duplicateRole->setAttribute('_id', $role->attribute('_id') . '-' . $index);
+                        $duplicateRole->setAttribute('for_entity', $forEntity);
+                        $duplicateRole->storeThis($isUpdate);
+                    }
+                }
+            }
+
+            return $role;
         }
 
         return $this->fromNode($node, [], $options);

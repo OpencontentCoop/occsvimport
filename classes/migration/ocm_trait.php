@@ -342,7 +342,8 @@ trait ocm_trait
             'organizzazioni-private' => "Tipi di organizzazione privata",
             'attivita' => "Tipo di attività",
             'content-type' => 'Tipi di contenuto',
-            'popolazione' => 'Fasce generali di popolazione'
+            'popolazione' => 'Fasce generali di popolazione',
+            'giuridica' => 'Forma giuridica'
         ];
         if (!isset($identifiers[$identifier])){
             throw new Exception("Invalid voc identifier $identifier");
@@ -354,9 +355,12 @@ trait ocm_trait
         ];
     }
 
-    public function convertToMarkdown(string $html): string
+    public function convertToMarkdown(?string $html): string
     {
+        if (!$html) return '';
+
         $converter = new HtmlConverter();
+//        $converter->getEnvironment()->addConverter(new \League\HTMLToMarkdown\Converter\TableConverter());
         return $converter->convert($html);
     }
 }

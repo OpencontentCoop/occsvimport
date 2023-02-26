@@ -54,8 +54,8 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
             'Nome' => $this->attribute('name'),
             'Nome breve' => $this->attribute('short_name'),
             'Descrizione breve' => $this->attribute('short_description'),
-            'Descrizione' => $this->attribute('tags'),
-            'Parole chiave' => $this->attribute('riferimento'),
+            'Descrizione' => $this->attribute('description'),
+            'Parole chiave' => $this->attribute('tags'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
         ];

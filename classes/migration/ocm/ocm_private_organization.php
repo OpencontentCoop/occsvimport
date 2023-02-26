@@ -200,6 +200,10 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
                 'strict' => true,
                 'ref' => self::getVocabolaryRangeRef('organizzazioni-private'),
             ],
+            "Forma giuridica" => [
+                'strict' => true,
+                'ref' => self::getVocabolaryRangeRef('giuridica'),
+            ],
         ];
     }
 
