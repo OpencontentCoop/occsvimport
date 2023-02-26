@@ -443,6 +443,9 @@ class OCMigration extends eZPersistentObject
                                 return implode(PHP_EOL, array_column($contentValue, $subField));
                             }
 
+                        case eZTagsType::DATA_TYPE_STRING:
+                            return OCMigrationVocs::filterVocs($contentValue);
+
                         default:{
                             return $converter->toCSVString($contentValue, $firstLocalizedContentLocale);
                         }
@@ -551,10 +554,107 @@ class OCMigration extends eZPersistentObject
             'fdfafe70890f994101c6a56d9928ef69' => ['topic_36',],
         ];
 
+        $names = [
+            'topic_1_agricoltura_e_alimentazione' => "Agricoltura, silvicoltura e pesca",
+            'topic_1_ambiente' => "Ambiente",
+            'topic_1_popolazione_e_societa' => "Demografia e popolazione",
+            'topic_1_giustizia_sistema_giuridico_e_sicurezza_pubblica' => "Diritto",
+            'topic_1_economia_e_finanze' => "Economia",
+            'topic_13' => "Energia",
+            'topic_1_scienza_e_tecnologia' => "Innovazione",
+            'topic_1_istruzione_cultura_e_sport' => "Istruzione",
+            'topic_1_territorio' => "Pianificazione del territorio",
+            'topic_1_governo_e_settore_pubblico' => "Politica",
+            '18e6e1013c2999465c05b2ad41b364cf' => "Questioni sociali",
+            'topic_1_tematiche_internazionali' => "Relazioni internazionali",
+            '6b9adcbc7ca00d48590c2c0122d45873' => "Tempo libero",
+            'topic_36' => "Trasporto pubblico",
+            'topic_2_agricoltura' => "Agricoltura",
+            'topic_4' => "Animale domestico",
+            'topic_2_foreste' => "Foreste",
+            '2b67071267460acb651dab78c5937290' => "Pesca",
+            '303df154b15e47f7986343c30ba57637' => "Prodotti alimentari",
+            'topic_2' => "Acqua",
+            '17722a57fb20ca1210125d2bdd8323ec' => "Aria",
+            'topic_17' => "Gestione rifiuti",
+            'topic_21' => "Inquinamento",
+            'topic_31' => "Spazio verde",
+            'topic_7' => "Associazioni",
+            'topic_2_impiego_nella_pa' => "Concorsi",
+            'topic_24' => "Demografia",
+            'topic_16' => "Formazione professionale",
+            'topic_10' => "Lavoro",
+            '520467b8e456dd71a0df06701267ec62' => "Matrimonio",
+            'a01a8345c4dd069454bd23f4a131b8ec' => "Morte",
+            '2585c8de2079feb3db29f85d3293de15' => "Nascita",
+            'a600b3fb2825c2e6c688c4bde8c3f961' => "Residenza",
+            'topic_2_volontariato' => "Volontariato",
+            '03247490a219ea48d754b8ffe0218429' => "Giustizia",
+            'topic_3_polizia' => "Polizia",
+            '087e4fb8eb71d06eb6edbfe6aaee6ecf' => "Protezione civile",
+            'topic_30' => "Sicurezza pubblica",
+            '468a42f92ac4acd1543f830f630fe1dd' => "Sistema giuridico",
+            'topic_2_costi_bilanci_spese_dell_ente' => "Bilancio",
+            '6df6d993b921ba5585b2c992b3ab4d5e' => "Commercio al minuto",
+            '9e9c6c0a4f25bad956def349e7ba7548' => "Commercio all'ingrosso",
+            '91bc19e1e6201bcb0a246791bad4d888' => "Commercio ambulante",
+            'topic_2_tributi' => "Imposte",
+            '7a508ac8d8ede77941d382c758a99042' => "Mercato",
+            '9642f556d5f52562385a6ff83f342b78' => "Piano di sviluppo",
+            '82f3daf9f172801c57f13d95000facfb' => "Politica commerciale",
+            'f9646a846cd5c0cc94e576fe3250d502' => "Sviluppo sostenibile",
+            '0dfc780404e1e86d3013c942f812e262' => "Tassa sui servizi",
+            'topic_2_energia_rinnovabile' => "Energie rinnovabili",
+            'ff27f221bb1a1105319f758da98f1005' => "Isolamento termico",
+            'topic_2_risparmio_energetico' => "Risparmio energetico",
+            '30308859ca4274ad266ae1b38666ae1e' => "Accesso all'informazione",
+            'topic_2_citta_intelligente' => "Città intelligente",
+            'topic_20' => "Dati aperti",
+            'dfa6ed0f6ceeddbc718c6280e53b9385' => "Imprese",
+            'topic_2_ricerca' => "Ricerca",
+            'f85cb496baed09fae468f041ae275a37' => "Biblioteca",
+            'f85de55bbafcd80eeed201a2d99d2351' => "Prima infanzia",
+            '6b101d7978a415884679d24a9afcec17' => "Scuola materna",
+            'topic_1' => "Casa",
+            'topic_2_catasto' => "Catasto",
+            'topic_3_lavori_pubblici' => "Lavori pubblici",
+            'topic_39' => "Urbanizzazione",
+            'topic_9' => "Comunicazione istituzionale",
+            'topic_2_politica' => "Comunicazione politica",
+            'fe63739f7047ad84533d1055c9380444' => "Elezioni",
+            'topic_26' => "Programma d'azione",
+            'c60b70f9d0f4bcb8dd1c0ff34ac90d16' => "Risposta alle emergenze",
+            '0afb9385587fd6f9fdff39d9dd5e3142' => "Trasparenza amministrativa",
+            'topic_2_vita_istituzionale' => "Vita istituzionale",
+            'topic_3_assistenza_agli_invalidi' => "Assistenza agli invalidi",
+            'topic_3_assistenza_sociale' => "Assistenza sociale",
+            'topic_2_covid_19' => "Covid-19",
+            '0b43588c71719126304e8aaae9e6438d' => "Igiene pubblica",
+            'topic_19' => "Immigrazione",
+            'topic_22' => "Integrazione sociale",
+            'topic_15' => "Politica della gioventù",
+            '2eb5ffa8cfbb467dee3026fd6ab7464c' => "Politica familiare",
+            'topic_3_protezione_delle_minoranze' => "Protezione delle minoranze",
+            'topic_2_comunita_europea' => "Comunità europea",
+            '901ac93a6d4baaa901cc17ac155101ca' => "Estero",
+            'topic_2_gemellaggi' => "Gemellaggi",
+            'bd5192a42244b7e5a0dc4ac0830bce83' => "Patrimonio culturale",
+            'topic_32' => "Sport",
+            '158a858d0fe4b8a9d0fe5d50c3605cb2' => "Turismo",
+            '6c62b4913df2ea2b739dae5cc04f70da' => "Viaggi",
+            'd5ffcb9ed91fa49cfdc42a7ee6fb4d81' => "Mobilità sostenibile",
+            'topic_6' => "Parcheggi",
+            '64e2943f2b139bbe825a1ec700cb24fc' => "Pista ciclabile",
+            'topic_37' => "Rete stradale",
+            'topic_35' => "Traffico urbano",
+            'abc9ab5b22d6f4a06ba477b75dafd075' => "ZTL",
+            'fdfafe70890f994101c6a56d9928ef69' => "Zone pedonali",
+        ];
+
         $objects = OpenPABase::fetchObjects($idList);
         foreach ($objects as $object) {
-            if (isset($topics[$object->remoteID()])) {
-                $data[] = $object->name();
+            if (isset($topics[$object->remoteID()]) && isset($names[$object->remoteID()])) {
+                $data[] = $names[$object->remoteID()];
             }
         }
 
