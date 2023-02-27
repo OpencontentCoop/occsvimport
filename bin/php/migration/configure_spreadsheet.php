@@ -29,6 +29,7 @@ foreach (OCMigration::getAvailableClasses($classFilter) as $className) {
         $result = OCMigrationSpreadsheet::instance()->configureSheet($className);
         if ($result['errors'] > 0) {
             $cli->error($result['errors'] . ' error(s)');
+            print_r($result);
         } else {
             $cli->output('ok');
         }
