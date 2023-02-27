@@ -23,11 +23,13 @@ $script->setUseDebugAccumulators(true);
 
 $classFilter = $options['only'] ? explode(',', $options['only']) : [];
 
-$cli->output('Update vocabolari');
-OCMigrationSpreadsheet::instance()->updateVocabolaries();
+if (empty($classFilter)) {
+    $cli->output('Update vocabolari');
+    OCMigrationSpreadsheet::instance()->updateVocabolaries();
 
-$cli->output('Update istruzioni');
-OCMigrationSpreadsheet::instance()->updateGuide();
+    $cli->output('Update istruzioni');
+    OCMigrationSpreadsheet::instance()->updateGuide();
+}
 
 foreach (OCMigration::getAvailableClasses($classFilter) as $className) {
     $cli->output($className);

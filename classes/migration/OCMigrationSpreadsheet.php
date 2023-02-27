@@ -388,19 +388,32 @@ class OCMigrationSpreadsheet
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
 
         $currentRules = [];
-//        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
-//        foreach ($response->sheets as $sheetData){
-//            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
-//                $currentRules = $sheetData;
-//                break;
-//            }
-//        }
+        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
+        foreach ($response->sheets as $sheetData){
+            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
+                $currentRules = $sheetData;
+                break;
+            }
+        }
 
         $responses = [];
         $errors = [];
 
         $addConditionalFormatRulesRequests = [];
         if ($addConditionalFormatRules) {
+
+            $sheetId = $currentRules->properties->sheetId;
+            if (isset($currentRules->conditionalFormats)) {
+                foreach (array_reverse(array_keys($currentRules->conditionalFormats)) as $index) {
+                    $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
+                        'deleteConditionalFormatRule' => [
+                            'sheetId' => $sheetId,
+                            'index' => $index
+                        ]
+                    ]);
+                }
+            }
+
             $requiredRanges = [];
             foreach ($headers as $index => $header) {
                 if (strpos($header, '*') !== false) {
@@ -493,7 +506,7 @@ class OCMigrationSpreadsheet
                                         'condition' => [
                                             'type' => 'CUSTOM_FORMULA',
                                             'values' => [
-                                                ['userEnteredValue' => '=LEN(REGEXREPLACE('. $this->getColumnLetter($sheetTitle, $header) .'4;"</?\S+[^<>]*>";""))>160'],
+                                                ['userEnteredValue' => '=LEN(REGEXREPLACE('. $this->getColumnLetter($sheetTitle, $header) .'4;"</?\S+[^<>]*>";""))>255'],
                                             ]
                                         ],
                                         'format' => [
