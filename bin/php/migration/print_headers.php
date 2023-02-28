@@ -15,7 +15,11 @@ $script = eZScript::instance([
 ]);
 
 $script->startup();
-$options = $script->getOptions();
+$options = $script->getOptions(
+    "[only:]",
+    "", [
+    'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
+]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 
@@ -24,7 +28,7 @@ $googleSheetService = $client->getGoogleSheetService();
 $spreadsheetId = OCMigrationSpreadsheet::getConnectedSpreadSheet();
 $spreadsheet = new GoogleSheet($spreadsheetId);
 
-foreach (OCMigration::getAvailableClasses() as $className) {
+foreach (OCMigration::getAvailableClasses($options['only'] ? explode(',', $options['only']) : []) as $className) {
     $cli->warning($className);
     try {
         $row = $spreadsheet->getSheetDataHash($className::getSpreadsheetTitle())[0];
