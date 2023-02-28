@@ -328,7 +328,7 @@ trait ocm_trait
             'formati' => 'Formati',
             'licenze' => 'Licenze',
             'life-events' => 'Life Events',
-            'business-events' => 'Business',
+            'business-events' => 'Business Events',
             'eventi' => 'Tematiche eventi',
             'documenti' => 'Tipologia di documento',
             'stagionalita' => 'Stagionalità',
