@@ -1,9 +1,7 @@
 <?php
 
-class ocm_folder extends eZPersistentObject implements ocm_interface
+class ocm_folder extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static function canImport(): bool
     {
         return false;
@@ -61,6 +59,20 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row['ID']);
+        $item->setAttribute('name', $row['Nome']);
+        $item->setAttribute('short_name', $row['Nome breve']);
+        $item->setAttribute('short_description', $row['Descrizione breve']);
+        $item->setAttribute('description', $row['Descrizione']);
+        $item->setAttribute('tags', $row['Parole chiave']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
@@ -75,14 +87,10 @@ class ocm_folder extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        // TODO: Implement fromSpreadsheet() method.
-    }
 
-    public function generatePayload(): array
+    public function generatePayload()
     {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int

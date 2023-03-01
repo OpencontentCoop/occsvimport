@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_online_contact_point extends eZPersistentObject implements ocm_interface
+class ocm_online_contact_point extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static function canPush(): bool
     {
         return true;
@@ -78,6 +76,36 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
         return $data;
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
+        $item->setAttribute('name', $row['Titolo punto di contatto*']);
+        $item->setAttribute('phone_availability_time', $row['Orari disponibilità telefonica']);
+
+        $contacts = [];
+        for ($x = 0; $x <= 5; $x++) {
+            $indexLabel = $x + 1;
+            $indexLabelRequired = $indexLabel;
+            if ($indexLabel === 1) $indexLabelRequired = "1*";
+            if (
+                isset($row['Tipologia di contatto ' . $indexLabelRequired], $row['Contatto ' . $indexLabelRequired], $row['Tipo di contatto ' . $indexLabel]) &&
+                (!empty($row['Tipologia di contatto ' . $indexLabelRequired]) || !empty($row['Contatto ' . $indexLabelRequired]) || !empty($row['Tipo di contatto ' . $indexLabel]))
+            ) {
+                $contact = [
+                    'type' => $row['Tipologia di contatto ' . $indexLabelRequired],
+                    'value' => $row['Contatto ' . $indexLabelRequired],
+                    'contact' => $row['Tipo di contatto ' . $indexLabel],
+                ];
+                $contacts[$x] = $contact;
+            }
+        }
+        $item->setAttribute('contact', json_encode($contacts));
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getRangeValidationHash(): array
     {
         $contactType = [
@@ -122,41 +150,12 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
         return $value;
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        $item = new static();
-        $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
-        $item->setAttribute('name', $row['Titolo punto di contatto*']);
-        $item->setAttribute('phone_availability_time', $row['Orari disponibilità telefonica']);
-
-        $contacts = [];
-        for ($x = 0; $x <= 5; $x++) {
-            $indexLabel = $x + 1;
-            $indexLabelRequired = $indexLabel;
-            if ($indexLabel === 1) $indexLabelRequired = "1*";
-            if (
-                isset($row['Tipologia di contatto ' . $indexLabelRequired], $row['Contatto ' . $indexLabelRequired], $row['Tipo di contatto ' . $indexLabel]) &&
-                (!empty($row['Tipologia di contatto ' . $indexLabelRequired]) || !empty($row['Contatto ' . $indexLabelRequired]) || !empty($row['Tipo di contatto ' . $indexLabel]))
-            ) {
-                $contact = [
-                    'type' => $row['Tipologia di contatto ' . $indexLabelRequired],
-                    'value' => $row['Contatto ' . $indexLabelRequired],
-                    'contact' => $row['Tipo di contatto ' . $indexLabel],
-                ];
-                $contacts[$x] = $contact;
-            }
-        }
-        $item->setAttribute('contact', json_encode($contacts));
-
-        return $item;
-    }
-
     public static function getImportPriority(): int
     {
         return 10;
     }
 
-    public function generatePayload(): array
+    public function generatePayload()
     {
         $locale = 'ita-IT';
         $payload = $this->getNewPayloadBuilderInstance();
@@ -166,20 +165,18 @@ class ocm_online_contact_point extends eZPersistentObject implements ocm_interfa
         $payload->setLanguages([$locale]);
         $payload->setData($locale, 'name', $this->attribute('name'));
         $payload->setData($locale, 'contact', json_decode($this->attribute('contact'), true));
-        $openingHours = [];
-        $openingHoursNames = explode(PHP_EOL, $this->attribute('phone_availability_time'));
-        if (!$this->isEmptyArray($openingHoursNames)){
-            $list = ocm_opening_hours_specification::fetchObjectList(
-                ocm_opening_hours_specification::definition(), ['_id'],
-                ['trim(name)' => [$openingHoursNames]]
-            );
-            $openingHours = array_column($list, '_id');
-        }
 
+        $openingHours = ocm_opening_hours_specification::getIdListByName($this->attribute('phone_availability_time'));
         if (!empty($openingHours)) {
             $payload->setData($locale, 'phone_availability_time', $openingHours);
         }
 
-        return $payload->getArrayCopy();
+        return $payload;
     }
+
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    {
+        return parent::getIdListByName($name, $field, 'Contatti ');
+    }
+
 }

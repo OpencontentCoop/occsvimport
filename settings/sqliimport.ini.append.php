@@ -4,6 +4,7 @@
 AvailableSourceHandlers[]=csvimporthandler
 AvailableSourceHandlers[]=csvimporthandlerlotto
 AvailableSourceHandlers[]=googlespreadsheetimporthandler
+AvailableSourceHandlers[]=ocmimporthandler
 RobotUserID=14
 
 [csvimporthandler-HandlerSettings]
@@ -26,5 +27,11 @@ Name=Google Spreadsheet Import Handler
 ClassName=OCGoogleSpreadsheetImportHandler
 Debug=enabled
 DefaultParentNodeID=2
+
+[ocmimporthandler-HandlerSettings]
+Enabled=true
+Name=Assistente Migrazione
+ClassName=OCMImportHandler
+Debug=enabled
 
 */ ?>

@@ -1,10 +1,7 @@
 <?php
 
-use Google_Service_Sheets_ClearValuesRequest as Google_Service_Sheets_ClearValuesRequestAlias;
 use Opencontent\Google\GoogleSheet;
 use Opencontent\Google\GoogleSheetClient;
-use Opencontent\Opendata\Api\ContentRepository;
-use Opencontent\Opendata\Api\EnvironmentLoader;
 
 class OCMigrationSpreadsheet
 {
@@ -67,7 +64,7 @@ class OCMigrationSpreadsheet
     {
         $id = self::getConnectedSpreadSheet();
         $title = false;
-        if ($id){
+        if ($id) {
             $spreadsheet = new GoogleSheet($id);
             $title = $spreadsheet->getTitle();
         }
@@ -94,7 +91,8 @@ class OCMigrationSpreadsheet
         if ($siteData instanceof eZSiteData) {
             $siteData->remove();
         }
-
+        OCMigration::createPayloadTableIfNeeded(null, true);
+        OCMigration::createTableIfNeeded(null, true);
         self::resetCurrentStatus();
     }
 
@@ -127,9 +125,9 @@ class OCMigrationSpreadsheet
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
             $siteData = eZSiteData::create('migration_status', false);
-        }elseif ($message === null){
+        } elseif ($message === null) {
             $current = json_decode($siteData->attribute('value'), true);
-            $message = $current['message'];
+            $message = $current['message'] ?? '';
         }
         $siteData->setAttribute(
             'value',
@@ -154,6 +152,8 @@ class OCMigrationSpreadsheet
             if ($siteData instanceof eZSiteData) {
                 $status = json_decode($siteData->attribute('value'), true);
                 $status['message'] = array_merge((array)$status['message'], (array)$message);
+                unset($status['message'][0]); //@todo
+                //eZCLI::instance()->output(var_export($status['message'], 1));
                 $status['timestamp'] = date('c');
                 $siteData->setAttribute(
                     'value',
@@ -170,8 +170,8 @@ class OCMigrationSpreadsheet
         if (!in_array($action, [
             'export',
             'push',
-//            'pull',
-//            'import',
+            'pull',
+            'import',
             'reset',
         ])) {
             throw new Exception("Action $action not found or not yet available");
@@ -187,13 +187,50 @@ class OCMigrationSpreadsheet
             $update = $options['update'] == 'update' ? '--update' : '';
         }
 
+        $validate = '';
+        if (isset($options['validate'])) {
+            $update = $options['validate'] !== '' ? '--validate' : '';
+        }
+
         if ($action === 'reset') {
             self::setCurrentStatus('', '', [], []);
         } else {
-            $command = 'bash extension/occsvimport/bin/bash/migration/run.sh ' . eZSiteAccess::current()['name'] . ' ' . $action . ' ' . $only . ' ' . $update;
-            eZDebug::writeError($command);
-            exec($command);
-            sleep(2);
+
+            $useSqlImport = true;
+
+            if ($useSqlImport) {
+                $importOptions = [
+                    'action' => $action,
+                    'only' => isset($options['class_filter']) ? implode(',', $options['class_filter']) : [],
+                    'update' => $options['update'],
+                    'validate' => $options['validate'],
+                ];
+                $pendingImport = new SQLIImportItem([
+                    'handler' => 'ocmimporthandler',
+                    'user_id' => eZUser::currentUserID(),
+                ]);
+                $pendingImport->setAttribute('options', new SQLIImportHandlerOptions($importOptions));
+                $pendingImport->store();
+
+                self::setCurrentStatus($action, 'pending', $options, []);
+                $message = "Schedulata azione: $action...";
+
+                $command = 'php runcronjobs.php -q -s' . eZSiteAccess::current()['name'] . ' sqliimport_run > /dev/null &';
+                eZDebug::writeError($command);
+                exec($command);
+            }else {
+                $command = 'bash extension/occsvimport/bin/bash/migration/run.sh '
+                    . eZSiteAccess::current()['name'] . ' '
+                    . $action . ' '
+                    . $only . ' '
+                    . $update . ' '
+                    . $validate;
+
+                eZDebug::writeError($command);
+                exec($command);
+                sleep(2);
+                $message = "In attesa di eseguire l'azione: $action...";
+            }
 
             $executionInfo = [];
             foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
@@ -202,11 +239,11 @@ class OCMigrationSpreadsheet
                     $executionInfo[$className] = [
                         'status' => 'pending',
                         'action' => $action,
-                        'update' => "In attesa di eseguire l'azione: $action...",
+                        'update' => $message,
                         'sheet' => '',
                         'range' => '',
                     ];
-                }else{
+                } else {
                     $executionInfo[$className] = [
                         'status' => 'success',
                         'action' => $action,
@@ -233,15 +270,15 @@ class OCMigrationSpreadsheet
 
     public static function getMasterSpreadsheet(): ?GoogleSheet
     {
-        if (self::$masterSpreadsheet === null){
+        if (self::$masterSpreadsheet === null) {
             $context = OCMigration::discoverContext();
             if ($context) {
                 $shortUrl = 'https://link.opencontent.it/new-kit-' . $context;
                 $ch = curl_init();
                 $timeout = 0;
-                curl_setopt ($ch, CURLOPT_URL, $shortUrl);
-                curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-                curl_setopt($ch, CURLOPT_HEADER, TRUE);
+                curl_setopt($ch, CURLOPT_URL, $shortUrl);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+                curl_setopt($ch, CURLOPT_HEADER, true);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                 // Getting binary data
                 curl_exec($ch);
@@ -262,10 +299,13 @@ class OCMigrationSpreadsheet
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
         $client = new GoogleSheetClient();
-        $firstRows = $client->getGoogleSheetService()->spreadsheets_values->get(self::$masterSpreadsheetId, $range)->getValues();
+        $firstRows = $client->getGoogleSheetService()->spreadsheets_values->get(
+            self::$masterSpreadsheetId,
+            $range
+        )->getValues();
 
         $helper = [];
-        foreach ($firstRows[0] as $index => $header){
+        foreach ($firstRows[0] as $index => $header) {
             $helper[$header] = $firstRows[1][$index] ?? '';
         }
 
@@ -276,7 +316,7 @@ class OCMigrationSpreadsheet
     {
         self::getMasterSpreadsheet();
         $url = str_replace('copy', 'edit', self::$masterSpreadsheetUrl);
-        $data = '=IMPORTRANGE("'.$url.'";"Istruzioni!A1:E50")';
+        $data = '=IMPORTRANGE("' . $url . '";"Istruzioni!A1:E50")';
         $sheetTitle = 'Istruzioni';
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
@@ -309,7 +349,10 @@ class OCMigrationSpreadsheet
         $masterColCount = $masterSheet->getProperties()->getGridProperties()->getColumnCount();
         $masterRange = "$sheetTitle!R1C1:R{$masterRowCount}C{$masterColCount}";
         $client = new GoogleSheetClient();
-        $data = $client->getGoogleSheetService()->spreadsheets_values->get(self::$masterSpreadsheetId, $masterRange)->getValues();
+        $data = $client->getGoogleSheetService()->spreadsheets_values->get(
+            self::$masterSpreadsheetId,
+            $masterRange
+        )->getValues();
 
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
@@ -335,7 +378,6 @@ class OCMigrationSpreadsheet
         )->getUpdatedRows();
         return $updateRows;
     }
-
 
     public function updateHelper($className): ?int
     {
@@ -377,9 +419,13 @@ class OCMigrationSpreadsheet
         return self::$instance;
     }
 
-    public function configureSheet($className, $addConditionalFormatRules = true, $addDateValidations = true, $addRangeValidations = true)
-    {
-        if (strpos($className, 'ocm_') === false){
+    public function configureSheet(
+        $className,
+        $addConditionalFormatRules = true,
+        $addDateValidations = true,
+        $addRangeValidations = true
+    ) {
+        if (strpos($className, 'ocm_') === false) {
             return false;
         }
         $sheetTitle = $className::getSpreadsheetTitle();
@@ -388,9 +434,12 @@ class OCMigrationSpreadsheet
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
 
         $currentRules = [];
-        $response = $this->googleSheetService->spreadsheets->get($this->spreadsheetId, ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)'])->toSimpleObject();
-        foreach ($response->sheets as $sheetData){
-            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()){
+        $response = $this->googleSheetService->spreadsheets->get(
+            $this->spreadsheetId,
+            ['fields' => 'sheets(properties(title,sheetId),conditionalFormats)']
+        )->toSimpleObject();
+        foreach ($response->sheets as $sheetData) {
+            if ($sheetData->properties->sheetId === $sheet->getProperties()->getSheetId()) {
                 $currentRules = $sheetData;
                 break;
             }
@@ -401,15 +450,14 @@ class OCMigrationSpreadsheet
 
         $addConditionalFormatRulesRequests = [];
         if ($addConditionalFormatRules) {
-
             $sheetId = $currentRules->properties->sheetId;
             if (isset($currentRules->conditionalFormats)) {
                 foreach (array_reverse(array_keys($currentRules->conditionalFormats)) as $index) {
                     $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                         'deleteConditionalFormatRule' => [
                             'sheetId' => $sheetId,
-                            'index' => $index
-                        ]
+                            'index' => $index,
+                        ],
                     ]);
                 }
             }
@@ -436,20 +484,20 @@ class OCMigrationSpreadsheet
                                     'type' => 'BLANK',
                                 ],
                                 'format' => [
-                                    'backgroundColorStyle' => ['rgbColor' => ['red' => 1]]
-                                ]
-                            ]
+                                    'backgroundColorStyle' => ['rgbColor' => ['red' => 1]],
+                                ],
+                            ],
                         ],
-                        'index' => 0
-                    ]
+                        'index' => 0,
+                    ],
                 ]);
             }
 
             $internalLinkConditionalFormatHeaders = $className::getInternalLinkConditionalFormatHeaders();
-            if (!empty($internalLinkConditionalFormatHeaders)){
+            if (!empty($internalLinkConditionalFormatHeaders)) {
                 $internalLinkRanges = [];
                 foreach ($headers as $index => $header) {
-                    if (in_array($header, $internalLinkConditionalFormatHeaders)){
+                    if (in_array($header, $internalLinkConditionalFormatHeaders)) {
                         $internalLinkRanges[] = [
                             'sheetId' => $sheet->getProperties()->getSheetId(),
                             'startColumnIndex' => $index,
@@ -469,27 +517,29 @@ class OCMigrationSpreadsheet
                                         'type' => 'TEXT_CONTAINS',
                                         'values' => [
                                             ['userEnteredValue' => '<a href="/'],
-                                        ]
+                                        ],
                                     ],
                                     'format' => [
-                                        'backgroundColorStyle' => ['rgbColor' => [
-                                            'red' => 1,
-                                            'green' => 0.549,
-                                            'blue' => 0
-                                        ]]
-                                    ]
-                                ]
+                                        'backgroundColorStyle' => [
+                                            'rgbColor' => [
+                                                'red' => 1,
+                                                'green' => 0.549,
+                                                'blue' => 0,
+                                            ],
+                                        ],
+                                    ],
+                                ],
                             ],
-                            'index' => 0
-                        ]
+                            'index' => 0,
+                        ],
                     ]);
                 }
             }
 
             $max160CharConditionalFormatHeaders = $className::getMax160CharConditionalFormatHeaders();
-            if (!empty($max160CharConditionalFormatHeaders)){
+            if (!empty($max160CharConditionalFormatHeaders)) {
                 foreach ($headers as $index => $header) {
-                    if (in_array($header, $max160CharConditionalFormatHeaders)){
+                    if (in_array($header, $max160CharConditionalFormatHeaders)) {
                         $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                             'addConditionalFormatRule' => [
                                 'rule' => [
@@ -500,28 +550,34 @@ class OCMigrationSpreadsheet
                                             'endColumnIndex' => $index + 1,
                                             'startRowIndex' => (self::$dataStartAtRow - 1),
                                             'endRowIndex' => $rowCount,
-                                        ]
+                                        ],
                                     ],
                                     'booleanRule' => [
                                         'condition' => [
                                             'type' => 'CUSTOM_FORMULA',
                                             'values' => [
-                                                ['userEnteredValue' => '=LEN(REGEXREPLACE('. $this->getColumnLetter($sheetTitle, $header) .'4;"</?\S+[^<>]*>";""))>255'],
-                                            ]
+                                                [
+                                                    'userEnteredValue' => '=LEN(REGEXREPLACE(' . $this->getColumnLetter(
+                                                            $sheetTitle,
+                                                            $header
+                                                        ) . '4;"</?\S+[^<>]*>";""))>255',
+                                                ],
+                                            ],
                                         ],
                                         'format' => [
-                                            'backgroundColorStyle' => ['rgbColor' => [
-                                                'red' => 1,
-                                                'green' => 0.549,
-                                                'blue' => 0
-                                            ]]
-                                        ]
-                                    ]
+                                            'backgroundColorStyle' => [
+                                                'rgbColor' => [
+                                                    'red' => 1,
+                                                    'green' => 0.549,
+                                                    'blue' => 0,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
                                 ],
-                                'index' => 0
-                            ]
+                                'index' => 0,
+                            ],
                         ]);
-
                     }
                 }
             }
@@ -546,10 +602,10 @@ class OCMigrationSpreadsheet
                                     'strict' => true,
                                     'condition' => [
                                         'type' => 'DATE_IS_VALID',
-                                        'values' => []
+                                        'values' => [],
                                     ],
                                 ],
-                            ]
+                            ],
                         ]);
                     }
                 }
@@ -577,11 +633,11 @@ class OCMigrationSpreadsheet
                                         'condition' => [
                                             'type' => 'ONE_OF_RANGE',
                                             'values' => [
-                                                ['userEnteredValue' => $userEnteredValue]
-                                            ]
+                                                ['userEnteredValue' => $userEnteredValue],
+                                            ],
                                         ],
                                     ],
-                                ]
+                                ],
                             ]);
                         }
                     }
@@ -605,10 +661,10 @@ class OCMigrationSpreadsheet
                                     'strict' => true,
                                     'condition' => [
                                         'type' => 'TEXT_IS_URL',
-                                        'values' => []
+                                        'values' => [],
                                     ],
                                 ],
-                            ]
+                            ],
                         ]);
                     }
                 }
@@ -626,7 +682,7 @@ class OCMigrationSpreadsheet
         if (!empty($requests)) {
             try {
                 $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
-                    'requests' => $requests
+                    'requests' => $requests,
                 ]);
                 $responses[] = $this->googleSheetService->spreadsheets->batchUpdate(
                     $this->spreadsheetId,
@@ -665,10 +721,10 @@ class OCMigrationSpreadsheet
         $sheet = $ref['sheet'];
         $column = $ref['column'];
         $startAt = $ref['start'];
-        
+
         $rowCount = $this->spreadsheet->getByTitle($sheet)->getProperties()->getGridProperties()->getRowCount();
         $letter = $this->getColumnLetter($sheet, $column);
-        if ($letter){
+        if ($letter) {
             return '=\'' . $sheet . '\'!$' . $letter . '$' . $startAt . ':$' . $letter . '$' . $rowCount;
         }
 
@@ -680,18 +736,33 @@ class OCMigrationSpreadsheet
         $headers = $this->getHeaders($sheetTitle);
         $alphabeth = range('A', 'Z');
         $letter = false;
-        foreach ($headers as $index => $header){
+        foreach ($headers as $index => $header) {
             $prefix = '';
-            if ($index > 25){
+            if ($index > 25) {
                 $index = $index - 25;
                 $prefix = 'A';
             }
-            if ($column == $header){
-                $letter = $prefix.$alphabeth[$index];
+            if ($column == $header) {
+                $letter = $prefix . $alphabeth[$index];
             }
         }
 
         return $letter;
+    }
+
+    private static function setAlreadyRunningStatus($action, $options)
+    {
+        $executionInfo = [];
+        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            $executionInfo[$className] = [
+                'status' => 'error',
+                'action' => $action,
+                'update' => "L'azione è già in corso",
+                'sheet' => '',
+                'range' => '',
+            ];
+        }
+        self::appendMessageToCurrentStatus($executionInfo);
     }
 
     /**
@@ -699,8 +770,11 @@ class OCMigrationSpreadsheet
      */
     public function push(eZCLI $cli = null, array $options = []): array
     {
-        if (self::getCurrentStatus('push')['status'] == 'running'){
-            if ($cli) $cli->output('Already running');
+        if (self::getCurrentStatus('push')['status'] == 'running') {
+            if ($cli) {
+                $cli->output('Already running');
+            }
+            self::setAlreadyRunningStatus('push', $options);
             return [];
         }
 
@@ -734,7 +808,7 @@ class OCMigrationSpreadsheet
 
         $override = !($options['update'] === true);
         if ($override && $cli) {
-            $cli->warning("Run in override mode");
+            $cli->output("Run in override mode");
         }
 
         if (!$className::canPush()) {
@@ -749,7 +823,6 @@ class OCMigrationSpreadsheet
         }
 
         $sheetTitle = $className::getSpreadsheetTitle();
-
         try {
             $sheet = $this->spreadsheet->getByTitle($sheetTitle);
             $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
@@ -770,10 +843,12 @@ class OCMigrationSpreadsheet
                 }
             }
 
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus([$className => [
-                'status' => 'running',
-                'update' => 'Preparazione dei contenuti...',
-            ]]);
+            OCMigrationSpreadsheet::appendMessageToCurrentStatus([
+                $className => [
+                    'status' => 'running',
+                    'update' => 'Preparazione dei contenuti...',
+                ],
+            ]);
 
             $items = $className::fetchObjectList(
                 $className::definition(),
@@ -852,7 +927,9 @@ class OCMigrationSpreadsheet
                 'range' => $range,
             ];
         } catch (Throwable $e) {
-            $message =  ($e instanceof \Google\Service\Exception) ? json_decode($e->getMessage())->error->message : $e->getMessage();
+            $message = ($e instanceof \Google\Service\Exception) ? json_decode(
+                $e->getMessage()
+            )->error->message : $e->getMessage();
             $executionInfo[$className] = [
                 'status' => 'error',
                 'action' => 'push',
@@ -860,7 +937,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -871,9 +948,11 @@ class OCMigrationSpreadsheet
     private function getItemToSpreadsheet(ocm_interface $item): array
     {
         $data = $item->toSpreadsheet();
-        foreach ($data as $key => $value){
-            if (mb_strlen($value) > 49999){
-                $data[$key] = "[Il valore di questo campo supera il limite di caratteri ammessi per una cella.\nSe vuoi che venga importato direttamente dal sito originale non rimuovere né modificare questa cella]\n#" . $item->attribute('_id');
+        foreach ($data as $key => $value) {
+            if (mb_strlen($value) > 49999) {
+                $data[$key] = "[Il valore di questo campo supera il limite di caratteri ammessi per una cella.\nSe vuoi che venga importato direttamente dal sito originale non rimuovere né modificare questa cella]\n#" . $item->attribute(
+                        '_id'
+                    );
             }
         }
 
@@ -882,8 +961,11 @@ class OCMigrationSpreadsheet
 
     public function pull(eZCLI $cli = null, array $options = [])
     {
-        if (self::getCurrentStatus('pull')['status'] == 'running'){
-            if ($cli) $cli->output('Already running');
+        if (self::getCurrentStatus('pull')['status'] == 'running') {
+            if ($cli) {
+                $cli->output('Already running');
+            }
+            self::setAlreadyRunningStatus('pull', $options);
             return [];
         }
 
@@ -891,7 +973,14 @@ class OCMigrationSpreadsheet
             throw new Exception('Wrong context');
         }
 
+        OCMigration::createTableIfNeeded($cli);
+
         self::setCurrentStatus('pull', 'running', $options);
+
+        $validate = isset($options['validate']) && $options['validate'];
+        if ($validate && $cli){
+            $cli->output('Run with validation');
+        }
 
         $executionInfo = [];
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
@@ -899,7 +988,13 @@ class OCMigrationSpreadsheet
             self::appendMessageToCurrentStatus($executionInfo);
         }
 
-        self::setCurrentStatus('pull', 'done', $options, $executionInfo);
+        OCMigration::createPayloadTableIfNeeded($cli);
+        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, $validate));
+            self::appendMessageToCurrentStatus($executionInfo);
+        }
+
+        self::setCurrentStatus('pull', 'done', $options);
 
         return $executionInfo;
     }
@@ -927,18 +1022,28 @@ class OCMigrationSpreadsheet
 
             $values = $this->getDataHash($sheetTitle);
             $count = 0;
-            foreach ($values as $index => $value) {
+            foreach ($values as $value) {
+                /** @var OCMPersistentObject $item */
                 $item = $className::fromSpreadsheet($value);
-                if ($item instanceof eZPersistentObject) {
-                    $item->store();
-                    $count++;
+                $ignora = isset($value['IGNORA']) && !empty($value['IGNORA']);
+                if ($item instanceof eZPersistentObject && !$ignora) {
+                    try {
+                        $item->storeThis(false);
+                        $count++;
+                    } catch (Throwable $e) {
+                        $executionInfo['errors'][$className][$item->attribute('_id')] =
+                            [
+                                'message' => $e->getMessage(),
+                                'action' => 'pull',
+                            ];
+                    }
                 }
             }
 
             $executionInfo[$className] = [
-                'status' => 'success',
+                'status' => 'running',
                 'action' => 'pull',
-                'update' => $count,
+                'update' => 'Lette ' . $count . ' righe',
                 'sheet' => $sheetTitle,
             ];
         } catch (Throwable $e) {
@@ -949,7 +1054,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -957,47 +1062,24 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    public function import(eZCLI $cli = null, array $options = [])
-    {
-        if (self::getCurrentStatus('import')['status'] == 'running'){
-            return [];
-        }
-
-        if (OCMigration::discoverContext() !== false) {
-            throw new Exception('Wrong context');
-        }
-
-        $executionInfo = [];
-        $sortedClasses = [];
-
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-            $sortedClasses[$className::getImportPriority()] = $className;
-        }
-        ksort($sortedClasses);
-
-        self::setCurrentStatus('import', 'running', $options, []);
-
-        foreach ($sortedClasses as $className) {
-            $executionInfo = array_merge($executionInfo, $this->importByType($className, $cli));
-        }
-
-        self::setCurrentStatus('import', 'done', $options, $executionInfo);
-
-        return $executionInfo;
-    }
-
-    private function importByType($className, eZCLI $cli = null): array
+    /**
+     * @param ocm_interface
+     * @param eZCLI|null $cli
+     * @param bool $validate
+     * @return array
+     */
+    private function createPayloadByType($className, eZCLI $cli = null, bool $validate = null): array
     {
         $executionInfo = [];
 
-        if (!$className::canImport()) {
+        if (!$className::canPull()) {
             $executionInfo[$className] = [
                 'status' => 'skipped',
                 'action' => 'pull',
                 'message' => '',
                 'class' => $className,
             ];
-            OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
+
             return $executionInfo;
         }
 
@@ -1006,7 +1088,7 @@ class OCMigrationSpreadsheet
             $className::definition(),
             null,
             null,
-            ['_id' => 'asc'],
+            [$className::getSortField() => 'asc'],
             null,
             true
         );
@@ -1014,65 +1096,80 @@ class OCMigrationSpreadsheet
 
         try {
             if ($cli) {
-                $cli->output("Import $itemCount $className items");
+                $cli->output("Create payload for $itemCount $className items");
             }
-            $count = $updated = $created = 0;
+            $count = 0;
 
             foreach ($items as $index => $item) {
+                $countIndex = $index + 1;
                 if ($cli) {
-                    $countIndex = $index + 1;
-                    $cli->output(" - $countIndex/$itemCount " . $item->attribute('_id'));
+                    $cli->output(" - $countIndex/$itemCount " . get_class($item) . ' ' . $item->attribute('_id'), false);
                 }
                 try {
-                    $payload = $item->generatePayload();
-                    if (empty($payload)) {
-                        throw new Exception('Empty payload');
-                    }
-                    $repository = new ContentRepository();
-                    $environment = EnvironmentLoader::loadPreset('content');
-                    $repository->setCurrentEnvironmentSettings($environment);
-
-                    $result = $repository->createUpdate($payload, true);
-                    if ($result['message'] == 'success') {
-                        if ($result['method'] == 'create') {
-                            $created++;
-                        } else {
-                            $updated++;
+                    $generatedPayloadCount = $item->storePayload();
+                    if ($validate && $generatedPayloadCount > 0) {
+                        $p = false;
+                        try {
+                            $p = OCMPayload::fetch($item->id());
+                        } catch (Exception $e) {
+                            $cli->output(' fail validation', false);
                         }
-                        $count++;
+                        if ($p instanceof OCMPayload) {
+                            $cli->output(' validation', false);
+                            $p->validate();
+                        }
+                    }
+                    $count = $count + $generatedPayloadCount;
+                    if ($cli) {
+                        $cli->output(' ' . $generatedPayloadCount);
                     }
                 } catch (Throwable $e) {
                     if ($cli) {
-                        $cli->error("   " . $e->getMessage());
+                        $cli->output(' ' . $e->getMessage());
                     }
-                    $executionInfo['errors'][$className][$item->attribute('_id')] =
-                        [
-                            'message' => $e->getMessage(),
-                            'action' => 'pull',
-                            'trace' => $e->getTraceAsString(),
-                            'payload' => $payload ?? null,
-                        ];
+                    $executionInfo['errors'][$className][$item->attribute('_id')] = [
+                        'message' => $e->getMessage(),
+                        'action' => 'pull',
+                    ];
+                }
+
+                if ($count > $itemCount){
+                    $count = $itemCount;
+                }
+                $message = 'Letti ' . $itemCount . ' contenuti e preparati ' . $count . ' contenuti per l\'importazione';
+
+                if (!$className::checkPayloadGeneration()){
+                    $message = 'Letti ' . $itemCount . ' contenuti';
+                }
+                if ($validate){
+                    $message = 'Letti ' . $itemCount . ' contenuti e validati ' . $count . ' contenuti';
+                }
+
+                $status = $countIndex >= $itemCount ? 'success' : 'running';
+                if ($status == 'success' && $className::checkPayloadGeneration()){
+                    $status = $count >= $itemCount ? 'success' : 'warning';
+                }
+
+                $executionInfo[$className] = [
+                    'status' => $status,
+                    'action' => 'import',
+                    'process' => $countIndex . '/' . $itemCount,
+                    'update' => $message,
+                    'class' => $className,
+                ];
+
+                if ($index % 5 === 0 || $countIndex >= $itemCount) {
+                    OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
                 }
             }
-
-            $executionInfo[$className] = [
-                'status' => $count != $itemCount ? 'warning' : 'success',
-                'action' => 'pull',
-                'process' => $itemCount,
-                'create' => $created,
-                'update' => $updated,
-                'class' => $className,
-            ];
         } catch (Throwable $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
                 'action' => 'pull',
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'class' => $className,
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -1080,10 +1177,161 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    public static function export(eZCLI $cli = null, array $options = [])
+    public function import(eZCLI $cli = null, array $options = []): array
     {
-        if (self::getCurrentStatus('export')['status'] == 'running'){
-            if ($cli) $cli->output('Already running');
+        if (self::getCurrentStatus('import')['status'] == 'running') {
+            if ($cli) {
+                $cli->output('Already running');
+            }
+            self::setAlreadyRunningStatus('import', $options);
+            return [];
+        }
+
+        if (OCMigration::discoverContext() !== false) {
+            throw new Exception('Wrong context');
+        }
+
+        self::setCurrentStatus('import', 'running', $options, []);
+
+        $onlyCreation = !($options['update'] === true);
+
+        $payloadsQueryConds = null;
+        if (isset($options['class_filter']) && !empty($options['class_filter'])) {
+            $payloadsQueryConds = [
+                'type' => [$options['class_filter']],
+            ];
+        }
+
+        /** @var OCMPayload[] $payloads */
+        $payloads = OCMPayload::fetchObjectList(
+            OCMPayload::definition(),
+            null,
+            $payloadsQueryConds,
+            ['priority' => 'asc', 'modified_at' => 'asc'],
+            null,
+            true
+        );
+        $payloadCount = count($payloads);
+
+        if ($cli) {
+            $cli->output("Import $payloadCount payloads " . implode(', ', $options['class_filter']));
+        }
+
+        $countProcessed = 0;
+        $count = [];
+        $executionInfo = [];
+        $stat = [];
+
+        foreach ($payloads as $payload) {
+            $className = $payload->type();
+            if (!isset($count[$className])) {
+                $count[$className] = 0;
+            }
+            if (!isset($stat[$className])){
+                $stat[$className] = [
+                    'c' => 0,
+                    'u' => 0,
+                    'f' => 0,
+                ];
+            }
+            $count[$className]++;
+        }
+
+        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            if (!isset($count[$className]) || $count[$className] === 0){
+                $executionInfo[$className] = [
+                    'status' => 'success',
+                    'action' => 'import',
+                    'update' => '<small>Nessun contenuto da processare</small>',
+                    'sheet' => '',
+                    'range' => '',
+                ];
+            }else{
+                $executionInfo[$className] = [
+                    'status' => 'running',
+                    'action' => 'import',
+                    'update' => '<small>Contenuti processati: 0 di ' . $count[$className] . '</small>',
+                    'sheet' => '',
+                    'range' => '',
+                ];
+            }
+        }
+        OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
+
+        foreach ($payloads as $index => $payload) {
+            $countProcessed++;
+            $className = $payload->type();
+
+            if (!$className::canImport()) {
+                $executionInfo[$className] = [
+                    'status' => 'skipped',
+                    'action' => 'import',
+                    'message' => '',
+                    'class' => $className,
+                ];
+            } else {
+                if ($cli) {
+                    $countIndex = $index + 1;
+                    $cli->output(" - $countIndex/$payloadCount " . $className . ' ' . $payload->id(), false);
+                }
+
+                try {
+                    $response = $payload->createOrUpdateContent($onlyCreation);
+                    if ($response == 'create') {
+                        $stat[$className]['c']++;
+                        if ($cli) {
+                            $cli->output(' created');
+                        }
+                    } else {
+                        $stat[$className]['u']++;
+                        if ($cli) {
+                            $cli->output(' updated');
+                        }
+                    }
+                } catch (Throwable $e) {
+                    $stat[$className]['f']++;
+                    if ($cli) {
+                        $cli->output(" error: " . $e->getMessage());
+                    }
+                }
+//                if ($index % 10 === 0) {
+
+                $status = 'running';
+                if ($count[$className] <= array_sum($stat[$className])){
+                    $status = $stat[$className]['f'] > 0 ? 'warning' : 'success';
+                }
+
+                $executionInfo[$className] = [
+                    'status' => $status,
+                    'action' => 'import',
+                    'process' => $countProcessed . '/' . $payloadCount,
+                    'update' => '<small>Contenuti processati: ' . array_sum($stat[$className]) . ' di ' . $count[$className]
+                        . '<br />Creati: ' . $stat[$className]['c'] . ' contenuti'
+                        . '<br />Aggiornati: ' . $stat[$className]['u'] . ' contenuti'
+                        . '<br />Errori di importazione: ' . $stat[$className]['f'] . '</small>',
+                    'class' => $className,
+                ];
+//                $cli->output($executionInfo[$className]['update']);
+//                }
+
+                if ($index % 5 === 0) {
+                    OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
+                }
+            }
+        }
+
+        self::setCurrentStatus('import', 'done', $options, $executionInfo);
+
+        return $executionInfo;
+    }
+
+    public static function export(eZCLI $cli = null, array $options = []): array
+    {
+        if (self::getCurrentStatus('export')['status'] == 'running') {
+            if ($cli) {
+                $cli->output('Already running');
+            }
+            self::setAlreadyRunningStatus('export', $options);
             return [];
         }
 
@@ -1095,7 +1343,7 @@ class OCMigrationSpreadsheet
 
         $override = !($options['update'] === true);
         if ($override && $cli) {
-            $cli->warning("Run in override mode");
+            $cli->output("Run in override mode");
         }
 
         self::setCurrentStatus('export', 'running', $options, []);
@@ -1105,8 +1353,8 @@ class OCMigrationSpreadsheet
                 $options['class_filter'] ?? [],
                 $options['update']
             );
-        }catch (Throwable $e){
-            self::setCurrentStatus('import', 'error', $options, $e->getMessage());
+        } catch (Throwable $e) {
+            self::setCurrentStatus('export', 'error', $options, $e->getMessage());
             return ['status' => 'error']; //@todo
         }
 
@@ -1116,7 +1364,7 @@ class OCMigrationSpreadsheet
         return ['status' => 'success']; //@todo
     }
 
-    private function getDataHash($sheetTitle)
+    private function getDataHash($sheetTitle): array
     {
         if (!isset($this->dataHash[$sheetTitle])) {
             $this->dataHash[$sheetTitle] = $this->spreadsheet->getSheetDataHash($sheetTitle);
