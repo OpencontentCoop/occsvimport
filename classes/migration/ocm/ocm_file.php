@@ -1,9 +1,7 @@
 <?php
 
-class ocm_file extends eZPersistentObject implements ocm_interface
+class ocm_file extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static function canImport(): bool
     {
         return false;
@@ -48,12 +46,21 @@ class ocm_file extends eZPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
-        // TODO: Implement fromSpreadsheet() method.
+        $item = new static();
+        $item->setAttribute('_id', $row['ID']);
+        $item->setAttribute('name', $row['Nome del file']);
+        $item->setAttribute('description', $row['Descrizione']);
+        $item->setAttribute('file', $row['File']);
+        $item->setAttribute('tags', $row['Tags']);
+        $item->setAttribute('percorso_univoco', $row['Percorso univoco del file ']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
     }
 
-    public function generatePayload(): array
+    public function generatePayload()
     {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int

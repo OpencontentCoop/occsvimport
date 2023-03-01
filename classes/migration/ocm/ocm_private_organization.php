@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_private_organization extends eZPersistentObject implements ocm_interface
+class ocm_private_organization extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'legal_name',
         'alt_name',
@@ -162,6 +160,79 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo*"]);
+        $item->setAttribute('legal_name', $row["Nome*"]);
+        $item->setAttribute('alt_name', $row["Nome alternativo"]);
+        $item->setAttribute('acronym', $row["Acronimo"]);
+        $item->setAttribute('description', $row["Descrizione*"]);
+        $item->setAttribute('business_objective', $row["Oggetto sociale"]);
+        $item->setAttribute('has_logo', $row["Logo"]);
+        $item->setAttribute('image', $row["Immagini"]);
+        $item->setAttribute('has_spatial_coverage', $row["Sedi"]);
+        $item->setAttribute('has_online_contact_point', $row["Punti di contatto"]);
+        $item->setAttribute('foundation_date', $row["Data di costituzione"]);
+        $item->setAttribute('has_private_org_activity_type', $row["Tipo di attività"]);
+        $item->setAttribute('topics', $row["Argomenti"]);
+        $item->setAttribute('attachments', $row["Allegati"]);
+        $item->setAttribute('more_information', $row["Ulteriori informazioni"]);
+        $item->setAttribute('holds_role_in_time', $row["Riveste un ruolo nel tempo"]);
+        $item->setAttribute('tax_code', $row["Codice fiscale"]);
+        $item->setAttribute('vat_code', $row["Partita IVA*"]);
+        $item->setAttribute('rea_number', $row["REA"]);
+        $item->setAttribute('private_organization_category', $row["Categoria di organizzazione privata"]);
+        $item->setAttribute('legal_status_code', $row["Forma giuridica"]);
+        $item->setAttribute('identifier', $row["Identificativo univoco interno"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('private_organization');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->discoverParentNode());
+        $payload->setLanguages([$locale]);
+        $payload->setData($locale, 'legal_name', trim($this->attribute('legal_name')));
+        $payload->setData($locale, 'alt_name', trim($this->attribute('alt_name')));
+        $payload->setData($locale, 'acronym', trim($this->attribute('acronym')));
+        $payload->setData($locale, 'description', trim($this->attribute('description')));
+        $payload->setData($locale, 'business_objective', trim($this->attribute('business_objective')));
+        $payload->setData($locale, 'has_logo', trim($this->attribute('has_logo')));
+        if (!empty($this->attribute('has_logo')) && (strpos($this->attribute('has_logo'), 'http') !== false)) {
+            $payload->setData($locale, 'has_logo', [
+                'url' => $this->attribute('has_logo'),
+                'filename' => basename($this->attribute('has_logo')),
+            ]);
+        }
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+        $payload->setData($locale, 'has_spatial_coverage', ocm_place::getIdListByName($this->attribute('has_spatial_coverage')));
+        $payload->setData($locale, 'has_online_contact_point', ocm_online_contact_point::getIdListByName($this->attribute('has_online_contact_point')));
+        $payload->setData($locale, 'foundation_date', $this->formatDate($this->attribute('foundation_date')));
+        $payload->setData($locale, 'has_private_org_activity_type', $this->formatTags($this->attribute('has_private_org_activity_type')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+        $payload->setData($locale, 'attachments', ocm_document::getIdListByName($this->attribute('attachments')));
+        $payload->setData($locale, 'more_information', trim($this->attribute('more_information')));
+        $payload->setData($locale, 'tax_code', trim($this->attribute('tax_code')));
+        $payload->setData($locale, 'vat_code', trim($this->attribute('vat_code')));
+        $payload->setData($locale, 'rea_number', trim($this->attribute('rea_number')));
+        $payload->setData($locale, 'private_organization_category', $this->formatTags($this->attribute('private_organization_category')));
+        $payload->setData($locale, 'legal_status_code', $this->formatTags($this->attribute('legal_status_code')));
+        $payload->setData($locale, 'identifier', trim($this->attribute('identifier')));
+
+        return $payload;
+    }
+
+    protected function discoverParentNode(): int
+    {
+        return $this->getNodeIdFromRemoteId('10742bd28e405f0e83ae61223aea80cb');
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -212,19 +283,14 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         return 'Nome*';
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
-    }
-
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 100;
+    }
+
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    {
+        return parent::getIdListByName($name, 'legal_name', $tryWithPrefix);
     }
 
 }

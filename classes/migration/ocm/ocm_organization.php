@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_organization extends eZPersistentObject implements ocm_interface
+class ocm_organization extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'legal_name',
         'alt_name',
@@ -48,6 +46,7 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
 
         return null;
     }
+
     protected function getComunwebSindacoFieldMapper(): array
     {
         return []; //@todo
@@ -375,6 +374,81 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row['Identificativo unità organizzativa*']);
+        $item->setAttribute('legal_name', $row['Nome dell\'unità organizzativa*']);
+        $item->setAttribute('abstract', $row['Descrizione breve*']);
+        $item->setAttribute('description', $row['Descrizione']);
+        $item->setAttribute('main_function', $row['Competenze*']);
+        $item->setAttribute('type', $row['Tipo di organizzazione*']);
+        $item->setAttribute('has_spatial_coverage', $row['Sede/i*']);
+        $item->setAttribute('has_online_contact_point', $row['Contatti*']);
+        $item->setAttribute('topics', $row['Argomenti']);
+        $item->setAttribute('image', $row['Immagine']);
+        $item->setAttribute('hold_employment', $row['Unità organizzativa genitore']);
+        $item->setAttribute('attachments', $row['Allegati']);
+        $item->setAttribute('more_information', $row['Ulteriori informazioni']);
+        $item->setAttribute('alt_name', $row['Nome alternativo']);
+        $item->setAttribute('identifier', $row['Identificatore univoco interno']);
+        $item->setAttribute('tax_code_e_invoice_service', $row['Codice fiscale servizio di fatturazione elettronica']);
+        $item->setAttribute('alt_name', $row['Nome alternativo']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+    protected function discoverParentNode(): int
+    {
+        $isPol = count(array_diff(
+            $this->formatTags($this->attribute('type')), [
+            'Commissione',
+            'Consiglio comunale',
+            'Giunta comunale',
+        ])) === 0;
+
+        return $isPol ? $this->getNodeIdFromRemoteId('organi_politici') : $this->getNodeIdFromRemoteId('899b1ac505747c0d8523dfe12751eaae');
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('organization');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->discoverParentNode());
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'legal_name', $this->attribute('legal_name'));
+        $payload->setData($locale, 'abstract', $this->attribute('abstract'));
+//        $payload->setData($locale, 'description', $this->attribute('description'));
+        $payload->setData($locale, 'main_function', $this->attribute('main_function'));
+        $payload->setData($locale, 'type', $this->formatTags($this->attribute('type')));
+        $payload->setData($locale, 'has_spatial_coverage', ocm_place::getIdListByName($this->attribute('has_spatial_coverage')));
+        $payload->setData($locale, 'has_online_contact_point', ocm_online_contact_point::getIdListByName($this->attribute('has_online_contact_point')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+        $payload->setData($locale, 'more_information', $this->attribute('more_information'));
+        $payload->setData($locale, 'alt_name', $this->attribute('alt_name'));
+        $payload->setData($locale, 'identifier', $this->attribute('identifier'));
+        $payload->setData($locale, 'tax_code_e_invoice_service', $this->attribute('tax_code_e_invoice_service'));
+
+        $payloads = [self::getImportPriority() => $payload];
+        $holdEmployments = ocm_organization::getIdListByName($this->attribute('hold_employment'), 'legal_name');
+        $attachments = ocm_document::getIdListByName($this->attribute('attachments'));
+
+        if (count($holdEmployments) > 0 || count($attachments) > 0) {
+            $payload2 = clone $payload;
+            $payload2->unSetData();
+            $payload2->setData($locale, 'attachments', $attachments);
+            $payload2->setData($locale, 'hold_employment', $holdEmployments);
+            $payloads[ocm_banner::getImportPriority()+1] = $payload2;
+        }
+
+        return $payloads;
+    }
+
     public static function getColumnName(): string
     {
         return 'Nome dell\'unità organizzativa*';
@@ -431,18 +505,15 @@ class ocm_organization extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        return new static();
-    }
-
     public static function getImportPriority(): int
     {
         return 30;
     }
 
-    public function generatePayload(): array
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
     {
-        return [];
+        return parent::getIdListByName($name, 'legal_name', $tryWithPrefix); // TODO: Change the autogenerated stub
     }
+
+
 }

@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_article extends eZPersistentObject implements ocm_interface
+class ocm_article extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'title',
         'content_type',
@@ -176,6 +174,83 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo dell'articolo*"]);
+        $item->setAttribute('title', $row["Titolo della notizia*"]);
+        $item->setAttribute('content_type', $row["Tipo di notizia*"]);
+        $item->setAttribute('abstract', $row["Descrizione breve*"]);
+        $item->setAttribute('published', $row["Data della notizia*"]);
+        $item->setAttribute('dead_line', $row["Data di scadenza"]);
+        $item->setAttribute('id_comunicato', $row["Numero progressivo comunicato stampa"]);
+        $item->setAttribute('topics', $row["Argomenti*"]);
+        $item->setAttribute('image', $row["Immagini"]);
+        $item->setAttribute('image_file', $row["File immagine"]);
+        $item->setAttribute('body', $row["Testo completo della notizia*"]);
+        $item->setAttribute('people', $row["Persone"]);
+        $item->setAttribute('location', $row["Luoghi"]);
+        $item->setAttribute('video', $row["Video"]);
+        $item->setAttribute('author', $row["A cura di*"]);
+        $item->setAttribute('attachment', $row["Documenti allegati"]);
+        $item->setAttribute('files', $row["File allegati"]);
+        $item->setAttribute('dataset', $row["Dataset"]);
+        $item->setAttribute('reading_time', $row["Tempo di lettura"]);
+        $item->setAttribute('related_service', $row["Riferimento al servizio pubblico"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('article');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->discoverParentNode());
+        $payload->setLanguages([$locale]);
+        $payload->setData($locale, 'title', trim($this->attribute('title')));
+        $payload->setData($locale, 'content_type', $this->formatTags($this->attribute('content_type')));
+        $payload->setData($locale, 'abstract', trim($this->attribute('abstract')));
+        $payload->setData($locale, 'published', $this->formatDate($this->attribute('published')));
+        $payload->setData($locale, 'dead_line', $this->formatDate($this->attribute('dead_line')));
+        $payload->setData($locale, 'id_comunicato', trim($this->attribute('id_comunicato')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+//todo
+//        $payload->setData($locale, 'image_file', trim($this->attribute('image_file')));
+        $payload->setData($locale, 'body', trim($this->attribute('body')));
+        $payload->setData($locale, 'people', ocm_public_person::getIdListByName($this->attribute('people')));
+        $payload->setData($locale, 'location', ocm_place::getIdListByName($this->attribute('location')));
+        $payload->setData($locale, 'video', trim($this->attribute('video')));
+        $payload->setData($locale, 'author', ocm_organization::getIdListByName($this->attribute('author')));
+        $payload->setData($locale, 'attachment', ocm_document::getIdListByName($this->attribute('attachment')));
+        $payload->setData($locale, 'files', $this->formatBinary($this->attribute('files')));
+//@todo
+//        $payload->setData($locale, 'dataset', trim($this->attribute('dataset')));
+        $payload->setData($locale, 'reading_time', intval($this->attribute('reading_time')));
+
+
+//@todo da impostare in seconda battuta quando impostati i servizi
+//        $payload->setData($locale, 'related_service', ocm_public_service::getIdListByName($this->attribute('related_service')));
+
+        return $payload;
+    }
+
+    protected function discoverParentNode(): int
+    {
+        if (in_array('Avviso', $this->formatTags($this->attribute('type')))){
+            return $this->getNodeIdFromRemoteId('9a1756e11164d0d550ee950657154db8');
+        }
+
+        if (in_array('Comunicato stampa', $this->formatTags($this->attribute('type')))){
+            return $this->getNodeIdFromRemoteId('16a65071f99a1be398a677e5e4bef93f');
+        }
+
+        return $this->getNodeIdFromRemoteId('ea708fa69006941b4dc235a348f1431d');
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -233,19 +308,9 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
-    }
-
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 110;
     }
 
 }

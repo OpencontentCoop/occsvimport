@@ -29,7 +29,7 @@ $spreadsheetId = OCMigrationSpreadsheet::getConnectedSpreadSheet();
 $spreadsheet = new GoogleSheet($spreadsheetId);
 
 foreach (OCMigration::getAvailableClasses($options['only'] ? explode(',', $options['only']) : []) as $className) {
-    $cli->warning($className);
+    $cli->output($className);
     try {
         $row = $spreadsheet->getSheetDataHash($className::getSpreadsheetTitle())[0];
         /** @var ocm_interface $test */

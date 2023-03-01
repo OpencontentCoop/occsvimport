@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
+class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static function canImport(): bool
     {
         return false;
@@ -117,6 +115,35 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $address = '';
+        [$latitude, $longitude] = explode(' ', $row["Latitudine e longitudine"]);
+        if ($latitude && $longitude) {
+            $address = json_encode([
+                'address' => $row['Indirizzo'],
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
+        }
+
+        $item = new static();
+        $item->setAttribute('_id', $row['ID']);
+        $item->setAttribute('name', $row['Nome']);
+        $item->setAttribute('short_name', $row['Nome breve']);
+        $item->setAttribute('abstract', $row['Abstract (Descrizione breve)']);
+        $item->setAttribute('description', $row['Descrizione']);
+        $item->setAttribute('image___name', $row['Nome immagine']);
+        $item->setAttribute('image___url', $row['File immagine']);
+        $item->setAttribute('gps', $address);
+        $item->setAttribute('riferimento', $row['Riferimento']);
+        $item->setAttribute('files', $row["File allegati"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+
     public static function getRangeValidationHash(): array
     {
         return [
@@ -131,14 +158,9 @@ class ocm_pagina_sito extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
