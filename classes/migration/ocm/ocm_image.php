@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_image extends eZPersistentObject implements ocm_interface
+class ocm_image extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'name',
         'de_name',
@@ -108,6 +106,51 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row['ID*']);
+        $item->setAttribute('name', $row['Nome*']);
+        $item->setAttribute('de_name', $row['Name* [de]']);
+        $item->setAttribute('caption', $row['Didascalia']);
+        $item->setAttribute('de_caption', $row['Didascalia [de]']);
+        $item->setAttribute('image___name', $row['Nome del file']);
+        $item->setAttribute('image___url', $row['Url al file*']);
+        $item->setAttribute('tags', $row['Tags']);
+        $item->setAttribute('license', $row['Licenza di utilizzo*']);
+        $item->setAttribute('proprietary_license', $row['Licenza proprietaria']);
+        $item->setAttribute('proprietary_license_source', $row['Fonte della licenza proprietaria']);
+        $item->setAttribute('author', $row['Autore*']);
+        $item->setAttribute('de_author', $row['Autor* [de]']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('image');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode(51);
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'name', $this->attribute('name'));
+        $payload->setData($locale, 'caption', $this->attribute('caption'));
+        $payload->setData($locale, 'image', [
+            'url' => $this->attribute('image___url'),
+            'filename' => $this->attribute('image___name'),
+        ]);
+        $payload->setData($locale, 'tags', $this->attribute('tags'));
+        $payload->setData($locale, 'license', $this->attribute('license'));
+        $payload->setData($locale, 'proprietary_license', $this->attribute('proprietary_license'));
+        $payload->setData($locale, 'proprietary_license_source', $this->attribute('proprietary_license_source'));
+        $payload->setData($locale, 'author', $this->attribute('author'));
+
+        return $payload;
+    }
+
     public static function getUrlValidationHeaders(): array
     {
         return [
@@ -125,33 +168,46 @@ class ocm_image extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        $item = new static();
-        $item->setAttribute('_id', $row['ID*']);
-        $item->setAttribute('name', $row['Nome*']);
-        $item->setAttribute('name', $row['Name* [de]']);
-        $item->setAttribute('caption', $row['Didascalia']);
-        $item->setAttribute('de_caption', $row['Didascalia [de]']);
-        $item->setAttribute('image___name', $row['Nome del file']);
-        $item->setAttribute('image___url', $row['Url al file*']);
-        $item->setAttribute('tags', $row['Tags']);
-        $item->setAttribute('license', $row['Licenza di utilizzo*']);
-        $item->setAttribute('proprietary_license', $row['Licenza proprietaria']);
-        $item->setAttribute('proprietary_license_source', $row['Fonte della licenza proprietaria']);
-        $item->setAttribute('author', $row['Autore*']);
-        $item->setAttribute('author', $row['Autor* [de]']);
-
-        return $item;
-    }
 
     public static function getImportPriority(): int
     {
         return -1;
     }
 
-    public function generatePayload(): array
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
     {
-        return [];
+        $data = [];
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+
+            $names = self::trimArray($names);
+            if ($tryWithPrefix){
+                foreach ($names as $name){
+                    $names[] = $tryWithPrefix.$name;
+                }
+            }
+
+            /** @var ocm_image[] $list */
+            $list = ocm_image::fetchObjectList(
+                ocm_image::definition(), null,
+                ['trim(' . $field . ')' => [$names]]
+            );
+            foreach ($list as $item){
+                $data[] = $item->id();
+                OCMPayload::create(
+                    $item->attribute('_id'),
+                    'ocm_image',
+                    ocm_image::getImportPriority(),
+                    $item->generatePayload()->getArrayCopy()
+                );
+            }
+        }
+
+        return $data;
+    }
+
+    public function storePayload(): int
+    {
+        return 0;
     }
 }

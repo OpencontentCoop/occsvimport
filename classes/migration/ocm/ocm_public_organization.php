@@ -19,7 +19,7 @@ class ocm_public_organization extends ocm_organization
         return 'Enti e fondazioni';
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
         $mapper = [
             'legal_name' => false,
@@ -42,5 +42,10 @@ class ocm_public_organization extends ocm_organization
         ];
 
         return $this->fromNode($node, $mapper, $options);
+    }
+
+    protected function discoverParentNode(): int
+    {
+        return $this->getNodeIdFromRemoteId('10742bd28e405f0e83ae61223aea80cb');
     }
 }

@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
+class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'label',
         'person',
@@ -201,7 +199,7 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
     public function toSpreadsheet(): array
     {
         $competences = json_decode($this->attribute('competences'), true);
-        $$delegations = json_decode($this->attribute('delegations'), true);
+        $delegations = json_decode($this->attribute('delegations'), true);
         return [
             "Identificativo incarico*" => $this->attribute('_id'),
             "Titolo dell'incarico" => $this->attribute('label'),
@@ -225,6 +223,33 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
         ];
+    }
+
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo incarico*"]);
+        $item->setAttribute('label', $row["Titolo dell'incarico"]);
+        $item->setAttribute('person', $row["Persona che ha il ruolo*"]);
+        $item->setAttribute('role', $row["Ruolo*"]);
+        $item->setAttribute('type', $row["Tipo di incarico*"]);
+        $item->setAttribute('for_entity', $row["Unità organizzativa*"]);
+        $item->setAttribute('compensi', $row["Compensi"]);
+        $item->setAttribute('importi', $row["Importi di viaggio e/o servizio"]);
+        $item->setAttribute('start_time', $row["Data inizio incarico*"]);
+        $item->setAttribute('end_time', $row["Data conclusione incarico"]);
+        $item->setAttribute('data_insediamento', $row["Data insediamento"]);
+        $item->setAttribute('atto_nomina', $row["Atto di nomina"]);
+        $item->setAttribute('organizational_position', $row["Incarichi di posizione organizzativa"]);
+        $item->setAttribute('incarico_dirigenziale', $row["Incarico dirigenziale"]);
+        $item->setAttribute('ruolo_principale', $row["Ruolo principale"]);
+        $item->setAttribute('priorita', $row["Priorità"]);
+        $item->setAttribute('notes', $row["Ulteriori informazioni"]);
+        $item->setAttribute('competences', json_encode(['ita-IT' => explode(PHP_EOL, $row["Competenze"])]));
+        $item->setAttribute('delegations', json_encode(['ita-IT' => explode(PHP_EOL, $row["Deleghe"])]));
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
     }
 
     public static function getDateValidationHeaders(): array
@@ -268,14 +293,9 @@ class ocm_time_indexed_role extends eZPersistentObject implements ocm_interface
         return 'Persona che ha il ruolo*';
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        return new static();
-    }
-
-    public function generatePayload(): array
-    {
-        return [];
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int

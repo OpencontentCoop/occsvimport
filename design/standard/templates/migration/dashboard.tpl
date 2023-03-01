@@ -91,8 +91,8 @@
                         </table>
                     </div>
 
+                    {if $context}
                     <div class="options mb-4">
-
                         <div class="bg-light p-2 rounded border mx-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" checked="checked" value="update" name="isUpdate" id="isUpdate">
@@ -102,6 +102,7 @@
                             </div>
                         </div>
                     </div>
+                    {/if}
 
                     <div class="text-center">
                     {if $context}
@@ -121,7 +122,7 @@
                                 <li>Crea un nuovo google spreadsheet copiandolo dal <a href="https://link.opencontent.it/new-kit-{$context|wash()}" target="_blank">modello</a></li>
                                 <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
                             {/if}
-                            <li>Incolla l'url del tuo google spreadsheet</li>
+                            <li>Incolla l'url del tuo google spreadsheet{if $context|not()} condiviso con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor{/if}</li>
                         </ol>
                         <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
                         <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" placeholder="Inserisci qui l'url del tuo google spreadsheet"/>
@@ -138,7 +139,7 @@
     <div class="row">
         {if $migration_spreadsheet}
             <div class="col-12">
-                <h2 class="my-4">Anteprima dati da {if $context}esportare{else}importare{/if}</h2>
+                <h2 class="my-4">{if $context}Anteprima dati da esportare{else}Errori di importazione{/if}</h2>
             </div>
             <div class="col-12">
                 <ul class="nav nav-tabs">
@@ -159,6 +160,8 @@
 <script type="text/javascript">
   console.log('Version {$version}');
   var BaseUrl = "{'/migration/dashboard'|ezurl(no)}";
+  var Context = {cond($context, concat('"', $context, '"'), false)};
+  console.log('Context '+Context);
 </script>
 {literal}
     <script type="text/javascript">
@@ -181,7 +184,7 @@
           $.getJSON(BaseUrl+'?fields='+type, function (columns) {
             data.DataTable({
               dom: 'it', //@todo pr
-              pageLength: 100,
+              pageLength: Context ? 100 : 5000,
               responsive: true,
               columns: columns,
               ajax: {

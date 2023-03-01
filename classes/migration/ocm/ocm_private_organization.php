@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_private_organization extends eZPersistentObject implements ocm_interface
+class ocm_private_organization extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'legal_name',
         'alt_name',
@@ -162,6 +160,36 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo*"]);
+        $item->setAttribute('legal_name', $row["Nome*"]);
+        $item->setAttribute('alt_name', $row["Nome alternativo"]);
+        $item->setAttribute('acronym', $row["Acronimo"]);
+        $item->setAttribute('description', $row["Descrizione*"]);
+        $item->setAttribute('business_objective', $row["Oggetto sociale"]);
+        $item->setAttribute('has_logo', $row["Logo"]);
+        $item->setAttribute('image', $row["Immagini"]);
+        $item->setAttribute('has_spatial_coverage', $row["Sedi"]);
+        $item->setAttribute('has_online_contact_point', $row["Punti di contatto"]);
+        $item->setAttribute('foundation_date', $row["Data di costituzione"]);
+        $item->setAttribute('has_private_org_activity_type', $row["Tipo di attività"]);
+        $item->setAttribute('topics', $row["Argomenti"]);
+        $item->setAttribute('attachments', $row["Allegati"]);
+        $item->setAttribute('more_information', $row["Ulteriori informazioni"]);
+        $item->setAttribute('holds_role_in_time', $row["Riveste un ruolo nel tempo"]);
+        $item->setAttribute('tax_code', $row["Codice fiscale"]);
+        $item->setAttribute('vat_code', $row["Partita IVA*"]);
+        $item->setAttribute('rea_number', $row["REA"]);
+        $item->setAttribute('private_organization_category', $row["Categoria di organizzazione privata"]);
+        $item->setAttribute('legal_status_code', $row["Forma giuridica"]);
+        $item->setAttribute('identifier', $row["Identificativo univoco interno"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -212,19 +240,14 @@ class ocm_private_organization extends eZPersistentObject implements ocm_interfa
         return 'Nome*';
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 100;
     }
 
 }

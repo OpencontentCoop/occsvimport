@@ -12,13 +12,17 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-"[only:]",
+"[only:][reset]",
 "", [
     'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 $only = $options['only'] ? ['class_filter' => explode(',', $options['only'])] : [];
+
+if ($options['reset']){
+    OCMigrationSpreadsheet::resetCurrentStatus();
+}
 
 /** @var eZUser $user */
 $user = eZUser::fetchByName('admin');
@@ -28,9 +32,9 @@ try {
     $executionInfo = OCMigrationSpreadsheet::instance()->import($options['verbose'] ? $cli: null, $only);
 }catch (Throwable $e){
     $cli->error($e->getMessage());
-    $cli->error($e->getTraceAsString());
+//    $cli->error($e->getTraceAsString());
 }
 
-print_r($executionInfo);
+//print_r($executionInfo);
 
 $script->shutdown();

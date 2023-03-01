@@ -1,9 +1,7 @@
 <?php
 
-class ocm_link extends eZPersistentObject implements ocm_interface
+class ocm_link extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'name',
         'short_name',
@@ -68,6 +66,24 @@ class ocm_link extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo del link*"]);
+        $item->setAttribute('name', $row['Nome*']);
+        $item->setAttribute('short_name', $row['Nome breve']);
+        $item->setAttribute('abstract', $row['Descrizione breve']);
+        $item->setAttribute('location', $row['Link esterno']);
+        $item->setAttribute('internal_location', $row['Link interno']);
+        $item->setAttribute('descrizione', $row['Descrizione']);
+        $item->setAttribute('image___name', $row["Nome dell'immagine"]);
+        $item->setAttribute('image___url', $row['Url file immagine']);
+        $item->setAttribute('data_archiviazione', $row['Data di archiviazione']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getUrlValidationHeaders(): array
     {
         return [
@@ -75,19 +91,14 @@ class ocm_link extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 190;
     }
 
 }

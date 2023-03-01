@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_place extends eZPersistentObject implements ocm_interface
+class ocm_place extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'name',
         'alternative_name',
@@ -38,9 +36,9 @@ class ocm_place extends eZPersistentObject implements ocm_interface
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        if ($node->classIdentifier() === 'servizio_sul_territorio'){
+        if ($node->classIdentifier() === 'servizio_sul_territorio') {
             return $this->fromNode($node, $this->getComunwebServizioSulTerritorioMapper(), $options);
-        }elseif ($node->classIdentifier() === 'luogo') {
+        } elseif ($node->classIdentifier() === 'luogo') {
             return $this->fromNode($node, $this->getComunwebLuogoMapper(), $options);
         }
 
@@ -50,16 +48,16 @@ class ocm_place extends eZPersistentObject implements ocm_interface
     protected function getComunwebServizioSulTerritorioMapper(): array
     {
         return [
-            'name' => function(Content $content){
+            'name' => function (Content $content) {
                 return trim($content->data['ita-IT']['titolo']['content']) ?? '';
             },
-            'de_name' => function(Content $content){
+            'de_name' => function (Content $content) {
                 return $content->data['ger-DE']['titolo']['content'] ?? '';
             },
-            'caption' => function(Content $content){
+            'caption' => function (Content $content) {
                 return $content->data['ita-IT']['abstract']['content'] ?? '';
             },
-            'de_caption' => function(Content $content){
+            'de_caption' => function (Content $content) {
                 return $content->data['ger-DE']['abstract']['content'] ?? '';
             },
             'description' => OCMigration::getMapperHelper('descrizione'),
@@ -70,11 +68,16 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $firstLocalizedContentData,
                 $firstLocalizedContentLocale,
                 $options
-            ){
-                $address = OCMigration::getMapperHelper('geo')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
+            ) {
+                $address = OCMigration::getMapperHelper('geo')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
                 $indirizzoField = $firstLocalizedContentData['indirizzo'];
                 $indirizzo = $indirizzoField['content'];
-                if (!empty($indirizzo)){
+                if (!empty($indirizzo)) {
                     $address = json_decode($address, true);
                     $address['address'] = $indirizzo;
                     $address = json_encode($address);
@@ -88,14 +91,29 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $firstLocalizedContentData,
                 $firstLocalizedContentLocale,
                 $options
-            ){
+            ) {
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
-                $galleria = OCMigration::getMapperHelper('galleria')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
-                $imageName = OCMigration::getMapperHelper('image/name')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
-                $imageUrl = OCMigration::getMapperHelper('image/url')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
-                if (!empty($imageUrl)){
+                $galleria = OCMigration::getMapperHelper('galleria')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
+                $imageName = OCMigration::getMapperHelper('image/name')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
+                $imageUrl = OCMigration::getMapperHelper('image/url')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
+                if (!empty($imageUrl)) {
                     $image = ocm_image::instanceBy('name', $imageName, $id . ':image');
                     $image->setAttribute('image___name', $imageName);
                     $image->setAttribute('image___url', $imageUrl);
@@ -110,7 +128,7 @@ class ocm_place extends eZPersistentObject implements ocm_interface
 
                 return $galleria;
             },
-            'help' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            'help' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
                 $className = $object->className();
@@ -119,7 +137,12 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
 
                 $hoursName = false;
-                $orario = OCMigration::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
+                $orario = OCMigration::getMapperHelper('orario')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Orari $className $name";
@@ -134,14 +157,14 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $contactsName = "Contatti $className $name";
                 $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
-                foreach (['telefono', 'url', 'email',] as $identifier){
-                    if (isset($dataMap[$identifier])){
+                foreach (['telefono', 'url', 'email',] as $identifier) {
+                    if (isset($dataMap[$identifier])) {
                         $type = $identifier;
-                        if ($identifier == 'telefono'){
+                        if ($identifier == 'telefono') {
                             $type = 'Telefono';
-                        }elseif (stripos($identifier, 'email') !== false){
+                        } elseif (stripos($identifier, 'email') !== false) {
                             $type = 'Email';
-                        }elseif ($identifier == 'url'){
+                        } elseif ($identifier == 'url') {
                             $type = 'Sito web';
                         }
                         $value = $dataMap[$identifier]->toString();
@@ -171,16 +194,16 @@ class ocm_place extends eZPersistentObject implements ocm_interface
     protected function getComunwebLuogoMapper(): array
     {
         return [
-            'name' => function(Content $content){
+            'name' => function (Content $content) {
                 return trim($content->data['ita-IT']['title']['content']) ?? '';
             },
-            'de_name' => function(Content $content){
+            'de_name' => function (Content $content) {
                 return $content->data['ger-DE']['title']['content'] ?? '';
             },
-            'caption' => function(Content $content){
+            'caption' => function (Content $content) {
                 return $content->data['ita-IT']['abstract']['content'] ?? '';
             },
-            'de_caption' => function(Content $content){
+            'de_caption' => function (Content $content) {
                 return $content->data['ger-DE']['abstract']['content'] ?? '';
             },
             'image___name' => OCMigration::getMapperHelper('image/name'),
@@ -190,11 +213,16 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $firstLocalizedContentData,
                 $firstLocalizedContentLocale,
                 $options
-            ){
-                $address = OCMigration::getMapperHelper('geo')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
+            ) {
+                $address = OCMigration::getMapperHelper('geo')(
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                );
                 $indirizzoField = $firstLocalizedContentData['indirizzo'];
                 $indirizzo = $indirizzoField['content'];
-                if (!empty($indirizzo)){
+                if (!empty($indirizzo)) {
                     $address = json_decode($address, true);
                     $address['address'] = $indirizzo;
                     $address = json_encode($address);
@@ -203,7 +231,7 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 return $address;
             },
             'image' => OCMigration::getMapperHelper('galleria'),
-            'help' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            'help' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
@@ -212,14 +240,14 @@ class ocm_place extends eZPersistentObject implements ocm_interface
                 $contactsName = "Contatti $name";
                 $contacts = ocm_online_contact_point::instanceBy('name', $contactsName, $contactsId);
                 $data = [];
-                foreach (['telefono', 'url', 'email',] as $identifier){
-                    if (isset($dataMap[$identifier])){
+                foreach (['telefono', 'url', 'email',] as $identifier) {
+                    if (isset($dataMap[$identifier])) {
                         $type = $identifier;
-                        if ($identifier == 'telefono'){
+                        if ($identifier == 'telefono') {
                             $type = 'Telefono';
-                        }elseif (stripos($identifier, 'email') !== false){
+                        } elseif (stripos($identifier, 'email') !== false) {
                             $type = 'Email';
-                        }elseif ($identifier == 'url'){
+                        } elseif ($identifier == 'url') {
                             $type = 'Sito web';
                         }
                         $value = $dataMap[$identifier]->toString();
@@ -268,6 +296,84 @@ class ocm_place extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $address = '';
+        [$latitude, $longitude] = explode(' ', $row["Latitudine e longitudine*"]);
+        if ($latitude && $longitude) {
+            $address = json_encode([
+                'address' => $row['Indirizzo*'],
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
+        }
+
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificatore luogo*"]);
+        $item->setAttribute('name', $row["Nome del luogo*"]);
+        $item->setAttribute('topics', $row["Argomento*"]);
+        $item->setAttribute('type', $row["Tipo di luogo*"]);
+        $item->setAttribute('accessibility', $row["Modalità di accesso*"]);
+        $item->setAttribute('help', $row["Punti di contatto*"]);
+        $item->setAttribute('abstract', $row["Descrizione breve*"]);
+        if (isset($row["Descrizione estesa "])) {
+            $item->setAttribute('description', $row["Descrizione estesa "]);
+        }
+        if (isset($row["Descrizione estesa"])) {
+            $item->setAttribute('description', $row["Descrizione estesa"]);
+        }
+        $item->setAttribute('image', $row["Immagini*"]);
+        $item->setAttribute('has_address', $address);
+        $item->setAttribute('has_video', $row["Link video"]);
+        $item->setAttribute('opening_hours_specification', $row["Orario per il pubblico"]);
+        $item->setAttribute('has_office', $row["Struttura responsabile"]);
+        $item->setAttribute('more_information', $row["Ulteriori informazioni"]);
+        $item->setAttribute('identifier', $row["Codice luogo"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('place');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode(
+            $this->getNodeIdFromRemoteId('all-places')
+        );
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'name', $this->attribute('name'));
+        $payload->setData($locale, 'alternative_name', $this->attribute('alternative_name'));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+        $payload->setData($locale, 'type', $this->attributeArray('type'));
+        $payload->setData($locale, 'abstract', $this->attribute('abstract'));
+        $payload->setData($locale, 'description', $this->attribute('description'));
+        $payload->setData($locale, 'accessibility', $this->attribute('accessibility'));
+        $payload->setData($locale, 'contains_place', ocm_online_contact_point::getIdListByName($this->attribute('contains_place')));
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+        $payload->setData($locale, 'video', $this->attribute('video'));
+        $payload->setData($locale, 'has_video', $this->attribute('has_video'));
+        $payload->setData($locale, 'has_address', json_decode($this->attribute('has_address'), true));
+        $payload->setData($locale, 'opening_hours_specification', ocm_opening_hours_specification::getIdListByName($this->attribute('opening_hours_specification')));
+        $payload->setData($locale, 'help', ocm_online_contact_point::getIdListByName($this->attribute('help')));
+        $payload->setData($locale, 'more_information', $this->attribute('more_information'));
+        $payload->setData($locale, 'identifier', $this->attribute('identifier'));
+
+        $payloads = [self::getImportPriority() => $payload];
+        $offices = ocm_organization::getIdListByName($this->attribute('has_office'), 'legal_name');
+        if (count($offices) > 0) {
+            $payload2 = clone $payload;
+            $payload2->unSetData();
+            $payload2->setData($locale, 'has_office', $offices);
+            $payloads[ocm_organization::getImportPriority()+1] = $payload2;
+        }
+
+        return $payloads;
+    }
+
     public static function getColumnName(): string
     {
         return 'Nome del luogo*';
@@ -286,7 +392,7 @@ class ocm_place extends eZPersistentObject implements ocm_interface
     public static function getMax160CharConditionalFormatHeaders(): array
     {
         return [
-            "Descrizione breve*"
+            "Descrizione breve*",
         ];
     }
 
@@ -295,11 +401,11 @@ class ocm_place extends eZPersistentObject implements ocm_interface
         return [
             'Punti di contatto*' => [
                 'strict' => false,
-                'ref' => ocm_online_contact_point::getRangeRef()
+                'ref' => ocm_online_contact_point::getRangeRef(),
             ],
             'Immagini*' => [
                 'strict' => false,
-                'ref' => ocm_image::getRangeRef()
+                'ref' => ocm_image::getRangeRef(),
             ],
             "Argomento*" => [
                 'strict' => true,
@@ -307,11 +413,11 @@ class ocm_place extends eZPersistentObject implements ocm_interface
             ],
             "Orario per il pubblico" => [
                 'strict' => true,
-                'ref' => ocm_opening_hours_specification::getRangeRef()
+                'ref' => ocm_opening_hours_specification::getRangeRef(),
             ],
             "Struttura responsabile" => [
                 'strict' => true,
-                'ref' => ocm_organization::getRangeRef()
+                'ref' => ocm_organization::getRangeRef(),
             ],
             "Tipo di luogo*" => [
                 'strict' => true,
@@ -320,18 +426,8 @@ class ocm_place extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        return new static();
-    }
-
     public static function getImportPriority(): int
     {
         return 20;
-    }
-
-    public function generatePayload(): array
-    {
-        return [];
     }
 }

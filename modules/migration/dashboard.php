@@ -3,13 +3,14 @@
 $module = $Params['Module'];
 $tpl = eZTemplate::factory();
 $http = eZHTTPTool::instance();
+$context = OCMigration::discoverContext();
 
 $tpl->setVariable('instance', OpenPABase::getCurrentSiteaccessIdentifier());
 $tpl->setVariable('version', OCMigration::version());
 $tpl->setVariable('db_name', eZDB::instance()->DB);
 $tpl->setVariable('ezxform_token', ezxFormToken::getToken());
 $tpl->setVariable('error_spreadsheet', false);
-$tpl->setVariable('context', OCMigration::discoverContext());
+$tpl->setVariable('context', $context);
 $tpl->setVariable('migration_spreadsheet', OCMigrationSpreadsheet::getConnectedSpreadSheet());
 $tpl->setVariable('migration_spreadsheet_title', OCMigrationSpreadsheet::getConnectedSpreadSheetTitle());
 $tpl->setVariable('google_user', 'phpsheet@norse-fiber-323812.iam.gserviceaccount.com'); //@todo
@@ -51,17 +52,56 @@ if ($http->hasPostVariable('remove_migration_spreadsheet')) {
     return;
 }
 
+if ($http->hasVariable('payload')) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    try {
+        if ($http->hasVariable('import')){
+            echo json_encode(OCMPayload::fetch($http->variable('payload'))->createOrUpdateContent());
+        }else {
+            echo OCMPayload::fetch($http->variable('payload'))->attribute('payload');
+        }
+    } catch (Throwable $e) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ]);
+    }
+    eZExecution::cleanExit();
+}
+
 if ($http->hasVariable('datatable')) {
     $class = $http->variable('datatable');
     $rows = [];
     $rowCount = 0;
-    $length = 100;//@todo $http->getVariable('length', 10);
+    $length = $context ? 100 : 5000;//@todo $http->getVariable('length', 10);
     $start = 0; //@todo $http->getVariable('start', 0);
+
     if (in_array($class, $classes)) {
-        /** @var eZPersistentObject|ocm_interface $class */
-        $rowCount =(int)$class::count($class::definition());
-        $rows = $class::fetchObjectList($class::definition(), null, null, [$class::getSortField() => 'asc'], ['limit' => $length, 'offset' => $start], false);
+        if ($context) {
+            /** @var eZPersistentObject|ocm_interface $class */
+            $rowCount = (int)$class::count($class::definition());
+            $rows = $class::fetchObjectList(
+                $class::definition(),
+                null,
+                null,
+                [$class::getSortField() => 'asc'],
+                ['limit' => $length, 'offset' => $start],
+                false
+            );
+        }else{
+            $rowCount = (int)OCMPayload::count(OCMPayload::definition(), ['type' => $class, 'error' => ['!=', '']]);
+            $rows = OCMPayload::fetchObjectList(
+                OCMPayload::definition(),
+                ['id', 'modified_at', 'executed_at', 'error'],
+                ['type' => $class, 'error' => ['!=', '']],
+                ['executed_at' => 'desc'],
+                ['limit' => $length, 'offset' => $start],
+                false
+            );
+        }
     }
+
     $data = [
         'draw' => $http->hasVariable('draw') ? ($http->variable('draw') + 1) : 0,
         'recordsTotal' => $rowCount,
@@ -83,19 +123,32 @@ if ($http->hasVariable('datatable')) {
 }
 
 if ($http->hasGetVariable('fields')) {
-    $class = $http->getVariable('fields');
     $data = [];
-    if (in_array($class, $classes)) {
-        foreach ($class::definition()['fields'] as $field) {
+    if ($context) {
+        $class = $http->getVariable('fields');
+        if (in_array($class, $classes)) {
+            foreach ($class::definition()['fields'] as $field) {
+                $data[] = [
+                    'data' => $field['name'],
+                    'title' => trim(str_replace('_', ' ', $field['name'])),
+                    'name' => $field['name'],
+                    'searchable' => false,
+                    'sortable' => false,
+                ];
+            }
+        }
+    }else {
+        foreach (['id', 'modified_at', 'executed_at', 'error'] as $field) {
             $data[] = [
-                'data' => $field['name'],
-                'title' => trim(str_replace('_', ' ', $field['name'])),
-                'name' => $field['name'],
+                'data' => $field,
+                'title' => trim(str_replace('_', ' ', $field)),
+                'name' => $field,
                 'searchable' => false,
                 'sortable' => false,
             ];
         }
     }
+
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     echo json_encode($data);

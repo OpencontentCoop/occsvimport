@@ -2,12 +2,12 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 use Opencontent\Opendata\Rest\Client\PayloadBuilder;
-use Opencontent\Opendata\Api\AttributeConverter\Base;
-use Opencontent\Opendata\Api\AttributeConverterLoader;
 use League\HTMLToMarkdown\HtmlConverter;
 
-trait ocm_trait
+abstract class OCMPersistentObject extends eZPersistentObject implements ocm_interface
 {
+    public static $fields = [];
+
     protected static $parentNodes = [];
 
     public static function getSortField(): string
@@ -20,7 +20,7 @@ trait ocm_trait
         return array_fill_keys(static::$fields, false);
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
         return $this->fromNode($node, $this->getOpencityFieldMapper(), $options);
     }
@@ -35,7 +35,7 @@ trait ocm_trait
         return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
     }
 
-    protected function fromNode(eZContentObjectTreeNode $node, array $mapper, array $options = [])
+    protected function fromNode(eZContentObjectTreeNode $node, array $mapper, array $options = []): OCMPersistentObject
     {
         $object = $node->object();
         $content = Content::createFromEzContentObject($object);
@@ -113,15 +113,6 @@ trait ocm_trait
         self::$capabilities['import'] = false;
     }
 
-    public function __construct($row = null)
-    {
-        $this->PersistentDataDirty = false;
-        if (is_string($row)) {
-            $row = $this->fetch($row, false);
-        }
-        $this->fill((array)$row);
-    }
-
     protected static function getStringFieldDefinition($identifier): array
     {
         return [
@@ -160,7 +151,7 @@ trait ocm_trait
         return $fields;
     }
 
-    public static function definition()
+    public static function definition(): array
     {
         return [
             "fields" => static::getFieldsDefinition(static::$fields),
@@ -184,18 +175,26 @@ trait ocm_trait
         return false;
     }
 
-    protected function isEmptyArray(array $array): bool
+    protected static function isEmptyArray(array $array): bool
     {
-        foreach ($array as $value) {
-            $trimmed = trim($value);
-            if (!empty($trimmed)) {
-                return false;
-            }
-        }
-
-        return true;
+        return OCMigration::isEmptyArray($array);
     }
 
+    protected static function trimArray(array $array): array
+    {
+        $trimmed = [];
+        foreach ($array as $item){
+            $trimmed[] = trim($item);
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * @param $remoteId
+     * @return int
+     * @throws Exception
+     */
     protected function getNodeIdFromRemoteId($remoteId): int
     {
         if (isset(self::$parentNodes[$remoteId])) {
@@ -242,11 +241,12 @@ trait ocm_trait
 
     /**
      * @param string $field
-     * @param mixed $value
+     * @param string $value
+     * @param $id
      * @param bool $asObject
-     * @return eZPersistentObject|ocm_interface
+     * @return ocm_interface
      */
-    public static function instanceBy(string $field, string $value, $id, bool $asObject = true)
+    public static function instanceBy(string $field, string $value, $id, bool $asObject = true): ocm_interface
     {
         $conditions = [$field => trim($value)];
         $instance = eZPersistentObject::fetchObject(
@@ -263,23 +263,6 @@ trait ocm_trait
         }
 
         return $instance;
-    }
-
-    public function appendAttribute($name, $value, $separator = PHP_EOL)
-    {
-        $this->setAttribute($name, trim($this->attribute($value) . $separator . $value, $separator));
-    }
-
-    /**
-     * @param eZContentObjectAttribute[] $dataMap
-     * @param string $identifier
-     * @return bool
-     */
-    protected static function hasAttributeStringContent(array $dataMap, string $identifier): bool
-    {
-        return isset($dataMap[$identifier])
-            && $dataMap[$identifier]->hasContent()
-            && !empty(trim($dataMap[$identifier]->toString()));
     }
 
     public static function removeById($id)
@@ -362,5 +345,116 @@ trait ocm_trait
         $converter = new HtmlConverter();
 //        $converter->getEnvironment()->addConverter(new \League\HTMLToMarkdown\Converter\TableConverter());
         return $converter->convert($html);
+    }
+
+    protected static function fillNodeReferenceFromSpreadsheet(array $row, ocm_interface $item)
+    {
+        if (isset($row['Pagina contenitore'])) {
+            $item->setAttribute('_parent_name', $row['Pagina contenitore']);
+        }
+        if (isset($row['Url originale'])) {
+            $item->setAttribute('_original_url', $row['Url originale']);
+        }
+    }
+
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    {
+        $data = [];
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+
+            $names = self::trimArray($names);
+            if ($tryWithPrefix){
+                foreach ($names as $name){
+                    $names[] = $tryWithPrefix.$name;
+                }
+            }
+
+            $list = static::fetchObjectList(
+                static::definition(), ['_id'],
+                ['trim(' . $field . ')' => [$names]]
+            );
+            $data = array_column($list, '_id');
+        }
+
+        return $data;
+    }
+
+    public static function getBinaryPayload(string $data, bool $isMultiple = true)
+    {
+        $values = [];
+        if (empty($data)){
+            return $values;
+        }
+        $items = explode(PHP_EOL, $data);
+        foreach ($items as $item) {
+            $values[] = [
+                'url' => $item,
+                'filename' => basename($item),
+            ];
+        }
+        if (!$isMultiple && !empty($values)){
+            return $values[0];
+        }
+
+        return $values;
+    }
+
+    public static function fetchByField($field, $name): array
+    {
+        $data = [];
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+            $data = static::fetchObjectList(
+                static::definition(), null,
+                ['trim(' . $field . ')' => [self::trimArray($names)]]
+            );
+        }
+
+        return $data;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function storePayload(): int
+    {
+        $payloads = $this->generatePayload();
+        if ($payloads instanceof PayloadBuilder){
+            $payloads = [$this::getImportPriority() => $payloads];
+        }
+
+        $index = 0;
+        foreach ($payloads as $priority => $payload) {
+            $payload = $payload->getArrayCopy();
+            $idSuffix = ($index === 0) ? '' : '###' . $index;
+            if (!empty($payload)) {
+                OCMPayload::create(
+                    $this->attribute('_id') . $idSuffix,
+                    get_class($this),
+                    $priority,
+                    $payload
+                );
+                $index++;
+            }
+        }
+
+        return $index;
+    }
+
+    public function attributeArray($name)
+    {
+        $value = $this->attribute($name);
+        if (!empty($value)){
+            $values = explode(PHP_EOL, $value);
+            return self::trimArray($values);
+        }
+
+        return $value;
+    }
+
+    public function id()
+    {
+        return $this->attribute('_id');
     }
 }

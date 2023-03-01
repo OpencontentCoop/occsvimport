@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_opening_hours_specification extends eZPersistentObject implements ocm_interface
+class ocm_opening_hours_specification extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static function canPush(): bool
     {
         return true;
@@ -115,6 +113,30 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row['Identificatore*']);
+        $item->setAttribute('name', $row['Nome*']);
+        $item->setAttribute('de_name', $row['Nome*  [de]']);
+        $item->setAttribute('valid_from', $row['Valido dal*']);
+        $item->setAttribute('valid_through', $row['Valido fino al']);
+        $item->setAttribute('note', $row['Note']);
+        $item->setAttribute('stagionalita', $row['Stagionalità*']);
+        $item->setAttribute('opening_hours___monday', $row['Lunedì']);
+        $item->setAttribute('opening_hours___tuesday', $row['Martedì']);
+        $item->setAttribute('opening_hours___wednesday', $row['Mercoledì']);
+        $item->setAttribute('opening_hours___thursday', $row['Giovedì']);
+        $item->setAttribute('opening_hours___friday', $row['Venerdì']);
+        $item->setAttribute('opening_hours___saturday', $row['Sabato']);
+        $item->setAttribute('opening_hours___sunday', $row['Domenica']);
+        $item->setAttribute('closure___day', $row['Giorni di chiusura']);
+        $item->setAttribute('closure___reason', $row['Motivo di chiusura']);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -140,38 +162,12 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
-    {
-        $item = new static();
-        $item->setAttribute('_id', $row['Identificatore*']);
-        $item->setAttribute('name', $row['Nome*']);
-        $item->setAttribute('valid_from', $row['Valido dal*']);
-        $item->setAttribute('valid_through', $row['Valido fino al']);
-        $item->setAttribute('note', $row['Note']);
-        $item->setAttribute('stagionalita', $row['Stagionalità*']);
-        $item->setAttribute('opening_hours___monday', $row['Lunedì']);
-        $item->setAttribute('opening_hours___tuesday', $row['Martedì']);
-        $item->setAttribute('opening_hours___wednesday', $row['Mercoledì']);
-        $item->setAttribute('opening_hours___thursday', $row['Giovedì']);
-        $item->setAttribute('opening_hours___friday', $row['Venerdì']);
-        $item->setAttribute('opening_hours___saturday', $row['Sabato']);
-        $item->setAttribute('opening_hours___sunday', $row['Domenica']);
-        $item->setAttribute('closure___day', $row['Giorni di chiusura']);
-        $item->setAttribute('closure___reason', $row['Motivo di chiusura']);
-
-        return $item;
-    }
-
     public static function getImportPriority(): int
     {
         return 0;
     }
 
-    /**
-     * @return array
-     * @throws Exception
-     */
-    public function generatePayload(): array
+    public function generatePayload()
     {
         $locale = 'ita-IT';
         $payload = $this->getNewPayloadBuilderInstance();
@@ -195,7 +191,6 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
         }else{
             $payload->setData($locale, 'stagionalita', $this->attribute('stagionalita'));
         }
-
 
         $monday = explode(PHP_EOL, $this->attribute('opening_hours___monday'));
         $tuesday = explode(PHP_EOL, $this->attribute('opening_hours___tuesday'));
@@ -224,7 +219,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
                 'saturday' => $saturday[$x] ?? '',
                 'sunday' => $sunday[$x] ?? '',
             ];
-            if (!$this->isEmptyArray($contact)) {
+            if (!self::isEmptyArray($contact)) {
                 $contacts[$x] = $contact;
             }
         }
@@ -245,7 +240,7 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
                 'day' => $closureDay[$x] ?? '',
                 'reason' => $closureReason[$x] ?? '',
             ];
-            if (!$this->isEmptyArray($contact)) {
+            if (!self::isEmptyArray($contact)) {
                 $closures[$x] = $closure;
             }
         }
@@ -253,7 +248,20 @@ class ocm_opening_hours_specification extends eZPersistentObject implements ocm_
             $payload->setData($locale, 'closure', $closures);
         }
 
-        return $payload->getArrayCopy();
+        if (!empty($this->attribute('de_name'))){
+            $locale = 'ger-DE';
+            $payload->setLanguages(array_merge($payload->getMetadaData('languages'), [$locale]));
+            $data = $payload->getData();
+            foreach ($data['ita-IT'] as $key => $value){
+                if ($key === 'name') {
+                    $payload->setData($locale, 'name', $this->attribute('de_name'));
+                }else{
+                    $payload->setData($locale, $key, $value);
+                }
+            }
+        }
+
+        return $payload;
     }
 
     /**

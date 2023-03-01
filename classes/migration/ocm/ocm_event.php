@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_event extends eZPersistentObject implements ocm_interface
+class ocm_event extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'event_title',
         'short_event_title',
@@ -233,6 +231,49 @@ class ocm_event extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo evento*"]);
+        $item->setAttribute('event_title', $row["Titolo dell'evento*"]);
+        $item->setAttribute('short_event_title', $row["Sottotitolo"]);
+        $item->setAttribute('event_abstract', $row["Descrizione breve*"]);
+        $item->setAttribute('description', $row["Descrizione*"]);
+        $item->setAttribute('image_file', $row["File immagine"]);
+        $item->setAttribute('image', $row["Immagini"]);
+        $item->setAttribute('video', $row["Video"]);
+        $item->setAttribute('sub_event_of', $row["Iniziativa di cui fa parte"]);
+        $item->setAttribute('target_audience', $row["Destinatari*"]);
+        $item->setAttribute('about_target_audience', $row["A chi è rivolto"]);
+        $item->setAttribute('has_playbill', $row["Locandina"]);
+        $item->setAttribute('attachment', $row["Allegati"]);
+        $item->setAttribute('has_online_contact_point', $row["Contatti*"]);
+        $item->setAttribute('has_public_event_typology', $row["Tipo di evento*"]);
+        $item->setAttribute('topics', $row["Argomenti*"]);
+        $item->setAttribute('time_interval_events', $row["Date ed orari dell'evento*"]);
+        $item->setAttribute('time_interval_ical', $row["Ripetizioni evento (formato ical)"]);
+        $item->setAttribute('takes_place_in', $row["Luogo dell'evento"]);
+        $item->setAttribute('attendee', $row["Partecipano"]);
+        $item->setAttribute('is_accessible_for_free', $row["È gratuito"]);
+        $item->setAttribute('cost_notes', $row["Informazioni sui costi"]);
+        $item->setAttribute('has_offer', $row["Costo"]);
+        $item->setAttribute('ulteriori_informazioni', $row["Ulteriori informazioni"]);
+        $item->setAttribute('organizer', $row["Organizzato da"]);
+        $item->setAttribute('funder', $row["Patrocinato da"]);
+        $item->setAttribute('sponsor', $row["Sponsorizzato da"]);
+        $item->setAttribute('related_event', $row["Appuntamenti"]);
+        $item->setAttribute('composer', $row["Persone o organizzazioni"]);
+        $item->setAttribute('performer', $row["Chi presenta"]);
+        $item->setAttribute('translator', $row["Servizio di traduzione curato da"]);
+        $item->setAttribute('in_language', $row["Lingue usate all'evento"]);
+        $item->setAttribute('maximum_attendee_capacity', $row["Numero massimo di posti"]);
+        $item->setAttribute('event_content_keyword', $row["Parole chiave"]);
+        $item->setAttribute('aggregate_rating', $row["Valutazione dell'evento"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
@@ -287,19 +328,14 @@ class ocm_event extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 180;
     }
 
 }

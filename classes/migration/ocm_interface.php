@@ -1,5 +1,7 @@
 <?php
 
+use Opencontent\Opendata\Rest\Client\PayloadBuilder;
+
 interface ocm_interface
 {
     public static function getSpreadsheetTitle(): string;
@@ -18,7 +20,12 @@ interface ocm_interface
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
 
-    public function generatePayload(): array;
+    /**
+     * @return PayloadBuilder|PayloadBuilder[]
+     */
+    public function generatePayload();
+
+    public function storePayload(): int;
 
     public static function getImportPriority(): int;
 
@@ -35,4 +42,6 @@ interface ocm_interface
     public static function disableImport(): void;
 
     public function storeThis(bool $isUpdate): bool;
+
+    public function setAttribute($attr, $val);
 }

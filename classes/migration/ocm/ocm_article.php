@@ -2,10 +2,8 @@
 
 use Opencontent\Opendata\Api\Values\Content;
 
-class ocm_article extends eZPersistentObject implements ocm_interface
+class ocm_article extends OCMPersistentObject implements ocm_interface
 {
-    use ocm_trait;
-
     public static $fields = [
         'title',
         'content_type',
@@ -176,6 +174,34 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         ];
     }
 
+    public static function fromSpreadsheet($row): ocm_interface
+    {
+        $item = new static();
+        $item->setAttribute('_id', $row["Identificativo dell'articolo*"]);
+        $item->setAttribute('title', $row["Titolo della notizia*"]);
+        $item->setAttribute('content_type', $row["Tipo di notizia*"]);
+        $item->setAttribute('abstract', $row["Descrizione breve*"]);
+        $item->setAttribute('published', $row["Data della notizia*"]);
+        $item->setAttribute('dead_line', $row["Data di scadenza"]);
+        $item->setAttribute('id_comunicato', $row["Numero progressivo comunicato stampa"]);
+        $item->setAttribute('topics', $row["Argomenti*"]);
+        $item->setAttribute('image', $row["Immagini"]);
+        $item->setAttribute('image_file', $row["File immagine"]);
+        $item->setAttribute('body', $row["Testo completo della notizia*"]);
+        $item->setAttribute('people', $row["Persone"]);
+        $item->setAttribute('location', $row["Luoghi"]);
+        $item->setAttribute('video', $row["Video"]);
+        $item->setAttribute('author', $row["A cura di*"]);
+        $item->setAttribute('attachment', $row["Documenti allegati"]);
+        $item->setAttribute('files', $row["File allegati"]);
+        $item->setAttribute('dataset', $row["Dataset"]);
+        $item->setAttribute('reading_time', $row["Tempo di lettura"]);
+        $item->setAttribute('related_service', $row["Riferimento al servizio pubblico"]);
+
+        self::fillNodeReferenceFromSpreadsheet($row, $item);
+        return $item;
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -233,19 +259,14 @@ class ocm_article extends eZPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public function generatePayload()
     {
-        // TODO: Implement fromSpreadsheet() method.
-    }
-
-    public function generatePayload(): array
-    {
-        // TODO: Implement generatePayload() method.
+        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
     {
-        // TODO: Implement getImportPriority() method.
+        return 110;
     }
 
 }
