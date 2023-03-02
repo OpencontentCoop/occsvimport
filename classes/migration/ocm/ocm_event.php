@@ -274,6 +274,106 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('event');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->getNodeIdFromRemoteId('all-events'));
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'event_title', trim($this->attribute('event_title')));
+        $payload->setData($locale, 'short_event_title', trim($this->attribute('short_event_title')));
+        $payload->setData($locale, 'event_abstract', trim($this->attribute('event_abstract')));
+        $payload->setData($locale, 'description', trim($this->attribute('description')));
+//@todo        $payload->setData($locale, 'image_file', trim($this->attribute('image_file')));
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+        $payload->setData($locale, 'video', trim($this->attribute('video')));
+        $payload->setData($locale, 'target_audience', $this->formatTags($this->attribute('target_audience')));
+        $payload->setData($locale, 'about_target_audience', trim($this->attribute('about_target_audience')));
+        $payload->setData($locale, 'has_playbill', $this->formatBinary($this->attribute('has_playbill'), false));
+        $payload->setData($locale, 'attachment', $this->formatBinary($this->attribute('attachment')));
+        $payload->setData($locale, 'has_online_contact_point', ocm_online_contact_point::getIdListByName($this->attribute('has_online_contact_point')));
+        $payload->setData($locale, 'has_public_event_typology', $this->formatTags($this->attribute('has_public_event_typology')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+
+
+        $recurr = $this->attribute('time_interval_ical');
+        $customEvents = [];
+        if (!empty($this->attribute('time_interval_events'))){
+            $events = explode(PHP_EOL, $this->attribute('time_interval_events'));
+
+            if (
+                strpos($this->attribute('time_interval_events'), '-') === false
+                && (count($events) === 2 || count($events) & 2 === 0)
+            ){
+                $startEndChunks = array_chunk($events, 2);
+                foreach ($startEndChunks as $startEndChunk){
+                    $start = $startEndChunk[0] ?? '';
+                    $end = $startEndChunk[1] ?? '';
+                    if ($start && $end) {
+                        $start = self::getDateTimePayload($start, false);
+                        $end = self::getDateTimePayload($end, false);
+                    }
+                    if ($start && $end) {
+                        $customEvents[] = "{$start}-{$end}";
+                    }
+                }
+            }else {
+                foreach ($events as $event) {
+                    [$start, $end] = explode('-', $event);
+                    if ($start && $end) {
+                        $start = self::getDateTimePayload($start, false);
+                        $end = self::getDateTimePayload($end, false);
+                    }
+                    if ($start && $end) {
+                        $customEvents[] = "{$start}-{$end}";
+                    }
+                }
+            }
+        }
+        $intervalStrings = [$recurr];
+        if (count($customEvents)){
+            $intervalStrings[] = implode('|', $customEvents);
+        }
+        $intervalString = implode('#', $intervalStrings);
+        if (!empty($intervalString)) {
+            $payload->setData($locale, 'time_interval', $intervalString);
+        }
+
+        $payload->setData($locale, 'takes_place_in', ocm_place::getIdListByName($this->attribute('takes_place_in')));
+        $payload->setData($locale, 'attendee', ocm_public_person::getIdListByName($this->attribute('attendee')));
+        $payload->setData($locale, 'is_accessible_for_free', intval($this->attribute('is_accessible_for_free')));
+        $payload->setData($locale, 'cost_notes', trim($this->attribute('cost_notes')));
+//@todo
+//        $payload->setData($locale, 'has_offer', trim($this->attribute('has_offer')));
+        $payload->setData($locale, 'ulteriori_informazioni', trim($this->attribute('ulteriori_informazioni')));
+        $payload->setData($locale, 'organizer', ocm_private_organization::getIdListByName($this->attribute('organizer')));
+        $payload->setData($locale, 'funder', ocm_private_organization::getIdListByName($this->attribute('funder')));
+        $payload->setData($locale, 'sponsor', ocm_private_organization::getIdListByName($this->attribute('sponsor')));
+        $payload->setData($locale, 'composer', ocm_private_organization::getIdListByName($this->attribute('composer')));
+        $payload->setData($locale, 'performer', ocm_private_organization::getIdListByName($this->attribute('performer')));
+        $payload->setData($locale, 'translator', ocm_private_organization::getIdListByName($this->attribute('translator')));
+        $payload->setData($locale, 'in_language', trim($this->attribute('in_language')));
+        $payload->setData($locale, 'maximum_attendee_capacity', intval($this->attribute('maximum_attendee_capacity')));
+        $payload->setData($locale, 'event_content_keyword', trim($this->attribute('event_content_keyword')));
+        $payload->setData($locale, 'aggregate_rating', trim($this->attribute('aggregate_rating')));
+
+        $payloads = [self::getImportPriority() => $payload];
+        $subEvents = ocm_event::getIdListByName($this->attribute('sub_event_of'), 'event_title');
+        $related = ocm_event::getIdListByName($this->attribute('related_event'), 'event_title');
+        if (count($subEvents) > 0 || count($related) > 0) {
+            $payload2 = clone $payload;
+            $payload2->unSetData();
+            $payload2->setData($locale, 'sub_event_of', $subEvents);
+            $payload2->setData($locale, 'related_event', $related);
+            $payloads[ocm_event::getImportPriority()+1] = $payload2;
+        }
+
+        return $payloads;
+    }
+
     public static function getRangeValidationHash(): array
     {
         return [
@@ -326,11 +426,6 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             "Descrizione breve*",
             "Descrizione"
         ];
-    }
-
-    public function generatePayload()
-    {
-        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int

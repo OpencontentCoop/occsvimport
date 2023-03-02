@@ -12,6 +12,17 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         return false;
     }
 
+    public static function canImport(): bool
+    {
+        return false;
+    }
+
+    public static function canPull(): bool
+    {
+        return false;
+    }
+
+
     public static $fields = [
         'type',
         'name',

@@ -20,7 +20,7 @@ $script->setUseDebugAccumulators(true);
 
 
 foreach (OCMigration::getAvailableClasses() as $className) {
-    $cli->warning($className::getSpreadsheetTitle());
+    $cli->output($className::getSpreadsheetTitle());
     try {
         $sample = new $className;
         $sampleData = $sample->toSpreadsheet();

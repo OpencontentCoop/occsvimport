@@ -397,25 +397,49 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return !empty($data);
     }
 
-    protected static function getDatePayload(string $data)
+    protected static function getDatePayload(string $data, $format = 'c')
+    {
+        if (empty($data)){
+            return null;
+        }
+        if (strpos($data, '-') !== false){
+            [$y, $m, $d] = explode('.', $data);
+        }else {
+            [$d, $m, $y] = explode('/', $data);
+        }
+        $timestamp = mktime(0,0,0, $m, $d, $y);
+
+        return $format ? date($format, $timestamp) : $timestamp;
+    }
+
+    protected static function getDateTimePayload(string $data, $format = 'c')
     {
         if (empty($data)){
             return null;
         }
 
-        [$d, $m, $y] = explode('/', $data);
-        $timestamp = mktime(0,0,0, $m, $d, $y);
+        [$day, $hours] = explode(' ', trim($data));
+        if (strpos($day, '-') !== false){
+            [$y, $m, $d] = explode('.', $day);
+        }else {
+            [$d, $m, $y] = explode('/', $day);
+        }
+        [$h, $min] = explode(':', $hours);
+        $timestamp = mktime((int)$h, (int)$min,0, (int)$m, (int)$d, (int)$y);
 
-        return date('c', $timestamp);
+        return $format ? date($format, $timestamp) : $timestamp;
     }
+
 
     public function formatBinary(string $data, bool $isMultiple = true)
     {
         return static::getBinaryPayload($data, $isMultiple);
     }
 
-    public function formatTags(string $name)
+    public function formatTags($name)
     {
+        if (empty($name)) return [];
+
         $names = explode(PHP_EOL, $name);
         if (!self::isEmptyArray($names)){
             return $names;
@@ -486,7 +510,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $index = 0;
         foreach ($payloads as $priority => $payload) {
             $payload = $payload->getArrayCopy();
-            $idSuffix = ($index === 0) ? '' : '###' . $index;
+            $idSuffix = ($index === 0) ? '' : '---' . $index;
             if (!empty($payload)) {
                 OCMPayload::create(
                     $this->attribute('_id') . $idSuffix,

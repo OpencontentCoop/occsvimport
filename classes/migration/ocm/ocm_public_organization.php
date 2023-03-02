@@ -48,4 +48,9 @@ class ocm_public_organization extends ocm_organization
     {
         return $this->getNodeIdFromRemoteId('10742bd28e405f0e83ae61223aea80cb');
     }
+
+    public static function getImportPriority(): int
+    {
+        return 29;
+    }
 }

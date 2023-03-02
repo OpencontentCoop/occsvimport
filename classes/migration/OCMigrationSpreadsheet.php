@@ -91,7 +91,8 @@ class OCMigrationSpreadsheet
         if ($siteData instanceof eZSiteData) {
             $siteData->remove();
         }
-
+        OCMigration::createPayloadTableIfNeeded(null, true);
+        OCMigration::createTableIfNeeded(null, true);
         self::resetCurrentStatus();
     }
 
@@ -186,14 +187,40 @@ class OCMigrationSpreadsheet
             $update = $options['update'] == 'update' ? '--update' : '';
         }
 
+        $validate = '';
+        if (isset($options['validate'])) {
+            $update = $options['validate'] !== '' ? '--validate' : '';
+        }
+
         if ($action === 'reset') {
             self::setCurrentStatus('', '', [], []);
         } else {
-            $command = 'bash extension/occsvimport/bin/bash/migration/run.sh ' . eZSiteAccess::current(
-                )['name'] . ' ' . $action . ' ' . $only . ' ' . $update;
-            eZDebug::writeError($command);
-            exec($command);
-            sleep(2);
+
+            if (!OCMigration::discoverContext()) {
+                $importOptions = [
+                    'action' => $action,
+                    'only' => implode(',', $options['class_filter']),
+                    'update' => $options['update'],
+                    'validate' => $options['validate'],
+                ];
+                $pendingImport = new SQLIImportItem([
+                    'handler' => 'ocmimporthandler',
+                    'user_id' => eZUser::currentUserID(),
+                ]);
+                $pendingImport->setAttribute('options', new SQLIImportHandlerOptions($importOptions));
+                $pendingImport->store();
+
+                self::setCurrentStatus($action, 'pending', $options, []);
+                $message = "Schedulata azione: $action...";
+
+            }else {
+                $command = 'bash extension/occsvimport/bin/bash/migration/run.sh ' . eZSiteAccess::current(
+                    )['name'] . ' ' . $action . ' ' . $only . ' ' . $update . ' ' . $validate;
+                eZDebug::writeError($command);
+                exec($command);
+                sleep(2);
+                $message = "In attesa di eseguire l'azione: $action...";
+            }
 
             $executionInfo = [];
             foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
@@ -202,7 +229,7 @@ class OCMigrationSpreadsheet
                     $executionInfo[$className] = [
                         'status' => 'pending',
                         'action' => $action,
-                        'update' => "In attesa di eseguire l'azione: $action...",
+                        'update' => $message,
                         'sheet' => '',
                         'range' => '',
                     ];
@@ -713,6 +740,21 @@ class OCMigrationSpreadsheet
         return $letter;
     }
 
+    private static function setAlreadyRunningStatus($action, $options)
+    {
+        $executionInfo = [];
+        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            $executionInfo[$className] = [
+                'status' => 'error',
+                'action' => $action,
+                'update' => "L'azione è già in corso",
+                'sheet' => '',
+                'range' => '',
+            ];
+        }
+        self::appendMessageToCurrentStatus($executionInfo);
+    }
+
     /**
      * @throws Exception
      */
@@ -722,6 +764,7 @@ class OCMigrationSpreadsheet
             if ($cli) {
                 $cli->output('Already running');
             }
+            self::setAlreadyRunningStatus('push', $options);
             return [];
         }
 
@@ -755,7 +798,7 @@ class OCMigrationSpreadsheet
 
         $override = !($options['update'] === true);
         if ($override && $cli) {
-            $cli->warning("Run in override mode");
+            $cli->output("Run in override mode");
         }
 
         if (!$className::canPush()) {
@@ -884,7 +927,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -912,6 +955,7 @@ class OCMigrationSpreadsheet
             if ($cli) {
                 $cli->output('Already running');
             }
+            self::setAlreadyRunningStatus('pull', $options);
             return [];
         }
 
@@ -923,6 +967,11 @@ class OCMigrationSpreadsheet
 
         self::setCurrentStatus('pull', 'running', $options);
 
+        $validate = isset($options['validate']) && $options['validate'];
+        if ($validate && $cli){
+            $cli->output('Run with validation');
+        }
+
         $executionInfo = [];
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
             $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli));
@@ -931,7 +980,7 @@ class OCMigrationSpreadsheet
 
         OCMigration::createPayloadTableIfNeeded($cli);
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, isset($options['validate'])));
+            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, $validate));
             self::appendMessageToCurrentStatus($executionInfo);
         }
 
@@ -964,11 +1013,12 @@ class OCMigrationSpreadsheet
             $values = $this->getDataHash($sheetTitle);
             $count = 0;
             foreach ($values as $value) {
+                /** @var OCMPersistentObject $item */
                 $item = $className::fromSpreadsheet($value);
                 $ignora = isset($value['IGNORA']) && !empty($value['IGNORA']);
                 if ($item instanceof eZPersistentObject && !$ignora) {
                     try {
-                        $item->store();
+                        $item->storeThis(false);
                         $count++;
                     } catch (Throwable $e) {
                         $executionInfo['errors'][$className][$item->attribute('_id')] =
@@ -981,7 +1031,7 @@ class OCMigrationSpreadsheet
             }
 
             $executionInfo[$className] = [
-                'status' => 'success',
+                'status' => 'running',
                 'action' => 'pull',
                 'update' => 'Lette ' . $count . ' righe',
                 'sheet' => $sheetTitle,
@@ -994,7 +1044,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -1035,19 +1085,21 @@ class OCMigrationSpreadsheet
             $count = 0;
 
             foreach ($items as $index => $item) {
+                $countIndex = $index + 1;
                 if ($cli) {
-                    $countIndex = $index + 1;
-                    $cli->output(" - $countIndex/$itemCount " . $item->attribute('_id'), false);
+                    $cli->output(" - $countIndex/$itemCount " . get_class($item) . ' ' . $item->attribute('_id'), false);
                 }
                 try {
                     $generatedPayloadCount = $item->storePayload();
-                    if ($validate) {
+                    if ($validate && $generatedPayloadCount > 0) {
                         $p = false;
                         try {
                             $p = OCMPayload::fetch($item->id());
                         } catch (Exception $e) {
+                            $cli->output(' fail validation', false);
                         }
                         if ($p instanceof OCMPayload) {
+                            $cli->output(' validation', false);
                             $p->validate();
                         }
                     }
@@ -1057,21 +1109,39 @@ class OCMigrationSpreadsheet
                     }
                 } catch (Throwable $e) {
                     if ($cli) {
-                        $cli->error(' ' . $e->getMessage());
+                        $cli->output(' ' . $e->getMessage());
                     }
                     $executionInfo['errors'][$className][$item->attribute('_id')] = [
                         'message' => $e->getMessage(),
                         'action' => 'pull',
                     ];
                 }
-            }
 
-            $executionInfo[$className] = [
-                'status' => $count < $itemCount ? 'warning' : 'success',
-                'action' => 'pull',
-                'update' => 'Letti ' . $itemCount . ' contenuti e preparati ' . $count . ' contenuti per l\'importazione',
-                'class' => $className,
-            ];
+                if ($count > $itemCount){
+                    $count = $itemCount;
+                }
+                $message = 'Letti ' . $itemCount . ' contenuti e preparati ' . $count . ' contenuti per l\'importazione';
+                if ($validate){
+                    $message = 'Letti ' . $itemCount . ' contenuti e validati ' . $count . ' contenuti';
+                }
+
+                $status = $countIndex >= $itemCount ? 'success' : 'running';
+                if ($status == 'success'){
+                    $status = $count >= $itemCount ? 'success' : 'warning';
+                }
+
+                $executionInfo[$className] = [
+                    'status' => $status,
+                    'action' => 'import',
+                    'process' => $countIndex . '/' . $itemCount,
+                    'update' => $message,
+                    'class' => $className,
+                ];
+
+                if ($index % 5 === 0 || $countIndex >= $itemCount) {
+                    OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
+                }
+            }
         } catch (Throwable $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
@@ -1079,7 +1149,7 @@ class OCMigrationSpreadsheet
                 'message' => $e->getMessage(),
             ];
             if ($cli) {
-                $cli->error($e->getMessage());
+                $cli->output($e->getMessage());
             }
         }
 
@@ -1093,6 +1163,7 @@ class OCMigrationSpreadsheet
             if ($cli) {
                 $cli->output('Already running');
             }
+            self::setAlreadyRunningStatus('import', $options);
             return [];
         }
 
@@ -1189,7 +1260,7 @@ class OCMigrationSpreadsheet
                     if ($response == 'create') {
                         $stat[$className]['c']++;
                         if ($cli) {
-                            $cli->warning(' created');
+                            $cli->output(' created');
                         }
                     } else {
                         $stat[$className]['u']++;
@@ -1200,7 +1271,7 @@ class OCMigrationSpreadsheet
                 } catch (Throwable $e) {
                     $stat[$className]['f']++;
                     if ($cli) {
-                        $cli->error(" error: " . $e->getMessage());
+                        $cli->output(" error: " . $e->getMessage());
                     }
                 }
 //                if ($index % 10 === 0) {
@@ -1240,6 +1311,7 @@ class OCMigrationSpreadsheet
             if ($cli) {
                 $cli->output('Already running');
             }
+            self::setAlreadyRunningStatus('export', $options);
             return [];
         }
 
@@ -1251,7 +1323,7 @@ class OCMigrationSpreadsheet
 
         $override = !($options['update'] === true);
         if ($override && $cli) {
-            $cli->warning("Run in override mode");
+            $cli->output("Run in override mode");
         }
 
         self::setCurrentStatus('export', 'running', $options, []);
@@ -1262,7 +1334,7 @@ class OCMigrationSpreadsheet
                 $options['update']
             );
         } catch (Throwable $e) {
-            self::setCurrentStatus('import', 'error', $options, $e->getMessage());
+            self::setCurrentStatus('export', 'error', $options, $e->getMessage());
             return ['status' => 'error']; //@todo
         }
 

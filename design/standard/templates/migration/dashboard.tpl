@@ -27,7 +27,8 @@
 <div class="container my-5 bg-white rounded p-5 position-relative">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-5">Assistente migrazione <br /><small><code>{$context|wash()} - {$instance|wash()} - {$db_name|wash()}</code></small></h1>
+            <h1>Assistente migrazione</h1>
+            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}</code></p>
             {if $migration_spreadsheet}
                 <h2 class="my-4">Impostazioni spreadsheet</h2>
             {else}
@@ -94,11 +95,19 @@
                     <div class="options mb-4">
                         <div class="bg-light p-2 rounded border mx-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" checked="checked" value="update" name="isUpdate" id="isUpdate">
+                                <input class="form-check-input" type="checkbox" {if $context}checked="checked"{/if} value="update" name="isUpdate" id="isUpdate">
                                 <label class="form-check-label h5" for="isUpdate" style="cursor:pointer">
                                     <b>{if $context}Non sovrascrivere i dati già elaborati{else}Aggiorna i contenuti già importati{/if}</b>
                                 </label>
                             </div>
+                            {if $context|not()}
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" value="update" name="doValidation" id="doValidation">
+                                    <label class="form-check-label h5" for="doValidation" style="cursor:pointer">
+                                        <b>Valida i dati quando leggi lo spreadsheet</b>
+                                    </label>
+                                </div>
+                            {/if}
                         </div>
                     </div>
 
@@ -211,7 +220,7 @@
             resetActions();
           } else if (data.status === 'unknown') {
             resetActions();
-          } else if (data.status === 'running') {
+          } else if (data.status === 'running' || data.status === 'pending') {
             setActionActive(data.action)
             setTimeout(function () {
               checkStatus(cb, context);
@@ -234,6 +243,9 @@
                 })
               } else if (index === 'update') {
                 $('#isUpdate').attr('checked', value ? 'checked' : false)
+                  .prop('checked', value ? 'checked' : false)
+              } else if (index === 'validate') {
+                $('#doValidation').attr('checked', value ? 'checked' : false)
                   .prop('checked', value ? 'checked' : false)
               }
             })
@@ -312,11 +324,13 @@
               }
             })
             var isUpdate = $('#isUpdate');
+            var doValidation = $('#doValidation');
             $.getJSON(BaseUrl, {
               action: action,
               options: {
                 class_filter: classes,
-                update: isUpdate.is(':checked') ? isUpdate.val() : ''
+                update: isUpdate.is(':checked') ? isUpdate.val() : '',
+                validate: doValidation.is(':checked') ? doValidation.val() : ''
               }
             }, function (data) {
               console.log('start', action);

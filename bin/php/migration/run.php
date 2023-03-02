@@ -12,7 +12,7 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[action:][only:][update][reset]",
+    "[action:][only:][update][reset][validate]",
     "", [
         'action' => 'Select from:'  . PHP_EOL . ' '  . implode(PHP_EOL . ' ', ['export', 'push', 'pull', 'import']),
         'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
@@ -30,7 +30,8 @@ if ($options['reset']){
 
 $opt = [
     'class_filter' => $options['only'] ? explode(',', $options['only']) : [],
-    'update' => !!$options['update']
+    'update' => !!$options['update'],
+    'validate' => $options['validate']
 ];
 
 $action = $options['action'];
@@ -56,5 +57,7 @@ try {
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }
+
+echo 'aaa';
 
 $script->shutdown();

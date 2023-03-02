@@ -12,13 +12,14 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[only:][reset][truncate]",
+    "[only:][reset][truncate][validate]",
     "", [
     'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 $only = $options['only'] ? ['class_filter' => explode(',', $options['only'])] : [];
+$only['validate'] = $options['validate'];
 
 if ($options['reset']){
     OCMigrationSpreadsheet::resetCurrentStatus();

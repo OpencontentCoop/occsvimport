@@ -31,6 +31,22 @@ foreach ($classes as $class) {
 $classHash = array_flip($classHash);
 ksort($classHash);
 $classHash = array_flip($classHash);
+
+if (!$context){
+    $sort = [];
+    foreach (array_keys($classHash) as $class){
+        $sort[$class::getImportPriority()][$class] = $classHash[$class];
+    }
+    ksort($sort);
+    $sortedClasses = [];
+    foreach ($sort as $i => $_classes){
+        foreach ($_classes as $name => $value){
+            $sortedClasses[$name] = $value;
+        }
+    }
+    $classHash = $sortedClasses;
+}
+
 $tpl->setVariable('class_hash', $classHash);
 
 if ($http->hasPostVariable('migration_spreadsheet') && $http->postVariable('migration_spreadsheet') !== "") {
@@ -77,6 +93,7 @@ if ($http->hasVariable('payload')) {
         echo json_encode([
             'status' => 'error',
             'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
         ]);
     }
     eZExecution::cleanExit();
@@ -111,6 +128,10 @@ if ($http->hasVariable('datatable')) {
                 ['limit' => $length, 'offset' => $start],
                 false
             );
+            foreach ($rows as $index => $row){
+                $rows[$index]['modified_at'] = empty($row['modified_at']) ? '' : date('D, d M Y H:i:s', $row['modified_at']);
+                $rows[$index]['executed_at'] = empty($row['executed_at']) ? '' : date('D, d M Y H:i:s', $row['executed_at']);
+            }
         }
     }
 

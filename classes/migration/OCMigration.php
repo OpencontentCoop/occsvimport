@@ -206,7 +206,7 @@ class OCMigration extends eZPersistentObject
         $db = eZDB::instance();
         eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
         if ($cli) {
-            $cli->warning("Using db " . $db->DB);
+            $cli->output("Using db " . $db->DB);
         }
 
         $tableQuery = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename  like 'ocmpayload';";
@@ -223,7 +223,7 @@ class OCMigration extends eZPersistentObject
         if (!isset($exists['ocmpayload'])) {
             $tableKeySql = "ALTER TABLE ONLY ocmpayload ADD CONSTRAINT ocmpayload_pkey PRIMARY KEY (id);";
             if ($cli) {
-                $cli->warning('Create table ocmpayload');
+                $cli->output('Create table ocmpayload');
             }
             $db->query($tableCreateSql);
             $db->query($tableKeySql);
@@ -245,7 +245,7 @@ class OCMigration extends eZPersistentObject
         $db = eZDB::instance();
         eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
         if ($cli) {
-            $cli->warning("Using db " . $db->DB);
+            $cli->output("Using db " . $db->DB);
         }
 
         $tableQuery = "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename  like 'ocm_%';";
@@ -277,7 +277,7 @@ class OCMigration extends eZPersistentObject
 
             if (!isset($exists[$class])) {
                 if ($cli) {
-                    $cli->warning('Create table ' . $class);
+                    $cli->output('Create table ' . $class);
                 }
                 foreach ($fields as $field => $definition) {
                     if ($cli) {
@@ -298,7 +298,7 @@ class OCMigration extends eZPersistentObject
                 if (!empty($missingColumns)) {
                     $appendColumnQueryParts = [];
                     if ($cli) {
-                        $cli->warning(
+                        $cli->output(
                             'Add missing columns to table ' . $class . ': ' . PHP_EOL . ' - ' . implode(
                                 PHP_EOL . ' - ',
                                 $missingColumns

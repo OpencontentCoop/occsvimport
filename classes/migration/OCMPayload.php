@@ -108,7 +108,7 @@ class OCMPayload extends eZPersistentObject
         $this->setAttribute('executed_at', time());
 
         try {
-            if (strpos($this->id(), '###')) {
+            if (strpos($this->id(), '---')) {
                 $result = $repository->update($payload, true);
             } elseif ($onlyCreation) {
                 try {
@@ -152,6 +152,7 @@ class OCMPayload extends eZPersistentObject
         } catch (Throwable $e) {
             $this->setAttribute('error', $e->getMessage());
             $this->store();
+            throw $e;
         }
     }
 }
