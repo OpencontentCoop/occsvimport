@@ -252,6 +252,39 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('time_indexed_role');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode(
+            $this->getNodeIdFromRemoteId('OpenPaRuoli')
+        );
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'label', $this->attribute('label'));
+        $payload->setData($locale, 'person', ocm_public_person::getIdByName($this->attribute('person')));
+        $payload->setData($locale, 'role', $this->attribute('role'));
+        $payload->setData($locale, 'type', $this->attribute('type'));
+        $payload->setData($locale, 'for_entity', ocm_organization::getIdByName($this->attribute('for_entity'), 'legal_name'));
+        $payload->setData($locale, 'compensi', $this->attribute('compensi'));
+        $payload->setData($locale, 'importi', $this->attribute('importi'));
+        $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')));
+        $payload->setData($locale, 'end_time', $this->formatDate($this->attribute('end_time')));
+        $payload->setData($locale, 'data_insediamento', $this->formatDate($this->attribute('data_insediamento')));
+        $payload->setData($locale, 'atto_nomina', $this->formatBinary($this->attribute('atto_nomina'), false));
+        $payload->setData($locale, 'organizational_position', self::getBooleanPayload($this->attribute('organizational_position')));
+        $payload->setData($locale, 'incarico_dirigenziale', self::getBooleanPayload($this->attribute('incarico_dirigenziale')));
+        $payload->setData($locale, 'ruolo_principale', self::getBooleanPayload($this->attribute('ruolo_principale')));
+        $payload->setData($locale, 'priorita', (int)$this->attribute('priorita'));
+        $payload->setData($locale, 'notes', $this->attribute('notes'));
+        $payload->setData($locale, 'competences', json_decode($this->attribute('competences'))->{'ita-IT'});
+        $payload->setData($locale, 'delegations', json_decode($this->attribute('delegations'))->{'ita-IT'});
+
+        return $payload;
+    }
+
     public static function getDateValidationHeaders(): array
     {
         return [
@@ -291,11 +324,6 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
     public static function getColumnName(): string
     {
         return 'Persona che ha il ruolo*';
-    }
-
-    public function generatePayload()
-    {
-        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int

@@ -181,12 +181,6 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         if (!self::isEmptyArray($names)){
 
             $names = self::trimArray($names);
-            if ($tryWithPrefix){
-                foreach ($names as $name){
-                    $names[] = $tryWithPrefix.$name;
-                }
-            }
-
             /** @var ocm_image[] $list */
             $list = ocm_image::fetchObjectList(
                 ocm_image::definition(), null,

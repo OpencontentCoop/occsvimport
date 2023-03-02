@@ -300,7 +300,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
     {
         $address = '';
         [$latitude, $longitude] = explode(' ', $row["Latitudine e longitudine*"]);
-        if ($latitude && $longitude) {
+        if (($latitude + $longitude) > 0) {
             $address = json_encode([
                 'address' => $row['Indirizzo*'],
                 'latitude' => $latitude,
@@ -361,8 +361,8 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'help', ocm_online_contact_point::getIdListByName($this->attribute('help')));
         $payload->setData($locale, 'more_information', $this->attribute('more_information'));
         $payload->setData($locale, 'identifier', $this->attribute('identifier'));
-
         $payloads = [self::getImportPriority() => $payload];
+
         $offices = ocm_organization::getIdListByName($this->attribute('has_office'), 'legal_name');
         if (count($offices) > 0) {
             $payload2 = clone $payload;

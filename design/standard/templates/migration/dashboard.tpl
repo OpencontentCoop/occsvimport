@@ -91,18 +91,17 @@
                         </table>
                     </div>
 
-                    {if $context}
                     <div class="options mb-4">
                         <div class="bg-light p-2 rounded border mx-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" checked="checked" value="update" name="isUpdate" id="isUpdate">
                                 <label class="form-check-label h5" for="isUpdate" style="cursor:pointer">
-                                    <b>Non sovrascrivere i dati già elaborati</b>
+                                    <b>{if $context}Non sovrascrivere i dati già elaborati{else}Aggiorna i contenuti già importati{/if}</b>
                                 </label>
                             </div>
                         </div>
                     </div>
-                    {/if}
+
 
                     <div class="text-center">
                     {if $context}
@@ -244,7 +243,8 @@
             $.each(data.message, function (i, v){
               var updateStyle = 'warning';
               if (v.status === 'success') updateStyle = 'success';
-              //if (v.status === 'error') updateStyle = 'danger';
+              if (v.status === 'pending') updateStyle = 'info';
+              if (v.status === 'warning') updateStyle = 'danger';
 
               var updateMessage = v.update ?? '';
               if (updateMessage.length > 0){
@@ -254,7 +254,11 @@
               if (typeof v.message === 'string'){
                 errorMessage = '<div class="alert alert-danger p-1 my-1">'+v.message+'</div>';
               }
-              var statusMessage = '<span class="badge badge-'+updateStyle+'">' + v.status + '</span> ';
+              var statusIcon = '';
+              if (v.status === 'warning'){
+                statusIcon = '<span class="glyphicon glyphicon-warning-sign text-'+updateStyle+'"></span> ';
+              }
+              var statusMessage = statusIcon + '<span class="badge badge-'+updateStyle+'">' + v.status + '</span> ';
               var action = v.action || data.action;
               var actionMessage = '<span class="badge badge-primary">' + action + '</span> ';
               var dateMessage = '<code>'+moment(data.timestamp).format('DD/MM/YYYY HH:mm') + '</code> ';

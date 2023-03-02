@@ -168,11 +168,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     protected function formatDate($value)
     {
-        if (!empty($value) && strtotime($value)) {
-            return date('c', strtotime($value));
-        }
-
-        return false;
+        return static::getDatePayload($value);
     }
 
     protected static function isEmptyArray(array $array): bool
@@ -366,7 +362,9 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             $names = self::trimArray($names);
             if ($tryWithPrefix){
                 foreach ($names as $name){
-                    $names[] = $tryWithPrefix.$name;
+                    if (strpos($name, $tryWithPrefix) === false) {
+                        $names[] = $tryWithPrefix . $name;
+                    }
                 }
             }
 
@@ -380,7 +378,68 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $data;
     }
 
-    public static function getBinaryPayload(string $data, bool $isMultiple = true)
+    public static function getIdByName($name, $field = 'name', string $tryWithPrefix = null): ?array
+    {
+        $data = static::getIdListByName($name, $field, $tryWithPrefix);
+        if (count($data)){
+            return [$data[0]];
+        }
+
+        return null;
+    }
+
+    public static function getBooleanPayload(string $data)
+    {
+        if (empty($data)){
+            return null;
+        }
+
+        return !empty($data);
+    }
+
+    protected static function getDatePayload(string $data)
+    {
+        if (empty($data)){
+            return null;
+        }
+
+        [$d, $m, $y] = explode('/', $data);
+        $timestamp = mktime(0,0,0, $m, $d, $y);
+
+        return date('c', $timestamp);
+    }
+
+    public function formatBinary(string $data, bool $isMultiple = true)
+    {
+        return static::getBinaryPayload($data, $isMultiple);
+    }
+
+    public function formatTags(string $name)
+    {
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+            return $names;
+        }
+
+        return [];
+    }
+
+    public function formatAuthor(string $name)
+    {
+        if (empty($data)){
+            return null;
+        }
+
+        $parts = explode(' ', $name);
+        $email = array_pop($parts);
+
+        return [
+            'name' => implode(' ', $name),
+            'email' => $email,
+        ];
+    }
+
+    protected static function getBinaryPayload(string $data, bool $isMultiple = true)
     {
         $values = [];
         if (empty($data)){

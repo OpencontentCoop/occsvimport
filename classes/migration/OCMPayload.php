@@ -2,6 +2,7 @@
 
 use Opencontent\Opendata\Api\ContentRepository;
 use Opencontent\Opendata\Api\EnvironmentLoader;
+use Opencontent\Opendata\Api\Exception\DuplicateRemoteIdException;
 
 class OCMPayload extends eZPersistentObject
 {
@@ -67,7 +68,7 @@ class OCMPayload extends eZPersistentObject
     public static function fetch($id): OCMPayload
     {
         $item = eZPersistentObject::fetchObject(self::definition(), null, ['id' => $id]);
-        if (!$item instanceof OCMPayload){
+        if (!$item instanceof OCMPayload) {
             throw new Exception("Payload $id not found");
         }
 
@@ -97,7 +98,7 @@ class OCMPayload extends eZPersistentObject
         return $this->attribute('type');
     }
 
-    public function createOrUpdateContent()
+    public function createOrUpdateContent($onlyCreation = false)
     {
         $repository = new ContentRepository();
         $environment = EnvironmentLoader::loadPreset('content');
@@ -107,9 +108,15 @@ class OCMPayload extends eZPersistentObject
         $this->setAttribute('executed_at', time());
 
         try {
-            if (strpos($this->id(), '###')){
+            if (strpos($this->id(), '###')) {
                 $result = $repository->update($payload, true);
-            }else {
+            } elseif ($onlyCreation) {
+                try {
+                    $result = $repository->create($payload, true);
+                } catch (DuplicateRemoteIdException $e) {
+                    $result = ['method' => 'not-update'];
+                }
+            } else {
                 $result = $repository->createUpdate($payload, true);
             }
             $this->setAttribute('result', $result['method']);
@@ -117,12 +124,34 @@ class OCMPayload extends eZPersistentObject
             $this->store();
 
             return $result['method'];
-
         } catch (Throwable $e) {
             $this->setAttribute('error', $e->getMessage());
             $this->store();
 
             throw $e;
+        }
+    }
+
+    public function validate()
+    {
+        $repository = new ContentRepository();
+        $environment = EnvironmentLoader::loadPreset('content');
+        $repository->setCurrentEnvironmentSettings($environment);
+        $payload = json_decode($this->attribute('payload'), true);
+
+        try {
+            if (!eZContentObject::fetchByRemoteID($payload['metadata']['remoteId'])){
+                $createStruct = $environment->instanceCreateStruct($payload);
+                $createStruct->validate(true);
+            }else{
+                $updateStruct = $environment->instanceUpdateStruct($payload);
+                $updateStruct->validate(true);
+            }
+            $this->setAttribute('error', '');
+            $this->store();
+        } catch (Throwable $e) {
+            $this->setAttribute('error', $e->getMessage());
+            $this->store();
         }
     }
 }

@@ -414,17 +414,17 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
         $payload->setData($locale, 'bio', $this->attribute('bio'));
         $payload->setData($locale, 'has_contact_point', ocm_online_contact_point::getIdListByName($this->attribute('has_contact_point')));
-        $payload->setData($locale, 'curriculum', self::getBinaryPayload($this->attribute('curriculum'), false));
+        $payload->setData($locale, 'curriculum', $this->formatBinary($this->attribute('curriculum'), false));
         $payload->setData($locale, 'situazione_patrimoniale', $this->attribute('situazione_patrimoniale'));
-        $payload->setData($locale, 'dichiarazioni_patrimoniali_soggetto', self::getBinaryPayload($this->attribute('dichiarazioni_patrimoniali_soggetto'), true));
-        $payload->setData($locale, 'dichiarazioni_patrimoniali_parenti', self::getBinaryPayload($this->attribute('dichiarazioni_patrimoniali_parenti')));
-        $payload->setData($locale, 'dichiarazione_redditi', self::getBinaryPayload($this->attribute('dichiarazione_redditi')));
+        $payload->setData($locale, 'dichiarazioni_patrimoniali_soggetto', $this->formatBinary($this->attribute('dichiarazioni_patrimoniali_soggetto'), true));
+        $payload->setData($locale, 'dichiarazioni_patrimoniali_parenti', $this->formatBinary($this->attribute('dichiarazioni_patrimoniali_parenti')));
+        $payload->setData($locale, 'dichiarazione_redditi', $this->formatBinary($this->attribute('dichiarazione_redditi')));
         $payload->setData($locale, 'spese_elettorali', $this->attribute('spese_elettorali'));
-        $payload->setData($locale, 'spese_elettorali_files', self::getBinaryPayload($this->attribute('spese_elettorali_files')));
-        $payload->setData($locale, 'variazioni_situazione_patrimoniale', self::getBinaryPayload($this->attribute('variazioni_situazione_patrimoniale')));
-        $payload->setData($locale, 'altre_cariche', self::getBinaryPayload($this->attribute('altre_cariche')));
-        $payload->setData($locale, 'eventuali_incarichi', self::getBinaryPayload($this->attribute('eventuali_incarichi')));
-        $payload->setData($locale, 'dichiarazione_incompatibilita', self::getBinaryPayload($this->attribute('dichiarazione_incompatibilita')));
+        $payload->setData($locale, 'spese_elettorali_files', $this->formatBinary($this->attribute('spese_elettorali_files')));
+        $payload->setData($locale, 'variazioni_situazione_patrimoniale', $this->formatBinary($this->attribute('variazioni_situazione_patrimoniale')));
+        $payload->setData($locale, 'altre_cariche', $this->formatBinary($this->attribute('altre_cariche')));
+        $payload->setData($locale, 'eventuali_incarichi', $this->formatBinary($this->attribute('eventuali_incarichi')));
+        $payload->setData($locale, 'dichiarazione_incompatibilita', $this->formatBinary($this->attribute('dichiarazione_incompatibilita')));
         $payload->setData($locale, 'notes', $this->attribute('notes'));
         $payload->setData($locale, 'has_role', '1');
 
@@ -497,4 +497,24 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
     {
         return 40;
     }
+
+    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    {
+        $data = [];
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+
+            $names = self::trimArray($names);
+
+            $list = static::fetchObjectList(
+                static::definition(), ['_id'],
+                ["concat_ws(' ', family_name, given_name)" => [$names]]
+            );
+            $data = array_column($list, '_id');
+        }
+
+        return $data;
+    }
+
+
 }

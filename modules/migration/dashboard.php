@@ -56,8 +56,20 @@ if ($http->hasVariable('payload')) {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
-        if ($http->hasVariable('import')){
+        if ($http->hasVariable('import')) {
             echo json_encode(OCMPayload::fetch($http->variable('payload'))->createOrUpdateContent());
+        } else if ($http->hasVariable('generate')){
+            $class = $http->variable('generate');
+            if (in_array($class, $classes)) {
+                /** @var ocm_interface[] $items */
+                $items = $class::fetchByField('_id', $http->variable('payload'));
+                if (isset($items[0])){
+                    $items[0]->storePayload();
+                    echo json_encode(
+                        $items[0]->generatePayload()
+                    );
+                }
+            }
         }else {
             echo OCMPayload::fetch($http->variable('payload'))->attribute('payload');
         }
@@ -95,7 +107,7 @@ if ($http->hasVariable('datatable')) {
                 OCMPayload::definition(),
                 ['id', 'modified_at', 'executed_at', 'error'],
                 ['type' => $class, 'error' => ['!=', '']],
-                ['executed_at' => 'desc'],
+                ['executed_at' => 'asc'],
                 ['limit' => $length, 'offset' => $start],
                 false
             );

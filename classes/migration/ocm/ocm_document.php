@@ -699,7 +699,6 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, $mapper, $options);
     }
 
-
     public static function getSpreadsheetTitle(): string
     {
         return 'Documenti';
@@ -796,11 +795,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_organization', $row["Ufficio responsabile del documento*"]);
         $item->setAttribute('full_description', $row["Descrizione"]);
         $item->setAttribute('link', $row["Link esterno al documento"]);
-        $item->setAttribute('attachments', implode('|', $row["File allegati"]));
-//        $item->setAttribute('attachments_1', $row["URL file allegato 1"]);
-//        $item->setAttribute('attachments_2', $row["URL file allegato 2"]);
-//        $item->setAttribute('attachments_3', $row["URL file allegato 3"]);
-//        $item->setAttribute('attachments_4', $row["URL file allegato 4"]);
+        $item->setAttribute('attachments', $row["File allegati"]);
         $item->setAttribute('start_time', $row["Data di inizio validità"]);
         $item->setAttribute('end_time', $row["Data di fine validità"]);
         $item->setAttribute('publication_start_time', $row["Data di inizio pubblicazione"]);
@@ -831,6 +826,62 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
+    }
+
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('document');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode(51);
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'name', trim($this->attribute('name')));
+        $payload->setData($locale, 'has_code', trim($this->attribute('has_code')));
+        $payload->setData($locale, 'protocollo', trim($this->attribute('has_code')));
+        $payload->setData($locale, 'data_protocollazione', $this->formatDate($this->attribute('data_protocollazione')));
+        $payload->setData($locale, 'document_type', $this->formatTags($this->attribute('document_type')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+        $payload->setData($locale, 'abstract', trim($this->attribute('abstract')));
+        $payload->setData($locale, 'file', $this->formatBinary($this->attribute('file'), false));
+        $payload->setData($locale, 'license', $this->formatTags($this->attribute('license')));
+        $payload->setData($locale, 'format', $this->formatTags($this->attribute('format')));
+        $payload->setData($locale, 'has_organization', ocm_organization::getIdListByName($this->attribute('has_organization'), 'legal_name'));
+        $payload->setData($locale, 'full_description', trim($this->attribute('full_description')));
+        $payload->setData($locale, 'link', trim($this->attribute('link')));
+        $payload->setData($locale, 'attachments', $this->formatBinary($this->attribute('attachments')));
+        $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')));
+        $payload->setData($locale, 'end_time', $this->formatDate($this->attribute('end_time')));
+        $payload->setData($locale, 'publication_start_time', $this->formatDate($this->attribute('publication_start_time')));
+        $payload->setData($locale, 'publication_end_time', $this->formatDate($this->attribute('publication_end_time')));
+        $payload->setData($locale, 'expiration_time', $this->formatDate($this->attribute('expiration_time')));
+        $payload->setData($locale, 'data_di_firma', $this->formatDate($this->attribute('data_di_firma')));
+        $payload->setData($locale, 'has_dataset', null); //@todo
+        $payload->setData($locale, 'other_information', trim($this->attribute('other_information')));
+        $payload->setData($locale, 'legal_notes', trim($this->attribute('legal_notes')));
+        $payload->setData($locale, 'keyword', trim($this->attribute('keyword')));
+        $payload->setData($locale, 'life_event', $this->formatTags($this->attribute('life_event')));
+        $payload->setData($locale, 'business_event', $this->formatTags($this->attribute('business_event')));
+        $payload->setData($locale, 'author', $this->formatAuthor($this->attribute('author')));
+        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
+        $payload->setData($locale, 'tipo_di_risposta', $this->formatTags($this->attribute('tipo_di_risposta')));
+        $payload->setData($locale, 'interroganti', ocm_public_person::getIdListByName($this->attribute('interroganti')));
+        $payload->setData($locale, 'gruppo_politico', ocm_organization::getIdListByName($this->attribute('gruppo_politico'), 'legal_name'));
+        $payload->setData($locale, 'data_invio_uffici', $this->formatDate($this->attribute('data_invio_uffici')));
+        $payload->setData($locale, 'data_giunta', $this->formatDate($this->attribute('data_giunta')));
+        $payload->setData($locale, 'data_risposta_consigliere', $this->formatDate($this->attribute('data_risposta_consigliere')));
+        $payload->setData($locale, 'giorni_interrogazione', intval($this->attribute('giorni_interrogazione')));
+        $payload->setData($locale, 'data_consiglio', $this->formatDate($this->attribute('data_consiglio')));
+        $payload->setData($locale, 'giorni_adozione', intval($this->attribute('giorni_adozione')));
+        $payload->setData($locale, 'announcement_type', $this->formatTags($this->attribute('announcement_type')));
+        $payload->setData($locale, 'data_di_scadenza_delle_iscrizioni', $this->formatDate($this->attribute('data_di_scadenza_delle_iscrizioni')));
+        $payload->setData($locale, 'data_di_conclusione', $this->formatDate($this->attribute('data_di_conclusione')));
+
+
+        $payload->setData($locale, 'reference_doc', ocm_document::getIdListByName($this->attribute('reference_doc')));
+
+        return $payload;
     }
 
     public static function getDateValidationHeaders(): array
@@ -914,10 +965,5 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
     public static function getImportPriority(): int
     {
         return 100;
-    }
-
-    public function generatePayload()
-    {
-        return $this->getNewPayloadBuilderInstance();
     }
 }

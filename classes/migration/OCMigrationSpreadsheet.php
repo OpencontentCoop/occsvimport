@@ -151,6 +151,7 @@ class OCMigrationSpreadsheet
             if ($siteData instanceof eZSiteData) {
                 $status = json_decode($siteData->attribute('value'), true);
                 $status['message'] = array_merge((array)$status['message'], (array)$message);
+                unset($status['message'][0]); //@todo
                 //eZCLI::instance()->output(var_export($status['message'], 1));
                 $status['timestamp'] = date('c');
                 $siteData->setAttribute(
@@ -930,10 +931,11 @@ class OCMigrationSpreadsheet
 
         OCMigration::createPayloadTableIfNeeded($cli);
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli));
+            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, isset($options['validate'])));
             self::appendMessageToCurrentStatus($executionInfo);
         }
-        self::setCurrentStatus('pull', 'done', $options, $executionInfo);
+
+        self::setCurrentStatus('pull', 'done', $options);
 
         return $executionInfo;
     }
@@ -1000,7 +1002,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    private function createPayloadByType($className, eZCLI $cli = null): array
+    private function createPayloadByType($className, eZCLI $cli = null, $validate = false): array
     {
         $executionInfo = [];
 
@@ -1039,6 +1041,16 @@ class OCMigrationSpreadsheet
                 }
                 try {
                     $generatedPayloadCount = $item->storePayload();
+                    if ($validate) {
+                        $p = false;
+                        try {
+                            $p = OCMPayload::fetch($item->id());
+                        } catch (Exception $e) {
+                        }
+                        if ($p instanceof OCMPayload) {
+                            $p->validate();
+                        }
+                    }
                     $count = $count + $generatedPayloadCount;
                     if ($cli) {
                         $cli->output(' ' . $generatedPayloadCount);
@@ -1090,6 +1102,8 @@ class OCMigrationSpreadsheet
 
         self::setCurrentStatus('import', 'running', $options, []);
 
+        $onlyCreation = !($options['update'] === true);
+
         $payloadsQueryConds = null;
         if (isset($options['class_filter']) && !empty($options['class_filter'])) {
             $payloadsQueryConds = [
@@ -1132,6 +1146,27 @@ class OCMigrationSpreadsheet
             $count[$className]++;
         }
 
+        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            if (!isset($count[$className]) || $count[$className] === 0){
+                $executionInfo[$className] = [
+                    'status' => 'success',
+                    'action' => 'import',
+                    'update' => '<small>Nessun contenuto da processare</small>',
+                    'sheet' => '',
+                    'range' => '',
+                ];
+            }else{
+                $executionInfo[$className] = [
+                    'status' => 'running',
+                    'action' => 'import',
+                    'update' => '<small>Contenuti processati: 0 di ' . $count[$className] . '</small>',
+                    'sheet' => '',
+                    'range' => '',
+                ];
+            }
+        }
+        OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
+
         foreach ($payloads as $index => $payload) {
             $countProcessed++;
             $className = $payload->type();
@@ -1139,7 +1174,7 @@ class OCMigrationSpreadsheet
             if (!$className::canImport()) {
                 $executionInfo[$className] = [
                     'status' => 'skipped',
-                    'action' => 'pull',
+                    'action' => 'import',
                     'message' => '',
                     'class' => $className,
                 ];
@@ -1150,7 +1185,7 @@ class OCMigrationSpreadsheet
                 }
 
                 try {
-                    $response = $payload->createOrUpdateContent();
+                    $response = $payload->createOrUpdateContent($onlyCreation);
                     if ($response == 'create') {
                         $stat[$className]['c']++;
                         if ($cli) {
@@ -1169,11 +1204,17 @@ class OCMigrationSpreadsheet
                     }
                 }
 //                if ($index % 10 === 0) {
+
+                $status = 'running';
+                if ($count[$className] <= array_sum($stat[$className])){
+                    $status = $stat[$className]['f'] > 0 ? 'warning' : 'success';
+                }
+
                 $executionInfo[$className] = [
-                    'status' => $stat[$className]['f'] > 0 ? 'warning' : 'success',
+                    'status' => $status,
                     'action' => 'import',
                     'process' => $countProcessed . '/' . $payloadCount,
-                    'update' => '<small>Totale contenuti da processare: ' . $count[$className]
+                    'update' => '<small>Contenuti processati: ' . array_sum($stat[$className]) . ' di ' . $count[$className]
                         . '<br />Creati: ' . $stat[$className]['c'] . ' contenuti'
                         . '<br />Aggiornati: ' . $stat[$className]['u'] . ' contenuti'
                         . '<br />Errori di importazione: ' . $stat[$className]['f'] . '</small>',
