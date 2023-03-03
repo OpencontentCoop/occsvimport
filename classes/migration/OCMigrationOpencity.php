@@ -47,7 +47,7 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
      * @return ocm_interface
      * @throws Exception
      */
-    protected function createFromNode(
+    public function createFromNode(
         eZContentObjectTreeNode $node,
         ocm_interface $item,
         array $options = []
