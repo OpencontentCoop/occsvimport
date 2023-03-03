@@ -273,7 +273,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')));
         $payload->setData($locale, 'end_time', $this->formatDate($this->attribute('end_time')));
         $payload->setData($locale, 'data_insediamento', $this->formatDate($this->attribute('data_insediamento')));
-        $payload->setData($locale, 'atto_nomina', ocm_document::getIdByName($this->attribute('atto_nomina'), false));
+        $payload->setData($locale, 'atto_nomina', ocm_document::getIdByName($this->attribute('atto_nomina')));
         $payload->setData($locale, 'organizational_position', self::getBooleanPayload($this->attribute('organizational_position')));
         $payload->setData($locale, 'incarico_dirigenziale', self::getBooleanPayload($this->attribute('incarico_dirigenziale')));
         $payload->setData($locale, 'ruolo_principale', self::getBooleanPayload($this->attribute('ruolo_principale')));

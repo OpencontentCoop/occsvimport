@@ -196,10 +196,12 @@ class OCMigrationSpreadsheet
             self::setCurrentStatus('', '', [], []);
         } else {
 
-            if (!OCMigration::discoverContext()) {
+            $useSqlImport = true;
+
+            if ($useSqlImport) {
                 $importOptions = [
                     'action' => $action,
-                    'only' => implode(',', $options['class_filter']),
+                    'only' => isset($options['class_filter']) ? implode(',', $options['class_filter']) : [],
                     'update' => $options['update'],
                     'validate' => $options['validate'],
                 ];
@@ -213,9 +215,17 @@ class OCMigrationSpreadsheet
                 self::setCurrentStatus($action, 'pending', $options, []);
                 $message = "Schedulata azione: $action...";
 
+                $command = 'php runcronjobs.php -q -s' . eZSiteAccess::current()['name'] . ' sqliimport_run > /dev/null &';
+                eZDebug::writeError($command);
+                exec($command);
             }else {
-                $command = 'bash extension/occsvimport/bin/bash/migration/run.sh ' . eZSiteAccess::current(
-                    )['name'] . ' ' . $action . ' ' . $only . ' ' . $update . ' ' . $validate;
+                $command = 'bash extension/occsvimport/bin/bash/migration/run.sh '
+                    . eZSiteAccess::current()['name'] . ' '
+                    . $action . ' '
+                    . $only . ' '
+                    . $update . ' '
+                    . $validate;
+
                 eZDebug::writeError($command);
                 exec($command);
                 sleep(2);
@@ -1052,7 +1062,13 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    private function createPayloadByType($className, eZCLI $cli = null, $validate = false): array
+    /**
+     * @param ocm_interface
+     * @param eZCLI|null $cli
+     * @param bool $validate
+     * @return array
+     */
+    private function createPayloadByType($className, eZCLI $cli = null, bool $validate = null): array
     {
         $executionInfo = [];
 
@@ -1121,12 +1137,16 @@ class OCMigrationSpreadsheet
                     $count = $itemCount;
                 }
                 $message = 'Letti ' . $itemCount . ' contenuti e preparati ' . $count . ' contenuti per l\'importazione';
+
+                if (!$className::checkPayloadGeneration()){
+                    $message = 'Letti ' . $itemCount . ' contenuti';
+                }
                 if ($validate){
                     $message = 'Letti ' . $itemCount . ' contenuti e validati ' . $count . ' contenuti';
                 }
 
                 $status = $countIndex >= $itemCount ? 'success' : 'running';
-                if ($status == 'success'){
+                if ($status == 'success' && $className::checkPayloadGeneration()){
                     $status = $count >= $itemCount ? 'success' : 'warning';
                 }
 

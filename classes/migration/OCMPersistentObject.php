@@ -113,6 +113,11 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         self::$capabilities['import'] = false;
     }
 
+    public static function checkPayloadGeneration(): bool
+    {
+        return true;
+    }
+
     protected static function getStringFieldDefinition($identifier): array
     {
         return [

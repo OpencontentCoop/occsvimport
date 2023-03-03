@@ -1,6 +1,9 @@
 <?php
-
+/** @var eZModule $module */
 $module = $Params['Module'];
+$requestAction = $Params['Action'];
+$requestId = $Params['ID'];
+
 $tpl = eZTemplate::factory();
 $http = eZHTTPTool::instance();
 $context = OCMigration::discoverContext();
@@ -34,6 +37,7 @@ $classHash = array_flip($classHash);
 
 if (!$context){
     $sort = [];
+    /** @var ocm_interface $class */
     foreach (array_keys($classHash) as $class){
         $sort[$class::getImportPriority()][$class] = $classHash[$class];
     }
@@ -68,26 +72,51 @@ if ($http->hasPostVariable('remove_migration_spreadsheet')) {
     return;
 }
 
-if ($http->hasVariable('payload')) {
+
+if (!$context && $requestAction === 'payload' && !empty($requestId)) {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
-        if ($http->hasVariable('import')) {
-            echo json_encode(OCMPayload::fetch($http->variable('payload'))->createOrUpdateContent());
-        } else if ($http->hasVariable('generate')){
-            $class = $http->variable('generate');
-            if (in_array($class, $classes)) {
-                /** @var ocm_interface[] $items */
-                $items = $class::fetchByField('_id', $http->variable('payload'));
-                if (isset($items[0])){
-                    $items[0]->storePayload();
-                    echo json_encode(
-                        $items[0]->generatePayload()
-                    );
-                }
+        echo OCMPayload::fetch($requestId)->attribute('payload');
+    } catch (Throwable $e) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+    }
+    eZExecution::cleanExit();
+}
+
+if (!$context && $requestAction === 'import' && !empty($requestId)) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    try {
+        echo json_encode(OCMPayload::fetch($requestId)->createOrUpdateContent());
+    } catch (Throwable $e) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+    }
+    eZExecution::cleanExit();
+}
+
+if ($requestAction === 'parse' && !empty($requestId) && $http->hasVariable('sheet')) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    try {
+        $class = $http->variable('sheet');
+        if (in_array($class, $classes)) {
+            /** @var ocm_interface[] $items */
+            $items = $class::fetchByField('_id', $requestId);
+            if (isset($items[0])) {
+                $items[0]->storePayload();
+                echo json_encode(
+                    $items[0]->generatePayload()
+                );
             }
-        }else {
-            echo OCMPayload::fetch($http->variable('payload'))->attribute('payload');
         }
     } catch (Throwable $e) {
         echo json_encode([
@@ -99,8 +128,8 @@ if ($http->hasVariable('payload')) {
     eZExecution::cleanExit();
 }
 
-if ($http->hasVariable('datatable')) {
-    $class = $http->variable('datatable');
+if ($requestAction === 'datatable') {
+    $class = $requestId;
     $rows = [];
     $rowCount = 0;
     $length = $context ? 100 : 5000;//@todo $http->getVariable('length', 10);
@@ -155,10 +184,10 @@ if ($http->hasVariable('datatable')) {
     eZExecution::cleanExit();
 }
 
-if ($http->hasGetVariable('fields')) {
+if ($requestAction === 'fields') {
     $data = [];
     if ($context) {
-        $class = $http->getVariable('fields');
+        $class = $requestId;
         if (in_array($class, $classes)) {
             foreach ($class::definition()['fields'] as $field) {
                 $data[] = [
@@ -188,14 +217,20 @@ if ($http->hasGetVariable('fields')) {
     eZExecution::cleanExit();
 }
 
-if ($http->hasGetVariable('status')) {
+if ($requestAction === 'status') {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     echo json_encode(OCMigrationSpreadsheet::getCurrentStatus());
     eZExecution::cleanExit();
 }
 
-if ($http->hasGetVariable('action')) {
+if ($requestAction === 'reset') {
+    OCMigrationSpreadsheet::resetCurrentStatus();
+    $module->redirectModule($module, 'dashboard');
+    return;
+}
+
+if ($requestAction === 'run') {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
@@ -215,15 +250,23 @@ if ($http->hasGetVariable('action')) {
     eZExecution::cleanExit();
 }
 
-if ($http->hasGetVariable('configure')) {
+if ($requestAction === 'configure') {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
-    $className = $http->getVariable('configure');
-    $addConditionalFormatRules = $http->getVariable('configuration') === 'format';
-    $addDateValidations = $http->getVariable('configuration') === 'date-validation';
-    $addRangeValidations = $http->getVariable('configuration') === 'range-validation';
-    //$result = var_export([$className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations], true);
-    $result = OCMigrationSpreadsheet::instance()->configureSheet($className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations);
+    $className = $requestId;
+    $result = false;
+    if (in_array($className, $classes)) {
+        $addConditionalFormatRules = $http->getVariable('configuration') === 'format';
+        $addDateValidations = $http->getVariable('configuration') === 'date-validation';
+        $addRangeValidations = $http->getVariable('configuration') === 'range-validation';
+        //$result = var_export([$className, $addConditionalFormatRules, $addDateValidations, $addRangeValidations], true);
+        $result = OCMigrationSpreadsheet::instance()->configureSheet(
+            $className,
+            $addConditionalFormatRules,
+            $addDateValidations,
+            $addRangeValidations
+        );
+    }
     echo json_encode($result);
     eZExecution::cleanExit();
 }

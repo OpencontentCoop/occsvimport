@@ -44,4 +44,6 @@ interface ocm_interface
     public function storeThis(bool $isUpdate): bool;
 
     public function setAttribute($attr, $val);
+
+    public static function checkPayloadGeneration(): bool;
 }

@@ -204,4 +204,9 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     {
         return 0;
     }
+
+    public static function checkPayloadGeneration(): bool
+    {
+        return false;
+    }
 }

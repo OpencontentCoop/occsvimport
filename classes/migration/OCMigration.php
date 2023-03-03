@@ -588,6 +588,10 @@ class OCMigration extends eZPersistentObject
 
     public static function isEmptyArray(array $array): bool
     {
+        if (empty($array)){
+            return true;
+        }
+
         foreach ($array as $value) {
             $trimmed = trim($value);
             if (!empty($trimmed)) {

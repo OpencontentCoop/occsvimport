@@ -189,14 +189,14 @@
           }
           var type = $('.nav-link.active').data('identifier');
           data.html('');
-          $.getJSON(BaseUrl+'?fields='+type, function (columns) {
+          $.getJSON(BaseUrl+'/fields/'+type, function (columns) {
             data.DataTable({
               dom: 'it', //@todo pr
               pageLength: Context ? 100 : 5000,
               responsive: true,
               columns: columns,
               ajax: {
-                url: BaseUrl+'?datatable='+type,
+                url: BaseUrl+'/datatable/'+type,
                 type: 'POST'
               },
               processing: true,
@@ -286,7 +286,7 @@
         var loader = $('#loader');
         var checkStatus = function (cb, context) {
           loader.show();
-          $.getJSON(BaseUrl+'?status', function (data) {
+          $.getJSON(BaseUrl+'/status', function (data) {
             console.log(data.action, data.status, data);
             parseStatus(data);
             if ($.isFunction(cb)) {
@@ -325,7 +325,7 @@
             })
             var isUpdate = $('#isUpdate');
             var doValidation = $('#doValidation');
-            $.getJSON(BaseUrl, {
+            $.getJSON(BaseUrl+'/run', {
               action: action,
               options: {
                 class_filter: classes,
@@ -345,8 +345,7 @@
           var self = $(this);
           var className = self.data('configure');
           var configuration = self.data('configuration');
-          $.getJSON(BaseUrl, {
-            configure: className,
+          $.getJSON(BaseUrl+'/configure/'+className, {
             configuration: configuration
           }, function (data) {
             console.log(data);
