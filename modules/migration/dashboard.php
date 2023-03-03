@@ -35,6 +35,15 @@ $classHash = array_flip($classHash);
 ksort($classHash);
 $classHash = array_flip($classHash);
 
+function jsonEncodeError(Throwable $e)
+{
+    return json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage(),
+//        'trace' => $e->getTraceAsString(),
+    ]);
+}
+
 if (!$context){
     $sort = [];
     /** @var ocm_interface $class */
@@ -72,44 +81,41 @@ if ($http->hasPostVariable('remove_migration_spreadsheet')) {
     return;
 }
 
-
+# /migration/dashboard/payload/ID
+# legge il payload salvato
 if (!$context && $requestAction === 'payload' && !empty($requestId)) {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
         echo OCMPayload::fetch($requestId)->attribute('payload');
     } catch (Throwable $e) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
+        echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
 }
 
+# /migration/dashboard/import/ID
+# importa il payload salvato in ez
 if (!$context && $requestAction === 'import' && !empty($requestId)) {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
         echo json_encode(OCMPayload::fetch($requestId)->createOrUpdateContent());
     } catch (Throwable $e) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
+        echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
 }
 
-if ($requestAction === 'parse' && !empty($requestId) && $http->hasVariable('sheet')) {
+# /migration/dashboard/store_payload/ID?type=TYPE
+# converte l'elemento TYPE con id ID e salva il payload
+if ($requestAction === 'store_payload' && !empty($requestId) && $http->hasVariable('type')) {
     header('Content-Type: application/json');
     header('HTTP/1.1 200 OK');
     try {
-        $class = $http->variable('sheet');
+        $class = $http->variable('type');
         if (in_array($class, $classes)) {
-            /** @var ocm_interface[] $items */
+            /** @var OCMPersistentObject[] $items */
             $items = $class::fetchByField('_id', $requestId);
             if (isset($items[0])) {
                 $items[0]->storePayload();
@@ -117,13 +123,63 @@ if ($requestAction === 'parse' && !empty($requestId) && $http->hasVariable('shee
                     $items[0]->generatePayload()
                 );
             }
+        }else{
+            throw new Exception("$class type not found");
         }
     } catch (Throwable $e) {
-        echo json_encode([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
+        echo jsonEncodeError($e);
+    }
+    eZExecution::cleanExit();
+}
+
+# /migration/dashboard/create/ID?type=TYPE
+# crea l'elemento TYPE a partire dal contenuto ez con remote_id == ID
+if ($context && $requestAction === 'create' && !empty($requestId) && $http->hasVariable('type')) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    try {
+        $class = $http->variable('type');
+        if (in_array($class, $classes)) {
+            $object = eZContentObject::fetchByRemoteID($requestId);
+            if (!$object instanceof eZContentObject){
+                throw new Exception('Content not found');
+            }
+            $node = $object->mainNode();
+            if (!$node instanceof eZContentObjectTreeNode){
+                throw new Exception('Node not found');
+            }
+            echo json_encode(OCMigration::factory($context)->createFromNode($node, new $class, ['is_update' => false]));
+        }else{
+            throw new Exception("$class type not found");
+        }
+    } catch (Throwable $e) {
+        echo jsonEncodeError($e);
+    }
+    eZExecution::cleanExit();
+}
+
+# /migration/dashboard/TYPE/ID
+# visualizza l'elemento TYPE con id ID
+if (in_array($requestAction, $classes) && !empty($requestId)) {
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    try {
+        $class = $requestAction;
+        if (in_array($class, $classes)) {
+            /** @var ocm_interface[] $items */
+            $items = $class::fetchByField('_id', $requestId);
+            if (isset($items[0])) {
+                echo json_encode(
+                    $items[0]->toSpreadsheet()
+                );
+            }else{
+                throw new Exception("$class $requestId type not found");
+            }
+        }else{
+            throw new Exception("$class type not found");
+        }
+    } catch (Throwable $e) {
+        echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
 }

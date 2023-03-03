@@ -83,6 +83,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
 
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
+                $dataMap = $object->dataMap();
 
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];

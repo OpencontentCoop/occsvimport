@@ -53,12 +53,11 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
-        $attachments = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+        $attachments = function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
             $data = [];
             $object = eZContentObject::fetch($content->metadata['id']);
-            if ($object instanceof eZContentObject){
-
-                $attributes = ['file_avviso', 'ammissione', 'criteri_file', 'tracce_file', 'graduatoria', 'risposta', ];
+            if ($object instanceof eZContentObject) {
+                $attributes = ['file_avviso', 'ammissione', 'criteri_file', 'tracce_file', 'graduatoria', 'risposta',];
                 foreach ($attributes as $attribute) {
                     $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl($object, $attribute);
                     if ($fileByAttribute) {
@@ -68,21 +67,21 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
                 /** @var eZContentObject[] $embedList */
                 $embedList = $object->relatedContentObjectList();
-                foreach ($embedList as $embed){
-                    if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])){
+                foreach ($embedList as $embed) {
+                    if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
                         ocm_file::removeById($embed->attribute('remote_id'));
                         $url = OCMigrationComunweb::getFileAttributeUrl($embed);
-                        if ($url){
+                        if ($url) {
                             $data[] = $url;
                         }
                     }
                 }
             }
             $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
-            foreach ($attachments as $attachment){
+            foreach ($attachments as $attachment) {
                 ocm_file::removeById($attachment->object()->attribute('remote_id'));
                 $url = OCMigrationComunweb::getFileAttributeUrl($attachment);
-                if ($url){
+                if ($url) {
                     $data[] = $url;
                 }
             }
@@ -90,15 +89,20 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             return implode(PHP_EOL, $data);
         };
 
-        $hasOrganization = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+        $hasOrganization = function (
+            Content $content,
+            $firstLocalizedContentData,
+            $firstLocalizedContentLocale,
+            $options
+        ) {
             $data = [];
             $idList = ['area', 'servizio', 'ufficio', 'struttura',];
-            foreach ($idList as $id){
-                if (isset($firstLocalizedContentData[$id])){
-                    foreach ($firstLocalizedContentData[$id]['content'] as $item){
+            foreach ($idList as $id) {
+                if (isset($firstLocalizedContentData[$id])) {
+                    foreach ($firstLocalizedContentData[$id]['content'] as $item) {
                         if ($item instanceof Content) {
                             $data[] = $item->metadata['name']['ita-IT'];
-                        }else{
+                        } else {
                             $data[] = $item['name']['ita-IT'];
                         }
                     }
@@ -110,7 +114,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
         $options['remove_ezxml_embed'] = true;
 
-        switch ($node->classIdentifier()){
+        switch ($node->classIdentifier()) {
             case 'accordo':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -128,7 +132,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'bilancio_di_settore':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -144,7 +149,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'bando':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
@@ -162,9 +168,17 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
-                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'other_information' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $fase = OCMigration::getMapperHelper('fase')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return $fase;
@@ -172,7 +186,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo_bando'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo_bando'),
                     'announcement_type' => OCMigration::getMapperHelper('tipologia_bando'),
-                ]; break;
+                ];
+                break;
             case 'circolare':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -189,7 +204,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('modulistica'),
-                ]; break;
+                ];
+                break;
             case 'concorso':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -207,29 +223,47 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
-                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'other_information' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $criteri = OCMigration::getMapperHelper('criteri')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $tracce = OCMigration::getMapperHelper('tracce')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $assunti = OCMigration::getMapperHelper('assunti')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (!empty($assunti)){
+                        if (!empty($assunti)) {
                             $assunti = "<p>Numero assunti:$assunti</p>";
                         }
                         $spese = OCMigration::getMapperHelper('spese')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (!empty($spese)){
+                        if (!empty($spese)) {
                             $spese = "<p>Numero assunti:$spese</p>";
                         }
 
-                        return $criteri.$tracce.$assunti.$spese;
+                        return $criteri . $tracce . $assunti . $spese;
                     },
-                ]; break;
+                ];
+                break;
             case 'concessioni':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
@@ -242,7 +276,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'attachments' => $attachments,
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
-                ]; break;
+                ];
+                break;
             case 'convenzione':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -260,16 +295,28 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
-                ]; break;
+                ];
+                break;
             case 'decreto_sindacale':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero/$anno";
@@ -286,53 +333,87 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'data_di_firma' => OCMigration::getMapperHelper('data'),
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
-                ]; break;
+                ];
+                break;
             case 'deliberazione':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero/$anno";
                     },
-                    'abstract' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'abstract' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $informazioni_esecutivita = OCMigration::getMapperHelper('informazioni_esecutivita')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (!empty($informazioni_esecutivita)){
-                            $informazioni_esecutivita = '<p><b>Informazioni riguardanti l\'esecutività della delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        if (!empty($informazioni_esecutivita)) {
+                            $informazioni_esecutivita = '<p><b>Informazioni riguardanti l\'esecutività della delibera</b></p><p>' . $informazioni_esecutivita . '</p>';
                         }
                         $stato = OCMigration::getMapperHelper('stato')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (!empty($stato)){
-                            $stato = '<p><b>Stato in cui si trova la delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        if (!empty($stato)) {
+                            $stato = '<p><b>Stato in cui si trova la delibera</b></p><p>' . $informazioni_esecutivita . '</p>';
                         }
                         $pubblicazione = OCMigration::getMapperHelper('pubblicazione')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (!empty($pubblicazione)){
-                            $pubblicazione = '<p><b>Informazioni sulla pubblicazione della delibera</b></p><p>'.$informazioni_esecutivita.'</p>';
+                        if (!empty($pubblicazione)) {
+                            $pubblicazione = '<p><b>Informazioni sulla pubblicazione della delibera</b></p><p>' . $informazioni_esecutivita . '</p>';
                         }
 
-                        return $informazioni_esecutivita.$stato.$pubblicazione;
+                        return $informazioni_esecutivita . $stato . $pubblicazione;
                     },
-                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'document_type' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $organo = OCMigration::getMapperHelper('organo_competente')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
-                        if (stripos($organo, 'consi')){
+                        if (stripos($organo, 'consi')) {
                             return 'Deliberazione del Consiglio comunale';
                         }
-                        if (stripos($organo, 'giunt')){
+                        if (stripos($organo, 'giunt')) {
                             return 'Deliberazione della Giunta comunale';
                         }
-                        if (stripos($organo, 'commiss')){
+                        if (stripos($organo, 'commiss')) {
                             return 'Deliberazione del Commissario ad acta';
                         }
                         return 'Deliberazione di altri Organi';
@@ -347,16 +428,28 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'start_time' => OCMigration::getMapperHelper('data_esecutivita'),
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
-                ]; break;
+                ];
+                break;
             case 'determinazione':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero/$anno";
@@ -374,7 +467,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'start_time' => OCMigration::getMapperHelper('data_efficacia'),
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
-                ]; break;
+                ];
+                break;
             case 'documento':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -394,7 +488,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'reference_doc' => OCMigration::getMapperHelper('riferimento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
                     'other_information' => OCMigration::getMapperHelper('iter_approvazione'),
-                ]; break;
+                ];
+                break;
             case 'graduatoria':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -410,22 +505,39 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
                     'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
-                ]; break;
+                ];
+                break;
             case 'interrogazione':
             case 'interpellanza':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero";
                     },
-                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'document_type' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         return ucfirst($content->metadata->classIdentifier);
                     },
                     'full_description' => OCMigration::getMapperHelper('soggetti'),
@@ -440,21 +552,38 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
                     'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
                     'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
-                ]; break;
+                ];
+                break;
             case 'mozione':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero";
                     },
-                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'document_type' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         return ucfirst($content->metadata->classIdentifier);
                     },
                     'full_description' => OCMigration::getMapperHelper('soggetti'),
@@ -469,7 +598,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
                     'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
                     'other_information' => OCMigration::getMapperHelper('note_aggiuntive'),
-                ]; break;
+                ];
+                break;
             case 'modello':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -489,7 +619,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
                     'other_information' => OCMigration::getMapperHelper('note'),
-                ]; break;
+                ];
+                break;
             case 'modulo':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -506,7 +637,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'publication_start_time' => OCMigration::getMapperHelper('data'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'modulistica':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -526,7 +658,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'normativa':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -545,16 +678,28 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'ordinanza':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $anno = OCMigration::getMapperHelper('anno')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero/$anno";
@@ -572,31 +717,56 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('riferimento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                    'other_information' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'other_information' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $isUrgenza = OCMigration::getMapperHelper('urgenza')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
                         $urgenza = $isUrgenza ? '<p>Ordinanza emanata in deroga alla legislazione vigente</p>' : '';
                         $motivo_non_pubblicazione = OCMigration::getMapperHelper('motivo_non_pubblicazione')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
-                        return $urgenza.$motivo_non_pubblicazione;
+                        return $urgenza . $motivo_non_pubblicazione;
                     },
                     'protocollo' => OCMigration::getMapperHelper('numero_protocollo'),
                     'data_protocollazione' => OCMigration::getMapperHelper('anno_protocollo'),
-                ]; break;
+                ];
+                break;
             case 'ordine_del_giorno':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('oggetto'),
-                    'has_code' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         $numero = OCMigration::getMapperHelper('numero')(
-                            $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
                         );
 
                         return "$numero";
                     },
-                    'document_type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                    'document_type' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
                         return 'Ordine del giorno';
                     },
                     'full_description' => OCMigration::getMapperHelper('soggetti'),
@@ -610,7 +780,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
                     'data_protocollazione' => OCMigration::getMapperHelper('data_protocollo'),
                     'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
-                ]; break;
+                ];
+                break;
             case 'parere':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('title'),
@@ -623,7 +794,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'attachments' => $attachments,
                     'has_organization' => $hasOrganization,
                     'other_information' => OCMigration::getMapperHelper('firma'),
-                ]; break;
+                ];
+                break;
             case 'piano_progetto':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -641,7 +813,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('documento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
 //            case 'procedura': // solo consorzio 5
 //            case 'protocollo': // solo asia 1 borgochiese 2 condino 2 consorzio 4 dambel 1 molveno 1 nagotorbole 2
 //            case 'rapporto': // non usato
@@ -660,7 +833,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
                     'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
-                ]; break;
+                ];
+                break;
             case 'regolamento':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('titolo'),
@@ -679,7 +853,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
                     'reference_doc' => OCMigration::getMapperHelper('riferimento'),
                     'keyword' => OCMigration::getMapperHelper('parola_chiave'),
-                ]; break;
+                ];
+                break;
             case 'statuto':
                 $mapper = [
                     'name' => OCMigration::getMapperHelper('name'),
@@ -690,7 +865,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'full_description' => OCMigration::getMapperHelper('descrizione'),
                     'file' => OCMigration::getMapperHelper('file'),
                     'attachments' => $attachments,
-                ]; break;
+                ];
+                break;
 //            case 'trattamento': // npn utilizzato
             default:
                 $mapper = [];
@@ -834,27 +1010,37 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload = $this->getNewPayloadBuilderInstance();
         $payload->setClassIdentifier('document');
         $payload->setRemoteId($this->attribute('_id'));
-        $payload->setParentNode(51);
+        $payload->setParentNode($this->discoverParentNode());
         $payload->setLanguages([$locale]);
 
+        $data_protocollazione = $this->formatDate($this->attribute('data_protocollazione'));
         $payload->setData($locale, 'name', trim($this->attribute('name')));
         $payload->setData($locale, 'has_code', trim($this->attribute('has_code')));
         $payload->setData($locale, 'protocollo', trim($this->attribute('has_code')));
-        $payload->setData($locale, 'data_protocollazione', $this->formatDate($this->attribute('data_protocollazione')));
+        $payload->setData($locale, 'data_protocollazione', $data_protocollazione);
         $payload->setData($locale, 'document_type', $this->formatTags($this->attribute('document_type')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
         $payload->setData($locale, 'abstract', trim($this->attribute('abstract')));
         $payload->setData($locale, 'file', $this->formatBinary($this->attribute('file'), false));
         $payload->setData($locale, 'license', $this->formatTags($this->attribute('license')));
         $payload->setData($locale, 'format', $this->formatTags($this->attribute('format')));
-        $payload->setData($locale, 'has_organization', ocm_organization::getIdListByName($this->attribute('has_organization'), 'legal_name'));
+        $payload->setData(
+            $locale,
+            'has_organization',
+            ocm_organization::getIdListByName($this->attribute('has_organization'), 'legal_name')
+        );
         $payload->setData($locale, 'full_description', trim($this->attribute('full_description')));
         $payload->setData($locale, 'link', trim($this->attribute('link')));
         $payload->setData($locale, 'attachments', $this->formatBinary($this->attribute('attachments')));
-        $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')));
+        $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')) ?? $data_protocollazione);
         $payload->setData($locale, 'end_time', $this->formatDate($this->attribute('end_time')));
-        $payload->setData($locale, 'publication_start_time', $this->formatDate($this->attribute('publication_start_time')));
+        $payload->setData(
+            $locale,
+            'publication_start_time',
+            $this->formatDate($this->attribute('publication_start_time')) ?? $data_protocollazione
+        );
         $payload->setData($locale, 'publication_end_time', $this->formatDate($this->attribute('publication_end_time')));
+
         $payload->setData($locale, 'expiration_time', $this->formatDate($this->attribute('expiration_time')));
         $payload->setData($locale, 'data_di_firma', $this->formatDate($this->attribute('data_di_firma')));
         $payload->setData($locale, 'has_dataset', null); //@todo
@@ -866,22 +1052,124 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'author', $this->formatAuthor($this->attribute('author')));
         $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
         $payload->setData($locale, 'tipo_di_risposta', $this->formatTags($this->attribute('tipo_di_risposta')));
-        $payload->setData($locale, 'interroganti', ocm_public_person::getIdListByName($this->attribute('interroganti')));
-        $payload->setData($locale, 'gruppo_politico', ocm_organization::getIdListByName($this->attribute('gruppo_politico'), 'legal_name'));
+        $payload->setData(
+            $locale,
+            'interroganti',
+            ocm_public_person::getIdListByName($this->attribute('interroganti'))
+        );
+        $payload->setData(
+            $locale,
+            'gruppo_politico',
+            ocm_organization::getIdListByName($this->attribute('gruppo_politico'), 'legal_name')
+        );
         $payload->setData($locale, 'data_invio_uffici', $this->formatDate($this->attribute('data_invio_uffici')));
         $payload->setData($locale, 'data_giunta', $this->formatDate($this->attribute('data_giunta')));
-        $payload->setData($locale, 'data_risposta_consigliere', $this->formatDate($this->attribute('data_risposta_consigliere')));
+        $payload->setData(
+            $locale,
+            'data_risposta_consigliere',
+            $this->formatDate($this->attribute('data_risposta_consigliere'))
+        );
         $payload->setData($locale, 'giorni_interrogazione', intval($this->attribute('giorni_interrogazione')));
         $payload->setData($locale, 'data_consiglio', $this->formatDate($this->attribute('data_consiglio')));
         $payload->setData($locale, 'giorni_adozione', intval($this->attribute('giorni_adozione')));
         $payload->setData($locale, 'announcement_type', $this->formatTags($this->attribute('announcement_type')));
-        $payload->setData($locale, 'data_di_scadenza_delle_iscrizioni', $this->formatDate($this->attribute('data_di_scadenza_delle_iscrizioni')));
+        $payload->setData(
+            $locale,
+            'data_di_scadenza_delle_iscrizioni',
+            $this->formatDate($this->attribute('data_di_scadenza_delle_iscrizioni'))
+        );
         $payload->setData($locale, 'data_di_conclusione', $this->formatDate($this->attribute('data_di_conclusione')));
 
 
         $payload->setData($locale, 'reference_doc', ocm_document::getIdListByName($this->attribute('reference_doc')));
 
         return $payload;
+    }
+
+    protected function discoverParentNode(): int
+    {
+        $containers = [
+            "Documenti albo pretorio" => 'b5cd50ff40706b1520e7b56fb4d18481',
+            "Modulistica" => 'cfd0a916ca48eb7d4a78bb6beb7821f9',
+            "Documenti funzionamento interno" => '76f8688f740d2f10c9e754305f16a546',
+            "Normative" => '68a7f7f6dbc9b55b007918d6c04ce0e0',
+            "Accordi tra enti" => '0b04fbb06981a2a30ca8d5516b636f48',
+            "Documenti attività politica" => '2ae121d5e5b04047d990d15723a36675',
+            "Documenti (tecnici) di supporto" => '972395281b6c293f05e8c6ce52b5643d',
+            "Dataset" => 'dataset',
+        ];
+
+        $map = [
+            "Documenti Albo Pretorio" => "Documenti albo pretorio",
+            "Atto amministrativo" => "Documenti albo pretorio",
+            "Decreto" => "Documenti albo pretorio",
+            "Decreto del Dirigente" => "Documenti albo pretorio",
+            "Decreti del Dirigente" => "Documenti albo pretorio",
+            "Decreto del Sindaco" => "Documenti albo pretorio",
+            "Deliberazione" => "Documenti albo pretorio",
+            "Deliberazione del Commissario ad acta" => "Documenti albo pretorio",
+            "Deliberazione del Consiglio circoscrizionale" => "Documenti albo pretorio",
+            "Deliberazione del Consiglio comunale" => "Documenti albo pretorio",
+            "Deliberazione consiliare" =>  "Documenti albo pretorio",
+            "Deliberazione dell'Esecutivo circoscrizionale" => "Documenti albo pretorio",
+            "Deliberazione della Giunta comunale" => "Documenti albo pretorio",
+            "Deliberazione di altri Organi" => "Documenti albo pretorio",
+            "Determinazione" => "Documenti albo pretorio",
+            "Determinazione del Dirigente" => "Documenti albo pretorio",
+            "Determinazione del Sindaco" => "Documenti albo pretorio",
+            "Ordinanza" => "Documenti albo pretorio",
+            "Ordinanza del Dirigente" => "Documenti albo pretorio",
+            "Ordinanza del Sindaco" => "Documenti albo pretorio",
+            "Atto autorizzativo" => "Documenti albo pretorio",
+            "Permesso a costruire" => "Documenti albo pretorio",
+            "Atto dello stato civile" => "Documenti albo pretorio",
+            "Provvedimento di cancellazione per irreperibilità" => "Documenti albo pretorio",
+            "Pubblicazione cambio nome" => "Documenti albo pretorio",
+            "Pubblicazione di matrimonio" => "Documenti albo pretorio",
+            "Atto generico" => "Documenti albo pretorio",
+            "Avviso" => "Documenti albo pretorio",
+            "Bando" => "Documenti albo pretorio",
+            "Pubblicazione esterna" => "Documenti albo pretorio",
+            "Atto di terzi" => "Documenti albo pretorio",
+            "Modulistica" => "Modulistica",
+            "Documenti funzionamento interno" => "Documenti funzionamento interno",
+            "Circolare" => "Documenti funzionamento interno",
+            "Disciplinare" => "Documenti funzionamento interno",
+            "Procedura" => "Documenti funzionamento interno",
+            "Regolamento" => "Documenti funzionamento interno",
+            "Statuto" => "Documenti funzionamento interno",
+            "Trattamento" => "Documenti funzionamento interno",
+            "Atti normativi" => "Normative",
+            "Accordi tra enti" => "Accordi tra enti",
+            "Accordo" => "Accordi tra enti",
+            "Accordi" => "Accordi tra enti",
+            "Convenzione" => "Accordi tra enti",
+            "Parere" => "Accordi tra enti",
+            "Partnership" => "Accordi tra enti",
+            "Documenti attività politica" => "Documenti attività politica",
+            "Interpellanza" => "Documenti attività politica",
+            "Interrogazione" => "Documenti attività politica",
+            "Mozione" => "Documenti attività politica",
+            "Ordine del giorno" => "Documenti attività politica",
+            "Seduta del consiglio" => "Documenti attività politica",
+            "Documenti di programmazione e rendicontazione" => "Documenti (tecnici) di supporto",
+            "Bilancio consuntivo" => "Documenti (tecnici) di supporto",
+            "Bilancio preventivo" => "Documenti (tecnici) di supporto",
+            "Documento unico di programmazione" => "Documenti (tecnici) di supporto",
+            "Piano Esecutivo di Gestione" => "Documenti (tecnici) di supporto",
+            "Rendiconto" => "Documenti (tecnici) di supporto",
+            "Documenti (tecnici) di supporto" => "Documenti (tecnici) di supporto",
+            "Piano/Progetto" => "Documenti (tecnici) di supporto",
+            "Pubblicazione" => "Documenti (tecnici) di supporto",
+            "Rapporto" => "Documenti (tecnici) di supporto",
+        ];
+
+        $types = $this->formatTags($this->attribute('document_type'));
+        if (isset($types[0]) && isset($map[$types[0]])){
+            return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
+        }
+
+        return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
     }
 
     public static function getDateValidationHeaders(): array
@@ -898,7 +1186,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Data di risposta al consigliere",
             "Data trattazione/risposta in Consiglio",
             "Data di scadenza delle iscrizioni",
-            "Data di conclusione del bando/progetto"
+            "Data di conclusione del bando/progetto",
         ];
     }
 
@@ -923,11 +1211,11 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             ],
             "Ufficio responsabile del documento*" => [
                 'strict' => false,
-                'ref' => ocm_organization::getRangeRef()
+                'ref' => ocm_organization::getRangeRef(),
             ],
             "Documenti collegati" => [
                 'strict' => false,
-                'ref' => ocm_document::getRangeRef()
+                'ref' => ocm_document::getRangeRef(),
             ],
             "Evento della vita" => [
                 'strict' => true,
@@ -939,15 +1227,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             ],
             "Immagine" => [
                 'strict' => false,
-                'ref' => ocm_image::getRangeRef()
+                'ref' => ocm_image::getRangeRef(),
             ],
             "Interroganti" => [
                 'strict' => false,
-                'ref' => ocm_public_person::getRangeRef()
+                'ref' => ocm_public_person::getRangeRef(),
             ],
             "Servizi" => [
                 'strict' => false,
-                'ref' => ocm_public_service::getRangeRef()
+                'ref' => ocm_public_service::getRangeRef(),
             ],
         ];
     }

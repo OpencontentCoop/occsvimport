@@ -675,7 +675,7 @@ class OCMigration extends eZPersistentObject
         }
     }
 
-    protected function createFromNode(
+    public function createFromNode(
         eZContentObjectTreeNode $node,
         ocm_interface $item,
         array $options = []
