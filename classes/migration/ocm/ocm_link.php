@@ -84,16 +84,37 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('link');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->getNodeIdFromRemoteId('banners'));
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'name', $this->attribute('name'));
+        $payload->setData($locale, 'short_name', $this->attribute('short_name'));
+        $payload->setData($locale, 'abstract', $this->attribute('abstract'));
+        $payload->setData($locale, 'descrizione', $this->attribute('descrizione'));
+        $payload->setData($locale, 'image', [
+            'url' => $this->attribute('image___url'),
+            'filename' => $this->attribute('image___name'),
+        ]);
+        if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
+            $payload->setData($locale, 'internal_location', '???');
+        }
+        $payload->setData($locale, 'location', $this->attribute('location'));
+        $payload->setData($locale, 'data_archiviazione', $this->formatDate($this->attribute('data_archiviazione')));
+
+        return $payload;
+    }
+
     public static function getUrlValidationHeaders(): array
     {
         return [
             'Url file immagine',
         ];
-    }
-
-    public function generatePayload()
-    {
-        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
