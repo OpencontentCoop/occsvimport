@@ -201,7 +201,7 @@ class OCMigrationSpreadsheet
             if ($useSqlImport) {
                 $importOptions = [
                     'action' => $action,
-                    'only' => isset($options['class_filter']) ? implode(',', $options['class_filter']) : [],
+                    'only' => isset($options['class_filter']) ? implode(',', $options['class_filter']) : '',
                     'update' => $options['update'],
                     'validate' => $options['validate'],
                 ];
