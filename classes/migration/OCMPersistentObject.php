@@ -435,7 +435,6 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $format ? date($format, $timestamp) : $timestamp;
     }
 
-
     public function formatBinary(string $data, bool $isMultiple = true)
     {
         return static::getBinaryPayload($data, $isMultiple);

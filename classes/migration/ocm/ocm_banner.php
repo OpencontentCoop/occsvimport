@@ -81,6 +81,31 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
+    public function generatePayload()
+    {
+        $locale = 'ita-IT';
+        $payload = $this->getNewPayloadBuilderInstance();
+        $payload->setClassIdentifier('banner');
+        $payload->setRemoteId($this->attribute('_id'));
+        $payload->setParentNode($this->getNodeIdFromRemoteId('banners'));
+        $payload->setLanguages([$locale]);
+
+        $payload->setData($locale, 'name', $this->attribute('name'));
+        $payload->setData($locale, 'description', $this->attribute('description'));
+        $payload->setData($locale, 'image', [
+            'url' => $this->attribute('image___url'),
+            'filename' => $this->attribute('image___name'),
+        ]);
+        if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
+            $payload->setData($locale, 'internal_location', '???');
+        }
+        $payload->setData($locale, 'location', $this->attribute('location'));
+        $payload->setData($locale, 'background_color', OpenPABootstrapItaliaOperators::decodeBannerColorSelection($this->attribute('background_color')));
+        $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
+
+        return $payload;
+    }
+
     public static function getUrlValidationHeaders(): array
     {
         return [
@@ -100,11 +125,6 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
                 'ref' => ocm_image::getRangeRef(),
             ],
         ];
-    }
-
-    public function generatePayload()
-    {
-        return $this->getNewPayloadBuilderInstance();
     }
 
     public static function getImportPriority(): int
