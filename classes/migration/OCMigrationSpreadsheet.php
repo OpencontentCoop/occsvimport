@@ -50,6 +50,8 @@ class OCMigrationSpreadsheet
         'options' => [],
     ];
 
+    private static $googleSheetClient;
+
     public static function getConnectedSpreadSheet()
     {
         $siteData = eZSiteData::fetchByName('migration_spreadsheet');
@@ -65,7 +67,7 @@ class OCMigrationSpreadsheet
         $id = self::getConnectedSpreadSheet();
         $title = false;
         if ($id) {
-            $spreadsheet = new GoogleSheet($id);
+            $spreadsheet = self::instanceGoogleSheet($id);
             $title = $spreadsheet->getTitle();
         }
 
@@ -74,7 +76,7 @@ class OCMigrationSpreadsheet
 
     public static function setConnectedSpreadSheet($spreadsheet)
     {
-        $checkAccessSpreadsheet = new GoogleSheet($spreadsheet);
+        $checkAccessSpreadsheet = self::instanceGoogleSheet($spreadsheet);
         $siteData = eZSiteData::fetchByName('migration_spreadsheet');
         if (!$siteData instanceof eZSiteData) {
             $siteData = eZSiteData::create('migration_spreadsheet', false);
@@ -261,11 +263,25 @@ class OCMigrationSpreadsheet
 
     public function __construct()
     {
-        $client = new GoogleSheetClient();
+        $client = self::instanceGoogleSheetClient();
         $this->googleSheetService = $client->getGoogleSheetService();
         $this->spreadsheetId = self::getConnectedSpreadSheet();
-        $this->spreadsheet = new GoogleSheet($this->spreadsheetId);
+        $this->spreadsheet = self::instanceGoogleSheet($this->spreadsheetId);
         //$sheets = $spreadsheet->getSheetTitleList();
+    }
+
+    private static function instanceGoogleSheet($id): GoogleSheet
+    {
+        return new GoogleSheet($id, self::instanceGoogleSheetClient());
+    }
+
+    public static function instanceGoogleSheetClient(): GoogleSheetClient
+    {
+        if (self::$googleSheetClient === null){
+            self::$googleSheetClient = new OCMGoogleSheetClient();
+        }
+
+        return self::$googleSheetClient;
     }
 
     public static function getMasterSpreadsheet(): ?GoogleSheet
@@ -285,7 +301,7 @@ class OCMigrationSpreadsheet
                 $info = curl_getinfo($ch);
                 $spreadsheetUrl = $info['redirect_url'];
                 self::$masterSpreadsheetId = OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri($spreadsheetUrl);
-                self::$masterSpreadsheet = new GoogleSheet(self::$masterSpreadsheetId);
+                self::$masterSpreadsheet = self::instanceGoogleSheet(self::$masterSpreadsheetId);
                 self::$masterSpreadsheetUrl = $spreadsheetUrl;
             }
         }
@@ -298,7 +314,7 @@ class OCMigrationSpreadsheet
         $sheet = self::getMasterSpreadsheet()->getByTitle($sheetTitle);
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
-        $client = new GoogleSheetClient();
+        $client = self::instanceGoogleSheetClient();
         $firstRows = $client->getGoogleSheetService()->spreadsheets_values->get(
             self::$masterSpreadsheetId,
             $range
@@ -348,7 +364,7 @@ class OCMigrationSpreadsheet
         $masterRowCount = $masterSheet->getProperties()->getGridProperties()->getRowCount();
         $masterColCount = $masterSheet->getProperties()->getGridProperties()->getColumnCount();
         $masterRange = "$sheetTitle!R1C1:R{$masterRowCount}C{$masterColCount}";
-        $client = new GoogleSheetClient();
+        $client = self::instanceGoogleSheetClient();
         $data = $client->getGoogleSheetService()->spreadsheets_values->get(
             self::$masterSpreadsheetId,
             $masterRange

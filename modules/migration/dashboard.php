@@ -8,16 +8,6 @@ $tpl = eZTemplate::factory();
 $http = eZHTTPTool::instance();
 $context = OCMigration::discoverContext();
 
-$tpl->setVariable('instance', OpenPABase::getCurrentSiteaccessIdentifier());
-$tpl->setVariable('version', OCMigration::version());
-$tpl->setVariable('db_name', eZDB::instance()->DB);
-$tpl->setVariable('ezxform_token', ezxFormToken::getToken());
-$tpl->setVariable('error_spreadsheet', false);
-$tpl->setVariable('context', $context);
-$tpl->setVariable('migration_spreadsheet', OCMigrationSpreadsheet::getConnectedSpreadSheet());
-$tpl->setVariable('migration_spreadsheet_title', OCMigrationSpreadsheet::getConnectedSpreadSheetTitle());
-$tpl->setVariable('google_user', 'phpsheet@norse-fiber-323812.iam.gserviceaccount.com'); //@todo
-
 $classes = OCMigration::getAvailableClasses();
 $classHash = [];
 foreach ($classes as $class) {
@@ -34,6 +24,8 @@ foreach ($classes as $class) {
 $classHash = array_flip($classHash);
 ksort($classHash);
 $classHash = array_flip($classHash);
+
+$tpl->setVariable('error_spreadsheet', false);
 
 function jsonEncodeError(Throwable $e)
 {
@@ -75,10 +67,21 @@ if ($http->hasPostVariable('migration_spreadsheet') && $http->postVariable('migr
     }
 }
 
-if ($http->hasPostVariable('remove_migration_spreadsheet')) {
+if (!$requestAction && $http->hasPostVariable('remove_migration_spreadsheet')) {
     OCMigrationSpreadsheet::removeConnectedSpreadSheet();
     $module->redirectTo('/migration/dashboard');
     return;
+}
+
+if ($requestAction === 'credentials' && $http->hasPostVariable('store_google_credentials')){
+    try {
+        $data = $http->postVariable('store_google_credentials');
+        OCMGoogleSheetClient::setGoogleCredentials(trim($data));
+        $module->redirectTo('/migration/dashboard');
+        return;
+    }catch (Exception $e) {
+        $tpl->setVariable('error_spreadsheet', $e->getMessage());
+    }
 }
 
 # /migration/dashboard/payload/ID
@@ -327,8 +330,32 @@ if ($requestAction === 'configure') {
     eZExecution::cleanExit();
 }
 
+$tpl->setVariable('instance', OpenPABase::getCurrentSiteaccessIdentifier());
+$tpl->setVariable('version', OCMigration::version());
+$tpl->setVariable('db_name', eZDB::instance()->DB);
+$tpl->setVariable('ezxform_token', ezxFormToken::getToken());
+$tpl->setVariable('context', $context);
+try {
+    $tpl->setVariable('migration_spreadsheet', OCMigrationSpreadsheet::getConnectedSpreadSheet());
+    $tpl->setVariable('migration_spreadsheet_title', OCMigrationSpreadsheet::getConnectedSpreadSheetTitle());
+}catch (Exception $e) {
+    $tpl->setVariable('error_spreadsheet', $e->getMessage());
+    $tpl->setVariable('migration_spreadsheet_title', '');
+}
+
+$credentials = OCMGoogleSheetClient::getGoogleCredentials();
+$user = 'phpsheet@norse-fiber-323812.iam.gserviceaccount.com';
+if ($credentials){
+    $user = $credentials['client_email'];
+}
+$tpl->setVariable('google_user', $user);
+
 $Result = [];
-$Result['content'] = $tpl->fetch('design:migration/dashboard.tpl');
+if ($requestAction === 'credentials'){
+    $Result['content'] = $tpl->fetch('design:migration/credentials.tpl');
+}else {
+    $Result['content'] = $tpl->fetch('design:migration/dashboard.tpl');
+}
 $Result['path'] = [];
 $contentInfoArray = [
     'node_id' => null,
