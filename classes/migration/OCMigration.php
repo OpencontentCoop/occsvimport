@@ -342,13 +342,13 @@ class OCMigration extends eZPersistentObject
 
             case 'image/name':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['image']['content'];
+                    $contentValue = $firstLocalizedContentData['image']['content'] ?? false;
                     return $contentValue ? $contentValue['filename'] : '';
                 };
 
             case 'image/url':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['image']['content'];
+                    $contentValue = $firstLocalizedContentData['image']['content'] ?? false;
                     $url = $contentValue ? $contentValue['url'] : '';
                     eZURI::transformURI($url, false, 'full');
                     $url = str_replace('http://', 'https://', $url);

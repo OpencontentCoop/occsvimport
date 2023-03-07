@@ -22,6 +22,11 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         'has_office',
         'more_information',
         'identifier',
+        'de_name',
+        'de_accessibility',
+        'de_has_address',
+        'de_abstract',
+        'de_description',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -273,6 +278,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
     public function toSpreadsheet(): array
     {
         $address = json_decode($this->attribute('has_address'), true);
+        $deAddress = json_decode($this->attribute('de_has_address'), true);
         return [
             "Identificatore luogo*" => $this->attribute('_id'),
             "Nome del luogo*" => $this->attribute('name'),
@@ -293,6 +299,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             "Codice luogo" => $this->attribute('identifier'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+
+            'Ortsname* [de]' => $this->attribute('de_name'),
+            'Zugriffsmodus* [de]' => $this->attribute('de_accessibility'),
+            'Adresse* [de]' => empty($deAddress['address']) ? $address['address'] : $deAddress['address'],
+            'Kurze Beschreibung* [de]' => $this->attribute('de_abstract'),
+            'Erweiterte Beschreibung [de]' => $this->attribute('de_description'),
         ];
     }
 
@@ -329,6 +341,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_office', $row["Struttura responsabile"]);
         $item->setAttribute('more_information', $row["Ulteriori informazioni"]);
         $item->setAttribute('identifier', $row["Codice luogo"]);
+
+        $item->setAttribute('de_name', $row['Ortsname* [de]']);
+        $item->setAttribute('de_accessibility', $row['Zugriffsmodus* [de]']);
+        $item->setAttribute('de_has_address', $row['Adresse* [de]']);
+        $item->setAttribute('de_abstract', $row['Kurze Beschreibung* [de]']);
+        $item->setAttribute('de_description', $row['Erweiterte Beschreibung [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

@@ -22,30 +22,18 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     protected function getOpencityFieldMapper(): array
     {
         return [
-            'name' => function(Content $content){
-                return $content->data['ita-IT']['name']['content'] ?? '';
-            },
-            'de_name' => function(Content $content){
-                return $content->data['ger-DE']['name']['content'] ?? '';
-            },
-            'caption' => function(Content $content){
-                return $content->data['ita-IT']['caption']['content'] ?? '';
-            },
-            'de_caption' => function(Content $content){
-                return $content->data['ger-DE']['caption']['content'] ?? '';
-            },
+            'name' => false,
+            'de_name' => false,
+            'caption' => false,
+            'de_caption' => false,
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
             'tags' => false,
             'license' => false,
             'proprietary_license' => false,
             'proprietary_license_source' => false,
-            'author' => function(Content $content){
-                return $content->data['ita-IT']['author']['content'] ?? '';
-            },
-            'de_author' => function(Content $content){
-                return $content->data['ger-DE']['author']['content'] ?? '';
-            },
+            'author' => false,
+            'de_author' => false,
         ];
     }
 
@@ -92,7 +80,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'Nome*' => $this->attribute('name'),
             'Name* [de]' => $this->attribute('de_name'),
             'Didascalia' => $this->attribute('caption'),
-            'Didascalia [de]' => $this->attribute('caption'),
+            'Untertitel [de]' => $this->attribute('caption'),
             'Nome del file' => $this->attribute('image___name'),
             'Url al file*' => $this->attribute('image___url'),
             'Tags' => $this->attribute('tags'),
@@ -113,7 +101,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('name', $row['Nome*']);
         $item->setAttribute('de_name', $row['Name* [de]']);
         $item->setAttribute('caption', $row['Didascalia']);
-        $item->setAttribute('de_caption', $row['Didascalia [de]']);
+        $item->setAttribute('de_caption', $row['Untertitel [de]']);
         $item->setAttribute('image___name', $row['Nome del file']);
         $item->setAttribute('image___url', $row['Url al file*']);
         $item->setAttribute('tags', $row['Tags']);

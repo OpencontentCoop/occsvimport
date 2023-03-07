@@ -40,24 +40,44 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $object = $node->object();
         $content = Content::createFromEzContentObject($object);
         $contentData = $content->data;
-        $firstLocalizedContentData = [];
-        $firstLocalizedContentLocale = 'ita-IT';
-        foreach ($contentData as $locale => $data){
-            $firstLocalizedContentData = $data;
-            $firstLocalizedContentLocale = $locale;
-            break;
-        }
 
         foreach ($mapper as $identifier => $callFunction){
-            if ($callFunction === false){
-                $callFunction = OCMigration::getMapperHelper($identifier);
+            if (is_numeric($identifier)){
+                throw new Exception("Invalid identifier $identifier " . var_export($callFunction, true) . ' in type ' . get_class($this));
             }
+            $attributeIdentifier = $identifier;
+
+            // default ita
+            $firstLocalizedContentLocale = 'ita-IT';
+            $firstLocalizedContentData = $contentData[$firstLocalizedContentLocale] ?? [];;
+
+            // se non c'è ita prende il primo che trova
+            if (empty($firstLocalizedContentData)){
+                foreach ($contentData as $locale => $data){
+                    $firstLocalizedContentData = $data;
+                    $firstLocalizedContentLocale = $locale;
+                    break;
+                }
+            }
+
+            // se è un campo de_ usa ger
+            if (strpos($identifier, 'de_') === 0) {
+                $firstLocalizedContentLocale = 'ger-DE';
+                $firstLocalizedContentData = $contentData[$firstLocalizedContentLocale] ?? [];
+                $attributeIdentifier = substr($identifier, 3);
+            }
+
+            if ($callFunction === false){
+                $callFunction = OCMigration::getMapperHelper($attributeIdentifier);
+            }
+
             $this->setAttribute($identifier, call_user_func($callFunction,
                 $content,
                 $firstLocalizedContentData,
                 $firstLocalizedContentLocale,
                 $options
             ));
+
         }
         if (!empty($mapper)) {
             $this->setAttribute('_id', $object->attribute('remote_id'));
@@ -301,7 +321,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return [
             'sheet' => static::getSpreadsheetTitle(),
             'column' => static::getColumnName(),
-            'start' => 3,
+            'start' => 4,
         ];
     }
 

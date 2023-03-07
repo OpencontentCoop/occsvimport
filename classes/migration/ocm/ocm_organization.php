@@ -22,6 +22,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         'tax_code_e_invoice_service',
         'has_logo___name',
         'has_logo___url',
+        'de_legal_name',
+        'de_abstract',
+        'de_main_function',
+        'de_alt_name',
+        'de_more_information',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -273,6 +278,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
+            'de_legal_name' => false,
+            'de_abstract' => false,
+            'de_main_function' => false,
+            'de_alt_name' => false,
+            'de_more_information' => false,
         ];
     }
 
@@ -296,6 +306,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
+            'de_legal_name' => false,
+            'de_abstract' => false,
+            'de_main_function' => false,
+            'de_alt_name' => false,
+            'de_more_information' => false,
         ];
     }
 
@@ -319,6 +334,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
+            'de_legal_name' => false,
+            'de_abstract' => false,
+            'de_main_function' => false,
+            'de_alt_name' => false,
+            'de_more_information' => false,
         ];
     }
 
@@ -342,6 +362,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'tax_code_e_invoice_service' => false,
             'has_logo___name' => false,
             'has_logo___url' => false,
+            'de_legal_name' => false,
+            'de_abstract' => false,
+            'de_main_function' => false,
+            'de_alt_name' => false,
+            'de_more_information' => false,
         ];
     }
 
@@ -371,6 +396,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'Codice fiscale servizio di fatturazione elettronica' => $this->attribute('tax_code_e_invoice_service'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+            'Organisationseinheit* [de]' => $this->attribute('de_legal_name'),
+            'Kurze Beschreibung* [de]' => $this->attribute('de_abstract'),
+            'Kompetenzen* [de]' => $this->attribute('de_main_function'),
+            'Alternativer Name [de]' => $this->attribute('de_alt_name'),
+            'Weitere Informationen [de]' => $this->attribute('de_more_information'),
         ];
     }
 
@@ -394,6 +424,11 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('identifier', $row['Identificatore univoco interno']);
         $item->setAttribute('tax_code_e_invoice_service', $row['Codice fiscale servizio di fatturazione elettronica']);
         $item->setAttribute('alt_name', $row['Nome alternativo']);
+        $item->setAttribute('de_legal_name', $row['Organisationseinheit* [de]']);
+        $item->setAttribute('de_abstract', $row['Kurze Beschreibung* [de]']);
+        $item->setAttribute('de_main_function', $row['Kompetenzen* [de]']);
+        $item->setAttribute('de_alt_name', $row['Alternativer Name [de]']);
+        $item->setAttribute('de_more_information', $row['Weitere Informationen [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

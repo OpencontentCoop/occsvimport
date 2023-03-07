@@ -33,24 +33,15 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         'opening_hours___sunday',
     ];
 
-
     protected function getOpencityFieldMapper(): array
     {
         return [
-            'name' => function(Content $content){
-                return $content->data['ita-IT']['name']['content'] ?? '';
-            },
-            'de_name' => function(Content $content){
-                return $content->data['ger-DE']['name']['content'] ?? '';
-            },
+            'name' => false,
+            'de_name' => false,
             'valid_from' => false,
             'valid_through' => false,
-            'note' => function(Content $content){
-                return $content->data['ita-IT']['note']['content'] ?? '';
-            },
-            'de_note' => function(Content $content){
-                return $content->data['ger-DE']['note']['content'] ?? '';
-            },
+            'note' => false,
+            'de_note' => false,
             'stagionalita' => false,
             'closure___reason' => OCMigration::getMapperHelper('closure/reason'),
             'closure___day' => OCMigration::getMapperHelper('closure/day'),
@@ -98,6 +89,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
             'Valido dal*' => $this->attribute('valid_from'),
             'Valido fino al' => $this->attribute('valid_through'),
             'Note' => $this->convertToMarkdown($this->attribute('note')),
+            'Notizen [de]' => $this->convertToMarkdown($this->attribute('de_note')),
             'Stagionalità*' => $this->getStagionalita(),
             'Lunedì' => $this->attribute('opening_hours___monday'),
             'Martedì' => $this->attribute('opening_hours___tuesday'),
@@ -118,10 +110,11 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore*']);
         $item->setAttribute('name', $row['Nome*']);
-        $item->setAttribute('de_name', $row['Nome*  [de]']);
+        $item->setAttribute('de_name', $row['Name* [de]']);
         $item->setAttribute('valid_from', $row['Valido dal*']);
         $item->setAttribute('valid_through', $row['Valido fino al']);
         $item->setAttribute('note', $row['Note']);
+        $item->setAttribute('de_note', $row['Notizen [de]']);
         $item->setAttribute('stagionalita', $row['Stagionalità*']);
         $item->setAttribute('opening_hours___monday', $row['Lunedì']);
         $item->setAttribute('opening_hours___tuesday', $row['Martedì']);
@@ -270,7 +263,19 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
      */
     private function discoverParentNode(): int
     {
-        return $this->getOrariStruttureParentNode(); //@todo
+        if (in_array($this->id(), ocm_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
+            return $this->getOrariStruttureParentNode();
+        }
+
+        if (in_array($this->id(), ocm_public_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
+            return $this->getOrariStruttureParentNode();
+        }
+
+        if (in_array($this->id(), ocm_private_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
+            return $this->getOrariStruttureParentNode();
+        }
+
+        return $this->getOrariServiziParentNode();
     }
 
     /**

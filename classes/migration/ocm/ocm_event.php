@@ -39,6 +39,13 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         'maximum_attendee_capacity',
         'event_content_keyword',
         'aggregate_rating',
+        'de_event_title',
+        'de_short_event_title',
+        'de_event_abstract',
+        'de_description',
+        'de_about_target_audience',
+        'de_ulteriori_informazioni',
+        'de_event_content_keyword'
     ];
 
     public static function getSortField(): string
@@ -97,9 +104,15 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             'maximum_attendee_capacity' => false,
             'event_content_keyword' => false,
             'aggregate_rating' => false,
+            'de_event_title' => false,
+            'de_short_event_title' => false,
+            'de_event_abstract' => false,
+            'de_description' => false,
+            'de_about_target_audience' => false,
+            'de_ulteriori_informazioni' => false,
+            'de_event_content_keyword' => false,
         ];
     }
-
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
@@ -187,7 +200,6 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, $mapper, $options);
     }
 
-
     public function toSpreadsheet(): array
     {
         return [
@@ -228,6 +240,12 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             "Numero massimo di posti" => $this->attribute('maximum_attendee_capacity'),
             "Parole chiave" => $this->attribute('event_content_keyword'),
             "Valutazione dell'evento" => $this->attribute('aggregate_rating'),
+            'Veranstaltungstitel* [de]' => $this->attribute('de_event_title'),
+            'Kurze Beschreibung* [de]' => $this->attribute('de_event_abstract'),
+            'Beschreibung* [de]' => $this->attribute('de_description'),
+            'An wen es gerichtet ist [de]' => $this->attribute('de_about_target_audience'),
+            'Weitere Informationen [de]' => $this->attribute('de_ulteriori_informazioni'),
+            'Stichwort [de]' => $this->attribute('de_event_content_keyword'),
         ];
     }
 
@@ -269,6 +287,13 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('maximum_attendee_capacity', $row["Numero massimo di posti"]);
         $item->setAttribute('event_content_keyword', $row["Parole chiave"]);
         $item->setAttribute('aggregate_rating', $row["Valutazione dell'evento"]);
+
+        $item->setAttribute('de_event_title', $row['Veranstaltungstitel* [de]']);
+        $item->setAttribute('de_event_abstract', $row['Kurze Beschreibung* [de]']);
+        $item->setAttribute('de_description', $row['Beschreibung* [de]']);
+        $item->setAttribute('de_about_target_audience', $row['An wen es gerichtet ist [de]']);
+        $item->setAttribute('de_ulteriori_informazioni', $row['Weitere Informationen [de]']);
+        $item->setAttribute('de_event_content_keyword', $row['Stichwort [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
