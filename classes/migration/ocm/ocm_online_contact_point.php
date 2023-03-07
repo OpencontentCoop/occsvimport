@@ -67,7 +67,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $data['Tipologia di contatto ' . $indexLabelRequired] = $contacts['ita-IT'][$x]['type'] ?? '';
             $data['Contatto ' . $indexLabelRequired] = isset($contacts['ita-IT'][$x]['value']) ? $this->formatContentValue($contacts['ita-IT'][$x]['value']) : '';
             $data['Tipo di contatto ' . $indexLabel] = $contacts['ita-IT'][$x]['contact'] ?? '';
-            $data['Kontakt ' . $indexLabel . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? '';
+            $data['Kontakt ' . $indexLabelRequired . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
         }
 
         $data['Pagina contenitore'] = $this->attribute('_parent_name');
@@ -146,6 +146,9 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $string = str_replace('/', '', $string);
         if (is_numeric($string)){
             $value = '(+39) ' . $value;
+        }
+        if (strpos($string, '+49') === 0){
+            $value = str_replace('+49', '(+49)', $value);
         }
         return $value;
     }

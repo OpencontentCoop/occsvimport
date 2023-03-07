@@ -143,7 +143,6 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
-
     public static function getRangeValidationHash(): array
     {
         return [

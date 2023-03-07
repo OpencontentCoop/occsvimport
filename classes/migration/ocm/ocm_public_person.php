@@ -23,6 +23,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         'eventuali_incarichi',
         'dichiarazione_incompatibilita',
         'notes',
+        'de_abstract',
+        'de_bio',
+        'de_situazione_patrimoniale',
+        'de_spese_elettorali',
+        'de_notes',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -63,11 +68,16 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'dichiarazione_redditi' => false,
             'spese_elettorali' => false,
             'spese_elettorali_files' => false,
-            'variazioni_situazione_patrimoniale',
+            'variazioni_situazione_patrimoniale' => false,
             'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => false,
             'dichiarazione_incompatibilita' => false,
             'notes' => false,
+            'de_abstract' => false,
+            'de_bio' => false,
+            'de_situazione_patrimoniale' => false,
+            'de_spese_elettorali' => false,
+            'de_notes' => false,
         ];
     }
 
@@ -147,6 +157,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'eventuali_incarichi' => false,
             'dichiarazione_incompatibilita' => false,
             'notes' => false,
+            'de_abstract' => false,
+            'de_bio' => false,
+            'de_situazione_patrimoniale' => false,
+            'de_spese_elettorali' => false,
+            'de_notes' => false,
         ];
     }
 
@@ -348,7 +363,12 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             "Ulteriori informazioni" => $this->attribute('notes'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
-            'Incarichi*' => '=VLOOKUP("'.$this->attribute('family_name').' '.$this->attribute('given_name').'";PersoneIncarichi;1;FALSE)'
+            'Incarichi*' => '=VLOOKUP("'.$this->attribute('family_name').' '.$this->attribute('given_name').'";PersoneIncarichi;1;FALSE)',
+            'Kurze Beschreibung [de]' => $this->attribute('de_abstract'),
+            'Biografie [de]' => $this->attribute('de_bio'),
+            'Erbliche Situation [de]' => $this->attribute('de_situazione_patrimoniale'),
+            'Wahlkosten* [de]' => $this->attribute('de_spese_elettorali'),
+            'Weitere Informationen [de]' => $this->attribute('de_notes'),
         ];
     }
 
@@ -395,6 +415,12 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('eventuali_incarichi', $row["Altri eventuali incarichi con oneri a carico della finanza pubblica e l'indicazione dei compensi spettanti"]);
         $item->setAttribute('dichiarazione_incompatibilita', $row["Dichiarazione incompatibilità e inconferibilità"]);
         $item->setAttribute('notes', $row["Ulteriori informazioni"]);
+
+        $item->setAttribute('de_abstract', $row['Kurze Beschreibung [de]']);
+        $item->setAttribute('de_bio', $row['Biografie [de]']);
+        $item->setAttribute('de_situazione_patrimoniale', $row['Erbliche Situation [de]']);
+        $item->setAttribute('de_spese_elettorali', $row['Wahlkosten* [de]']);
+        $item->setAttribute('de_notes', $row['Weitere Informationen [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

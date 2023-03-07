@@ -6,8 +6,10 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 {
     public static $fields = [
         'title',
+        'de_title',
         'content_type',
         'abstract',
+        'de_abstract',
         'published',
         'dead_line',
         'id_comunicato',
@@ -15,6 +17,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         'image',
         'image_file',
         'body',
+        'de_body',
         'people',
         'location',
         'video',
@@ -153,8 +156,10 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
             "Titolo della notizia*" => $this->attribute('title'),
+            "Nachrichtentitel* [de]" => $this->attribute('de_title'),
             "Tipo di notizia*" => $this->attribute('content_type'),
             "Descrizione breve*" => $this->attribute('abstract'),
+            "Kurze Beschreibung* [de]" => $this->attribute('de_abstract'),
             "Data della notizia*" => $this->attribute('published'),
             "Data di scadenza" => $this->attribute('dead_line'),
             "Numero progressivo comunicato stampa" => $this->attribute('id_comunicato'),
@@ -162,6 +167,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
             "Immagini" => $this->attribute('image'),
             "File immagine" => $this->attribute('image_file'),
             "Testo completo della notizia*" => $this->attribute('body'),
+            "Haupttext der Nachricht* [de]" => $this->attribute('de_body'),
             "Persone" => $this->attribute('people'),
             "Luoghi" => $this->attribute('location'),
             "Video" => $this->attribute('video'),
@@ -179,8 +185,10 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo dell'articolo*"]);
         $item->setAttribute('title', $row["Titolo della notizia*"]);
+        $item->setAttribute('de_title', $row["Nachrichtentitel* [de]"]);
         $item->setAttribute('content_type', $row["Tipo di notizia*"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
+        $item->setAttribute('de_abstract', $row["Kurze Beschreibung* [de]"]);
         $item->setAttribute('published', $row["Data della notizia*"]);
         $item->setAttribute('dead_line', $row["Data di scadenza"]);
         $item->setAttribute('id_comunicato', $row["Numero progressivo comunicato stampa"]);
@@ -188,6 +196,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('image', $row["Immagini"]);
         $item->setAttribute('image_file', $row["File immagine"]);
         $item->setAttribute('body', $row["Testo completo della notizia*"]);
+        $item->setAttribute('de_body', $row["Haupttext der Nachricht* [de]"]);
         $item->setAttribute('people', $row["Persone"]);
         $item->setAttribute('location', $row["Luoghi"]);
         $item->setAttribute('video', $row["Video"]);
@@ -262,7 +271,8 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
     public static function getMax160CharConditionalFormatHeaders(): array
     {
         return [
-            "Descrizione breve*"
+            "Descrizione breve*",
+            "Kurze Beschreibung* [de]",
         ];
     }
 

@@ -23,14 +23,31 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         'ruolo_principale',
         'priorita',
         'notes',
+        'de_compensi',
+        'de_importi',
+        'de_notes',
     ];
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
     {
         $this->fromNode($node, $this->getOpencityFieldMapper(), $options);
-        $this->setAttribute('type', $node->classIdentifier() === 'politico' ? 'Politico' : 'Amministrativo');
 
-        return $this;
+        $type = $node->classIdentifier() === 'politico' ? 'Politico' : 'Amministrativo';
+        if ($node->classIdentifier() === 'time_indexed_role'){
+            $dataMap = $node->dataMap();
+            if (isset($dataMap['person']) && $dataMap['person']->hasContent()){
+                $people = $dataMap['person']->content();
+                $person = $people['relation_list'][0] ?? false;
+                if ($person) {
+                    $type = $person['contentclass_identifier'] === 'politico' ? 'Politico' : 'Amministrativo';
+                }else{
+                    $type = '';
+                }
+            }
+        }
+        $this->setAttribute('type', $type);
+
+        return $this->expandRole($this);
     }
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
@@ -45,27 +62,32 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         }
 
         if ($role){
-            $forEntities = explode(PHP_EOL, $role->attribute('for_entity'));
-            sort($forEntities);
-            if (count($forEntities) > 1){
-                $isUpdate = $options['is_update'] ?? false;
-                $first = array_shift($forEntities);
-                $role->setAttribute('for_entity', $first);
-                foreach ($forEntities as $index => $forEntity){
-                    $forEntity = trim($forEntity);
-                    if (!empty($forEntity)) {
-                        $duplicateRole = clone $role;
-                        $duplicateRole->setAttribute('_id', $role->attribute('_id') . '-' . $index);
-                        $duplicateRole->setAttribute('for_entity', $forEntity);
-                        $duplicateRole->storeThis($isUpdate);
-                    }
-                }
-            }
-
-            return $role;
+            return $this->expandRole($role);
         }
 
         return $this->fromNode($node, [], $options);
+    }
+
+    private function expandRole(ocm_time_indexed_role $role): ocm_time_indexed_role
+    {
+        $forEntities = explode(PHP_EOL, $role->attribute('for_entity'));
+        sort($forEntities);
+        if (count($forEntities) > 1){
+            $isUpdate = $options['is_update'] ?? false;
+            $first = array_shift($forEntities);
+            $role->setAttribute('for_entity', $first);
+            foreach ($forEntities as $index => $forEntity){
+                $forEntity = trim($forEntity);
+                if (!empty($forEntity)) {
+                    $duplicateRole = clone $role;
+                    $duplicateRole->setAttribute('_id', $role->attribute('_id') . '-' . $index);
+                    $duplicateRole->setAttribute('for_entity', $forEntity);
+                    $duplicateRole->storeThis($isUpdate);
+                }
+            }
+        }
+
+        return $role;
     }
 
     protected function getComunwebFieldMapperFromRuolo(): array
@@ -214,7 +236,9 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             "Data insediamento" => $this->attribute('data_insediamento'),
             "Atto di nomina" => $this->attribute('atto_nomina'),
             "Competenze" => implode(PHP_EOL, $competences['ita-IT']),
+            'Kompetenzen [de]' => implode(PHP_EOL, $competences['ger-DE'] ?? []),
             "Deleghe" => implode(PHP_EOL, $delegations['ita-IT']),
+            "Delegationen [de]" => implode(PHP_EOL, $delegations['ger-DE'] ?? []),
             "Incarichi di posizione organizzativa" => $this->attribute('organizational_position'),
             "Incarico dirigenziale" => $this->attribute('incarico_dirigenziale'),
             "Ruolo principale" => $this->attribute('ruolo_principale'),
@@ -222,6 +246,9 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             "Ulteriori informazioni" => $this->attribute('notes'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+            'Entschädigung [de]' => $this->attribute('de_compensi'),
+            'Reise - und/oder Servicebeträge [de]' => $this->attribute('de_importi'),
+            'Weitere Informationen [de]' => $this->attribute('de_notes'),
         ];
     }
 
@@ -245,8 +272,17 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('ruolo_principale', $row["Ruolo principale"]);
         $item->setAttribute('priorita', $row["Priorità"]);
         $item->setAttribute('notes', $row["Ulteriori informazioni"]);
-        $item->setAttribute('competences', json_encode(['ita-IT' => explode(PHP_EOL, $row["Competenze"])]));
-        $item->setAttribute('delegations', json_encode(['ita-IT' => explode(PHP_EOL, $row["Deleghe"])]));
+        $item->setAttribute('competences', json_encode([
+            'ita-IT' => explode(PHP_EOL, $row["Competenze"]),
+            'ger-DE' => explode(PHP_EOL, $row["Kompetenzen [de]"]),
+        ]));
+        $item->setAttribute('delegations', json_encode([
+            'ita-IT' => explode(PHP_EOL, $row["Deleghe"]),
+            'ger-DE' => explode(PHP_EOL, $row["Delegationen [de]"]),
+        ]));
+        $item->setAttribute('de_compensi', $row['Entschädigung [de]']);
+        $item->setAttribute('de_importi', $row['Reise - und/oder Servicebeträge [de]']);
+        $item->setAttribute('de_notes', $row['Weitere Informationen [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

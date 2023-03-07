@@ -4,7 +4,9 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
 {
     public static $fields = [
         'name',
+        'de_name',
         'description',
+        'de_description',
         'image___name',
         'image___url',
         'internal_location',
@@ -54,7 +56,9 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
             'Nome*' => $this->attribute('name'),
+            'Name* [de]' => $this->attribute('de_name'),
             'Descrizione' => $this->attribute('description'),
+            'Beschreibung [de]' => $this->attribute('de_description'),
             "Nome dell'immagine" => $this->attribute('image___name'),
             'Url file immagine*' => $this->attribute('image___url'),
             'Link interno' => $this->attribute('internal_location'),
@@ -69,6 +73,8 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del banner*"]);
         $item->setAttribute('name', $row['Nome*']);
+        $item->setAttribute('de_name', $row['Name* [de]']);
+        $item->setAttribute('de_description', $row['Beschreibung [de]']);
         $item->setAttribute('description', $row['Descrizione']);
         $item->setAttribute('image___name', $row["Nome dell'immagine"]);
         $item->setAttribute('image___url', $row['Url file immagine*']);

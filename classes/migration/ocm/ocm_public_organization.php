@@ -25,7 +25,7 @@ class ocm_public_organization extends ocm_organization
             'legal_name' => false,
             'alt_name' => false,
             'topics' => false,
-            'abstract',
+            'abstract' => false,
             'description' => false,
             'image' => false,
             'main_function' => false,
@@ -39,6 +39,11 @@ class ocm_public_organization extends ocm_organization
             'tax_code_e_invoice_service' => OCMigration::getMapperHelper('tax_code'),
             'has_logo___name' => false,
             'has_logo___url' => false,
+            'de_legal_name' => false,
+            'de_abstract' => false,
+            'de_main_function' => false,
+            'de_alt_name' => false,
+            'de_more_information' => false,
         ];
 
         return $this->fromNode($node, $mapper, $options);

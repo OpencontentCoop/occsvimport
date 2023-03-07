@@ -6,13 +6,16 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 {
     public static $fields = [
         'name',
+        'de_name',
         'has_code',
         'protocollo',
         'data_protocollazione',
         'image',
         'document_type',
         'abstract',
+        'de_abstract',
         'full_description',
+        'de_full_description',
         'file',
         'link',
         'attachments',
@@ -31,9 +34,11 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'expiration_time',
         'data_di_firma',
         'other_information',
+        'de_other_information',
         'legal_notes',
         'reference_doc',
         'keyword',
+        'de_keyword',
         'has_service',
         'anno_protocollazione',
         'help',
@@ -875,6 +880,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, $mapper, $options);
     }
 
+    protected function getOpencityFieldMapper(): array
+    {
+        $mapper = array_fill_keys(static::$fields, false);
+        $mapper['abstract'] = OCMigration::getMapperHelper('description');
+        $mapper['de_abstract'] = OCMigration::getMapperHelper('description');
+
+        return $mapper;
+    }
+
     public static function getSpreadsheetTitle(): string
     {
         return 'Documenti';
@@ -948,9 +962,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Tipologia di bando" => $this->attribute('announcement_type'),
             "Data di scadenza delle iscrizioni" => $this->attribute('data_di_scadenza_delle_iscrizioni'),
             "Data di conclusione del bando/progetto" => $this->attribute('data_di_conclusione'),
-            "Servizi" => $this->attribute('related_public_services'),
+//            "Servizi" => $this->attribute('related_public_services'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+
+            'Titel* [de]' => $this->attribute('de_name'),
+            'Kurze Beschreibung* [de]' => $this->attribute('de_abstract'),
+            'Beschreibung [de]' => $this->attribute('de_full_description'),
+            'Weitere Informationen [de]' => $this->attribute('de_other_information'),
+            'Stichwort [de]' => $this->attribute('de_keyword'),
         ];
     }
 
@@ -999,6 +1019,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('announcement_type', $row["Tipologia di bando"]);
         $item->setAttribute('data_di_scadenza_delle_iscrizioni', $row["Data di scadenza delle iscrizioni"]);
         $item->setAttribute('data_di_conclusione', $row["Data di conclusione del bando/progetto"]);
+
+        $item->setAttribute('de_name', $row['Titel* [de]']);
+        $item->setAttribute('de_abstract', $row['Kurze Beschreibung* [de]']);
+        $item->setAttribute('de_full_description', $row['Beschreibung [de]']);
+        $item->setAttribute('de_other_information', $row['Weitere Informationen [de]']);
+        $item->setAttribute('de_keyword', $row['Stichwort [de]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

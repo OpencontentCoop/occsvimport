@@ -12,6 +12,10 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         'image___name',
         'image___url',
         'data_archiviazione',
+        'de_name',
+        'de_short_name',
+        'de_abstract',
+        'de_descrizione',
     ];
 
     public static function canPush(): bool
@@ -63,6 +67,12 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
             'Data di archiviazione' => $this->attribute('data_archiviazione'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
+
+            'Name* [de]' => $this->attribute('de_name'),
+            'Kurzname [de]' => $this->attribute('de_short_name'),
+            'Kurze Beschreibung [de]' => $this->attribute('de_abstract'),
+            'Beschreibung [de]' => $this->attribute('de_descrizione'),
+
         ];
     }
 
@@ -79,6 +89,12 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('image___name', $row["Nome dell'immagine"]);
         $item->setAttribute('image___url', $row['Url file immagine']);
         $item->setAttribute('data_archiviazione', $row['Data di archiviazione']);
+
+        $item->setAttribute('de_name', $row['Name* [de]']);
+        $item->setAttribute('de_short_name', $row['Kurzname [de]']);
+        $item->setAttribute('de_abstract', $row['Kurze Beschreibung [de]']);
+        $item->setAttribute('de_descrizione', $row['Beschreibung [de]']);
+
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
