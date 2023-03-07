@@ -21,16 +21,16 @@
         'responsive.dataTables.min.css'
     ))}
 </head>
-<body class="bg-primary">
+<body class="bg-{if $context|not}success{else}primary{/if}">
 
 <div id="loader" style="display:none; position: fixed;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
 <div class="container my-5 bg-white rounded p-5 position-relative">
     <div class="row">
         <div class="col-12">
-            <h1>Assistente migrazione</h1>
-            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}</code></p>
+            <h1>Assistente migrazione <span class="badge badge-{if $context|not}success{else}primary{/if}">{if $context} esportazione {else} importazione {/if} dati</span></h1>
+            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br />{$google_user}</code></p>
             {if $migration_spreadsheet}
-                <h2 class="my-4">Impostazioni spreadsheet</h2>
+                <h4 class="my-4">Impostazioni dello spreadsheet {if $context} di destinazione {else} sorgente {/if}</h4>
             {else}
                 {if $context}
                     <h2>Imposta il google spreadsheet per esportare i dati</h2>
