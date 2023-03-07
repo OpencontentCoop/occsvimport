@@ -285,6 +285,10 @@ if ($requestAction === 'status') {
 
 if ($requestAction === 'reset') {
     OCMigrationSpreadsheet::resetCurrentStatus();
+    if ($http->hasGetVariable('force')){
+        SQLIImportToken::cleanAll();
+        eZDebug::writeDebug('Clean sqlitoken', __FILE__);
+    }
     $module->redirectModule($module, 'dashboard');
     return;
 }
