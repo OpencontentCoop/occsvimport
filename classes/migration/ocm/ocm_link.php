@@ -113,10 +113,12 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'short_name', $this->attribute('short_name'));
         $payload->setData($locale, 'abstract', $this->attribute('abstract'));
         $payload->setData($locale, 'descrizione', $this->attribute('descrizione'));
-        $payload->setData($locale, 'image', [
-            'url' => $this->attribute('image___url'),
-            'filename' => $this->attribute('image___name'),
-        ]);
+        if (!empty($this->attribute('image___url'))) {
+            $payload->setData($locale, 'image', [
+                'url' => $this->attribute('image___url'),
+                'filename' => $this->attribute('image___name'),
+            ]);
+        }
         if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
             $payload->setData($locale, 'internal_location', '???');
         }
