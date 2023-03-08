@@ -98,10 +98,12 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
 
         $payload->setData($locale, 'name', $this->attribute('name'));
         $payload->setData($locale, 'description', $this->attribute('description'));
-        $payload->setData($locale, 'image', [
-            'url' => $this->attribute('image___url'),
-            'filename' => $this->attribute('image___name'),
-        ]);
+        if (!empty($this->attribute('image___url'))) {
+            $payload->setData($locale, 'image', [
+                'url' => $this->attribute('image___url'),
+                'filename' => $this->attribute('image___name'),
+            ]);
+        }
         if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
             $payload->setData($locale, 'internal_location', '???');
         }
