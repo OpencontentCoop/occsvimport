@@ -41,9 +41,11 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $content = Content::createFromEzContentObject($object);
         $contentData = $content->data;
 
-        foreach ($mapper as $identifier => $callFunction){
-            if (is_numeric($identifier)){
-                throw new Exception("Invalid identifier $identifier " . var_export($callFunction, true) . ' in type ' . get_class($this));
+        foreach ($mapper as $identifier => $callFunction) {
+            if (is_numeric($identifier)) {
+                throw new Exception(
+                    "Invalid identifier $identifier " . var_export($callFunction, true) . ' in type ' . get_class($this)
+                );
             }
             $attributeIdentifier = $identifier;
 
@@ -52,8 +54,8 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             $firstLocalizedContentData = $contentData[$firstLocalizedContentLocale] ?? [];;
 
             // se non c'è ita prende il primo che trova
-            if (empty($firstLocalizedContentData)){
-                foreach ($contentData as $locale => $data){
+            if (empty($firstLocalizedContentData)) {
+                foreach ($contentData as $locale => $data) {
                     $firstLocalizedContentData = $data;
                     $firstLocalizedContentLocale = $locale;
                     break;
@@ -67,17 +69,20 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 $attributeIdentifier = substr($identifier, 3);
             }
 
-            if ($callFunction === false){
+            if ($callFunction === false) {
                 $callFunction = OCMigration::getMapperHelper($attributeIdentifier);
             }
 
-            $this->setAttribute($identifier, call_user_func($callFunction,
-                $content,
-                $firstLocalizedContentData,
-                $firstLocalizedContentLocale,
-                $options
-            ));
-
+            $this->setAttribute(
+                $identifier,
+                call_user_func(
+                    $callFunction,
+                    $content,
+                    $firstLocalizedContentData,
+                    $firstLocalizedContentLocale,
+                    $options
+                )
+            );
         }
         if (!empty($mapper)) {
             $this->setAttribute('_id', $object->attribute('remote_id'));
@@ -204,7 +209,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     protected static function trimArray(array $array): array
     {
         $trimmed = [];
-        foreach ($array as $item){
+        foreach ($array as $item) {
             $trimmed[] = trim($item);
         }
 
@@ -239,7 +244,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 $doStore = false;
             }
         }
-        if (empty($this->attribute('_id'))){
+        if (empty($this->attribute('_id'))) {
             $doStore = false;
         }
         if ($doStore) {
@@ -277,7 +282,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             $asObject
         );
 
-        if (!$instance){
+        if (!$instance) {
             $instance = new static();
             $instance->setAttribute('_id', $id);
             $instance->setAttribute($field, trim($value));
@@ -347,9 +352,9 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             'attivita' => "Tipo di attività",
             'content-type' => 'Tipi di contenuto',
             'popolazione' => 'Fasce generali di popolazione',
-            'giuridica' => 'Forma giuridica'
+            'giuridica' => 'Forma giuridica',
         ];
-        if (!isset($identifiers[$identifier])){
+        if (!isset($identifiers[$identifier])) {
             throw new Exception("Invalid voc identifier $identifier");
         }
         return [
@@ -361,7 +366,9 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public function convertToMarkdown(?string $html): string
     {
-        if (!$html) return '';
+        if (!$html) {
+            return '';
+        }
 
         $converter = new HtmlConverter();
 //        $converter->getEnvironment()->addConverter(new \League\HTMLToMarkdown\Converter\TableConverter());
@@ -382,11 +389,10 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     {
         $data = [];
         $names = explode(PHP_EOL, $name);
-        if (!self::isEmptyArray($names)){
-
+        if (!self::isEmptyArray($names)) {
             $names = self::trimArray($names);
-            if ($tryWithPrefix){
-                foreach ($names as $name){
+            if ($tryWithPrefix) {
+                foreach ($names as $name) {
                     if (strpos($name, $tryWithPrefix) === false) {
                         $names[] = $tryWithPrefix . $name;
                     }
@@ -406,7 +412,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     public static function getIdByName($name, $field = 'name', string $tryWithPrefix = null): ?array
     {
         $data = static::getIdListByName($name, $field, $tryWithPrefix);
-        if (count($data)){
+        if (count($data)) {
             return [$data[0]];
         }
 
@@ -415,7 +421,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public static function getBooleanPayload(string $data)
     {
-        if (empty($data)){
+        if (empty($data)) {
             return null;
         }
 
@@ -424,33 +430,33 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     protected static function getDatePayload(string $data, $format = 'c')
     {
-        if (empty($data)){
+        if (empty($data)) {
             return null;
         }
-        if (strpos($data, '-') !== false){
+        if (strpos($data, '-') !== false) {
             [$y, $m, $d] = explode('.', $data);
-        }else {
+        } else {
             [$d, $m, $y] = explode('/', $data);
         }
-        $timestamp = mktime(0,0,0, $m, $d, $y);
+        $timestamp = mktime(0, 0, 0, $m, $d, $y);
 
         return $format ? date($format, $timestamp) : $timestamp;
     }
 
     protected static function getDateTimePayload(string $data, $format = 'c')
     {
-        if (empty($data)){
+        if (empty($data)) {
             return null;
         }
 
         [$day, $hours] = explode(' ', trim($data));
-        if (strpos($day, '-') !== false){
+        if (strpos($day, '-') !== false) {
             [$y, $m, $d] = explode('.', $day);
-        }else {
+        } else {
             [$d, $m, $y] = explode('/', $day);
         }
         [$h, $min] = explode(':', $hours);
-        $timestamp = mktime((int)$h, (int)$min,0, (int)$m, (int)$d, (int)$y);
+        $timestamp = mktime((int)$h, (int)$min, 0, (int)$m, (int)$d, (int)$y);
 
         return $format ? date($format, $timestamp) : $timestamp;
     }
@@ -462,10 +468,12 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public function formatTags($name)
     {
-        if (empty($name)) return [];
+        if (empty($name)) {
+            return [];
+        }
 
         $names = explode(PHP_EOL, $name);
-        if (!self::isEmptyArray($names)){
+        if (!self::isEmptyArray($names)) {
             return $names;
         }
 
@@ -474,7 +482,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public function formatAuthor(string $name)
     {
-        if (empty($data)){
+        if (empty($data)) {
             return null;
         }
 
@@ -490,7 +498,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     protected static function getBinaryPayload(string $data, bool $isMultiple = true)
     {
         $values = [];
-        if (empty($data)){
+        if (empty($data)) {
             return $values;
         }
         $items = explode(PHP_EOL, $data);
@@ -500,7 +508,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 'filename' => basename($item),
             ];
         }
-        if (!$isMultiple && !empty($values)){
+        if (!$isMultiple && !empty($values)) {
             return $values[0];
         }
 
@@ -511,7 +519,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     {
         $data = [];
         $names = explode(PHP_EOL, $name);
-        if (!self::isEmptyArray($names)){
+        if (!self::isEmptyArray($names)) {
             $data = static::fetchObjectList(
                 static::definition(), null,
                 ['trim(' . $field . ')' => [self::trimArray($names)]]
@@ -527,7 +535,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     public function storePayload(): int
     {
         $payloads = $this->generatePayload();
-        if ($payloads instanceof PayloadBuilder){
+        if ($payloads instanceof PayloadBuilder) {
             $payloads = [$this::getImportPriority() => $payloads];
         }
 
@@ -549,10 +557,47 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $index;
     }
 
+    protected function appendTranslationsToPayloadIfNeeded(PayloadBuilder $payload)
+    {
+        $fields = static::$fields;
+        $translationsLocalized = [];
+        foreach ($fields as $field) {
+            if (strpos($field, 'de_') === 0 && !empty($this->attribute($field))) {
+                $attributeIdentifier = substr($field, 3);
+                $translationsLocalized['ger-DE'][$attributeIdentifier] = $this->attribute($field);
+            }
+        }
+
+        $payloadData = $payload->getData();
+        $defaultLocale = 'ita-IT';
+        if (!empty($translationsLocalized)) {
+            foreach ($translationsLocalized as $translationLocale => $translations) {
+                foreach ($translations as $identifier => $value) {
+                    if (!isset($payloadData[$translationLocale][$identifier])) {
+
+                        if (!isset($payloadData[$translationLocale]) && isset($payloadData[$defaultLocale][$identifier])) {
+                            $payload->setLanguages(
+                                array_unique(
+                                    array_merge($payload->getMetadaData('languages'), [$translationLocale])
+                                )
+                            );
+                            foreach ($payloadData[$defaultLocale] as $key => $datum){
+                                $payload->setData($translationLocale, $key, $datum);
+                            }
+                        }
+                        $payload->setData($translationLocale, $identifier, $value);
+                    }
+                }
+            }
+        }
+
+        return $payload;
+    }
+
     public function attributeArray($name)
     {
         $value = $this->attribute($name);
-        if (!empty($value)){
+        if (!empty($value)) {
             $values = explode(PHP_EOL, $value);
             return self::trimArray($values);
         }

@@ -385,6 +385,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'event_content_keyword', trim($this->attribute('event_content_keyword')));
         $payload->setData($locale, 'aggregate_rating', trim($this->attribute('aggregate_rating')));
 
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         $payloads = [self::getImportPriority() => $payload];
         $subEvents = ocm_event::getIdListByName($this->attribute('sub_event_of'), 'event_title');
         $related = ocm_event::getIdListByName($this->attribute('related_event'), 'event_title');
@@ -393,6 +394,10 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             $payload2->unSetData();
             $payload2->setData($locale, 'sub_event_of', $subEvents);
             $payload2->setData($locale, 'related_event', $related);
+            if (in_array('ger-DE', $payload->getMetadaData('languages'))){
+                $payload2->setData('ger-DE', 'sub_event_of', $subEvents);
+                $payload2->setData('ger-DE', 'related_event', $related);
+            }
             $payloads[ocm_event::getImportPriority()+1] = $payload2;
         }
 

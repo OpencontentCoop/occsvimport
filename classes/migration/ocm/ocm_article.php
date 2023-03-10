@@ -244,7 +244,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 //@todo da impostare in seconda battuta quando impostati i servizi
 //        $payload->setData($locale, 'related_service', ocm_public_service::getIdListByName($this->attribute('related_service')));
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     protected function discoverParentNode(): int

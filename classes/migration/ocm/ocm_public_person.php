@@ -455,7 +455,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'notes', $this->attribute('notes'));
         $payload->setData($locale, 'has_role', '1');
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     // 3da91bfec50abc9740f0f3d62c8aaac4 amm

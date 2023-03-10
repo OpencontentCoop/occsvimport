@@ -477,6 +477,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'identifier', $this->attribute('identifier'));
         $payload->setData($locale, 'tax_code_e_invoice_service', $this->attribute('tax_code_e_invoice_service'));
 
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         $payloads = [self::getImportPriority() => $payload];
         $holdEmployments = ocm_organization::getIdListByName($this->attribute('hold_employment'), 'legal_name');
         $attachments = ocm_document::getIdListByName($this->attribute('attachments'));
@@ -486,6 +487,10 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             $payload2->unSetData();
             $payload2->setData($locale, 'attachments', $attachments);
             $payload2->setData($locale, 'hold_employment', $holdEmployments);
+            if (in_array('ger-DE', $payload->getMetadaData('languages'))){
+                $payload2->setData('ger-DE', 'attachments', $attachments);
+                $payload2->setData('ger-DE', 'hold_employment', $holdEmployments);
+            }
             $payloads[ocm_banner::getImportPriority()+1] = $payload2;
         }
 

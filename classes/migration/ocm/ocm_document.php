@@ -1106,10 +1106,20 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         );
         $payload->setData($locale, 'data_di_conclusione', $this->formatDate($this->attribute('data_di_conclusione')));
 
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
+        $payloads = [self::getImportPriority() => $payload];
+        $docs = ocm_document::getIdListByName($this->attribute('reference_doc'));
+        if (count($docs) > 0) {
+            $payload2 = clone $payload;
+            $payload2->unSetData();
+            $payload2->setData($locale, 'reference_doc', $docs);
+            if (in_array('ger-DE', $payload->getMetadaData('languages'))){
+                $payload2->setData('ger-DE', 'reference_doc', $docs);
+            }
+            $payloads[self::getImportPriority()+1] = $payload2;
+        }
 
-        $payload->setData($locale, 'reference_doc', ocm_document::getIdListByName($this->attribute('reference_doc')));
-
-        return $payload;
+        return $payloads;
     }
 
     protected function discoverParentNode(): int
@@ -1166,6 +1176,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Statuto" => "Documenti funzionamento interno",
             "Trattamento" => "Documenti funzionamento interno",
             "Atti normativi" => "Normative",
+            "Normative" => "Normative",
+            "Normativa" => "Normative",
             "Accordi tra enti" => "Accordi tra enti",
             "Accordo" => "Accordi tra enti",
             "Accordi" => "Accordi tra enti",
@@ -1195,7 +1207,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
         }
 
-        return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
+        return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
+//        return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
     }
 
     public static function getDateValidationHeaders(): array

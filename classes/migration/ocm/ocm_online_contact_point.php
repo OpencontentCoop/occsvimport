@@ -56,7 +56,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $data = [
             'Identificatore punto di contatto*' => $this->attribute('_id'),
             'Titolo punto di contatto*' => $this->attribute('name'),
-            'Kontakttitel* [de]' => $this->attribute('name'),
+            'Kontakttitel* [de]' => $this->attribute('de_name'),
             'Orari disponibilità telefonica' => $this->attribute('phone_availability_time'),
         ];
 
@@ -81,6 +81,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
         $item->setAttribute('name', $row['Titolo punto di contatto*']);
+        $item->setAttribute('de_name', $row['Kontakttitel* [de]']);
         $item->setAttribute('phone_availability_time', $row['Orari disponibilità telefonica']);
 
         $contacts = [];
@@ -89,15 +90,25 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $indexLabelRequired = $indexLabel;
             if ($indexLabel === 1) $indexLabelRequired = "1*";
             if (
-                isset($row['Tipologia di contatto ' . $indexLabelRequired], $row['Contatto ' . $indexLabelRequired], $row['Tipo di contatto ' . $indexLabel]) &&
-                (!empty($row['Tipologia di contatto ' . $indexLabelRequired]) || !empty($row['Contatto ' . $indexLabelRequired]) || !empty($row['Tipo di contatto ' . $indexLabel]))
+                isset(
+                    $row['Tipologia di contatto ' . $indexLabelRequired],
+                    $row['Contatto ' . $indexLabelRequired],
+                    $row['Tipo di contatto ' . $indexLabel]
+                ) && (
+                    !empty($row['Tipologia di contatto ' . $indexLabelRequired])
+                    || !empty($row['Contatto ' . $indexLabelRequired])
+                    || !empty($row['Tipo di contatto ' . $indexLabel])
+                )
             ) {
                 $contact = [
                     'type' => $row['Tipologia di contatto ' . $indexLabelRequired],
                     'value' => $row['Contatto ' . $indexLabelRequired],
                     'contact' => $row['Tipo di contatto ' . $indexLabel],
                 ];
-                $contacts[$x] = $contact;
+                $contacts['ita-IT'][$x] = $contacts['ger-DE'][$x] = $contact;
+                if (isset($row['Kontakt ' . $indexLabelRequired . ' [de]'])) {
+                    $contacts['ger-DE'][$x]['value'] = $row['Kontakt ' . $indexLabelRequired . ' [de]'];
+                }
             }
         }
         $item->setAttribute('contact', json_encode($contacts));
@@ -167,11 +178,20 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $payload->setParentNode($this->getNodeIdFromRemoteId('punti_di_contatto'));
         $payload->setLanguages([$locale]);
         $payload->setData($locale, 'name', $this->attribute('name'));
-        $payload->setData($locale, 'contact', json_decode($this->attribute('contact'), true));
-
         $openingHours = ocm_opening_hours_specification::getIdListByName($this->attribute('phone_availability_time'));
         if (!empty($openingHours)) {
             $payload->setData($locale, 'phone_availability_time', $openingHours);
+        }
+
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
+        $contacts = json_decode($this->attribute('contact'), true);
+        if (isset($contacts['ita-IT'])) {
+            $payload->setData($locale, 'contact', $contacts['ita-IT']);
+            if (isset($contacts['ger-DE']) && in_array('ger-DE', $payload->getMetadaData('languages'))){
+                $payload->setData('ger-DE', 'contact', $contacts['ger-DE']);
+            }
+        } elseif (!empty($contacts)){
+            $payload->setData($locale, 'contact', $contacts);
         }
 
         return $payload;

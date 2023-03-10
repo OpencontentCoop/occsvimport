@@ -173,7 +173,10 @@ if (in_array($requestAction, $classes) && !empty($requestId)) {
             $items = $class::fetchByField('_id', $requestId);
             if (isset($items[0])) {
                 echo json_encode(
-                    $items[0]->toSpreadsheet()
+                    [
+                        'item' => $items[0],
+                        'row' => $items[0]->toSpreadsheet(),
+                    ]
                 );
             }else{
                 throw new Exception("$class $requestId type not found");
@@ -288,6 +291,10 @@ if ($requestAction === 'reset') {
     if ($http->hasGetVariable('force')){
         SQLIImportToken::cleanAll();
         eZDebug::writeDebug('Clean sqlitoken', __FILE__);
+    }
+    if ($http->hasGetVariable('truncate')){
+        OCMigration::createTableIfNeeded(false, true);
+        OCMigration::createPayloadTableIfNeeded(false, true);
     }
     $module->redirectModule($module, 'dashboard');
     return;
