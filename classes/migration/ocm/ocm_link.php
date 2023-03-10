@@ -125,7 +125,7 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'location', $this->attribute('location'));
         $payload->setData($locale, 'data_archiviazione', $this->formatDate($this->attribute('data_archiviazione')));
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     public static function getUrlValidationHeaders(): array

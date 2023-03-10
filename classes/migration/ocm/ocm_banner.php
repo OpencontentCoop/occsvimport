@@ -111,7 +111,7 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'background_color', OpenPABootstrapItaliaOperators::decodeBannerColorSelection($this->attribute('background_color')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     public static function getUrlValidationHeaders(): array

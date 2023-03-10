@@ -243,7 +243,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         $payload->setData($locale, 'legal_status_code', $this->formatTags($this->attribute('legal_status_code')));
         $payload->setData($locale, 'identifier', trim($this->attribute('identifier')));
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     protected function discoverParentNode(): int

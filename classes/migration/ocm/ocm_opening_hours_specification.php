@@ -241,18 +241,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
             $payload->setData($locale, 'closure', $closures);
         }
 
-        if (!empty($this->attribute('de_name'))){
-            $locale = 'ger-DE';
-            $payload->setLanguages(array_merge($payload->getMetadaData('languages'), [$locale]));
-            $data = $payload->getData();
-            foreach ($data['ita-IT'] as $key => $value){
-                if ($key === 'name') {
-                    $payload->setData($locale, 'name', $this->attribute('de_name'));
-                }else{
-                    $payload->setData($locale, $key, $value);
-                }
-            }
-        }
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
 
         return $payload;
     }

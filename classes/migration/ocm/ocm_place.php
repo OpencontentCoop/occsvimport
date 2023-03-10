@@ -379,6 +379,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'help', ocm_online_contact_point::getIdListByName($this->attribute('help')));
         $payload->setData($locale, 'more_information', $this->attribute('more_information'));
         $payload->setData($locale, 'identifier', $this->attribute('identifier'));
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         $payloads = [self::getImportPriority() => $payload];
 
         $offices = ocm_organization::getIdListByName($this->attribute('has_office'), 'legal_name');
@@ -386,6 +387,9 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             $payload2 = clone $payload;
             $payload2->unSetData();
             $payload2->setData($locale, 'has_office', $offices);
+            if (in_array('ger-DE', $payload->getMetadaData('languages'))){
+                $payload2->setData('ger-DE', 'has_office', $offices);
+            }
             $payloads[ocm_organization::getImportPriority()+1] = $payload2;
         }
 

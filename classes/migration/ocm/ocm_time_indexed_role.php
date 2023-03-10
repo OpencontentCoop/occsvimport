@@ -318,7 +318,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'competences', json_decode($this->attribute('competences'))->{'ita-IT'});
         $payload->setData($locale, 'delegations', json_decode($this->attribute('delegations'))->{'ita-IT'});
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     public static function getDateValidationHeaders(): array

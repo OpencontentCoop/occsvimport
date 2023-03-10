@@ -136,7 +136,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'proprietary_license_source', $this->attribute('proprietary_license_source'));
         $payload->setData($locale, 'author', $this->attribute('author'));
 
-        return $payload;
+        return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
     public static function getUrlValidationHeaders(): array
