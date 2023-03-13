@@ -1133,6 +1133,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Documenti attività politica" => '2ae121d5e5b04047d990d15723a36675',
             "Documenti (tecnici) di supporto" => '972395281b6c293f05e8c6ce52b5643d',
             "Dataset" => 'dataset',
+            "Documenti di programmazione e rendicontazione" => 'doc_progamma_rendiconto',
         ];
 
         $map = [
@@ -1191,15 +1192,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Ordine del giorno" => "Documenti attività politica",
             "Seduta del consiglio" => "Documenti attività politica",
             "Documenti di programmazione e rendicontazione" => "Documenti (tecnici) di supporto",
-            "Bilancio consuntivo" => "Documenti (tecnici) di supporto",
-            "Bilancio preventivo" => "Documenti (tecnici) di supporto",
-            "Documento unico di programmazione" => "Documenti (tecnici) di supporto",
-            "Piano Esecutivo di Gestione" => "Documenti (tecnici) di supporto",
-            "Rendiconto" => "Documenti (tecnici) di supporto",
+            "Bilancio consuntivo" => "Documenti di programmazione e rendicontazione",
+            "Bilancio preventivo" => "Documenti di programmazione e rendicontazione",
+            "Documento unico di programmazione" => "Documenti di programmazione e rendicontazione",
+            "Piano Esecutivo di Gestione" => "Documenti di programmazione e rendicontazione",
+            "Rendiconto" => "Documenti di programmazione e rendicontazione",
             "Documenti (tecnici) di supporto" => "Documenti (tecnici) di supporto",
-            "Piano/Progetto" => "Documenti (tecnici) di supporto",
+            "Piano/Progetto" => "Documenti di programmazione e rendicontazione",
             "Pubblicazione" => "Documenti (tecnici) di supporto",
-            "Rapporto" => "Documenti (tecnici) di supporto",
+            "Rapporto" => "Documenti di programmazione e rendicontazione",
         ];
 
         $types = $this->formatTags($this->attribute('document_type'));
