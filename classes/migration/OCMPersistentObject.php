@@ -473,6 +473,19 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
 
         $names = explode(PHP_EOL, $name);
+
+        if (count($names) === 1 && strpos($names[0], ',') !== false){
+            $filteredList = OCMigrationVocs::filterVocs($names);
+            if (empty($filteredList)) {
+                $withCommaTag = $names[0];
+                $withCommaTag = str_replace(', ', '$', $withCommaTag);
+                $names = explode(',', $withCommaTag);
+                $names = array_map(function ($item){
+                   return str_replace('$',', ', $item);
+                }, $names);
+            }
+        }
+
         if (!self::isEmptyArray($names)) {
             return $names;
         }
@@ -482,7 +495,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public function formatAuthor(string $name)
     {
-        if (empty($data)) {
+        if (empty($name)) {
             return null;
         }
 
@@ -490,7 +503,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $email = array_pop($parts);
 
         return [
-            'name' => implode(' ', $name),
+            'name' => trim(implode(' ', $parts)),
             'email' => $email,
         ];
     }

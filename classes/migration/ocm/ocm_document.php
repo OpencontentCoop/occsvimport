@@ -981,6 +981,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('_id', $row["Identificativo del documento*"]);
         $item->setAttribute('name', $row["Titolo*"]);
         $item->setAttribute('has_code', $row["Protocollo*"]);
+        $item->setAttribute('protocollo', $row["Protocollo*"]);
         $item->setAttribute('data_protocollazione', $row["Data protocollazione*"]);
         $item->setAttribute('document_type', $row["Tipo di documento*"]);
         $item->setAttribute('topics', $row["Argomento*"]);
@@ -1042,7 +1043,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $data_protocollazione = $this->formatDate($this->attribute('data_protocollazione'));
         $payload->setData($locale, 'name', trim($this->attribute('name')));
         $payload->setData($locale, 'has_code', trim($this->attribute('has_code')));
-        $payload->setData($locale, 'protocollo', trim($this->attribute('has_code')));
+        $payload->setData($locale, 'protocollo', trim($this->attribute('protocollo')));
         $payload->setData($locale, 'data_protocollazione', $data_protocollazione);
         $payload->setData($locale, 'document_type', $this->formatTags($this->attribute('document_type')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
