@@ -6,10 +6,24 @@ class OCMigrationVocs
     {
         if (empty($data)) return '';
 
+        $data = self::remapList($data);
         $invalidItems = array_diff($data, self::getVocabulariesAsList());
         $validItems = array_diff($data, $invalidItems);
 
         return implode(PHP_EOL, $validItems);
+    }
+
+    private static function remapList($source): array
+    {
+        $map = [
+            "Consigliere comunale" => "Consigliere",
+        ];
+
+        $source = array_map(function ($item) use ($map){
+            return $map[$item] ?? $item;
+        }, $source);
+
+        return $source;
     }
 
     private static function getVocabulariesAsList(): array

@@ -30,6 +30,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         'de_notes',
     ];
 
+    public function avoidNameDuplication()
+    {
+        return false;
+    }
+
     public static function getSpreadsheetTitle(): string
     {
         return 'Persone pubbliche';
@@ -543,5 +548,9 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return $data;
     }
 
+    public function name(): ?string
+    {
+        return $this->attribute('family_name') . ' ' . $this->attribute('given_name');
+    }
 
 }

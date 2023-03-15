@@ -529,6 +529,26 @@ class OCMigration extends eZPersistentObject
         return $data;
     }
 
+    public static function getObjectRemoteIdByName($name)
+    {
+        if (empty($name) || !is_string($name)){
+            return $name;
+        }
+
+        $rows = eZDB::instance()->arrayQuery('
+            SELECT remote_id 
+            FROM ezcontentobject 
+            WHERE id IN (
+                SELECT contentobject_id 
+                FROM ezcontentobject_name 
+                WHERE LOWER(name) = \'' . eZDB::instance()->escapeString(strtolower($name)) . '\' 
+                ORDER BY content_version DESC, contentobject_id ASC 
+                LIMIT 1
+        )');
+
+        return count($rows) ? $rows[0]['remote_id'] : $name;
+    }
+
     public static function getTopicsIdListFromString($topicsStrings): array
     {
         $data = [];
