@@ -120,7 +120,7 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
             ]);
         }
         if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
-            $payload->setData($locale, 'internal_location', '???');
+            $payload->setData($locale, 'internal_location', [OCMigration::getObjectRemoteIdByName($this->attribute('internal_location'))]);
         }
         $payload->setData($locale, 'location', $this->attribute('location'));
         $payload->setData($locale, 'data_archiviazione', $this->formatDate($this->attribute('data_archiviazione')));

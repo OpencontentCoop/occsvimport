@@ -19,6 +19,11 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         'de_author',
     ];
 
+    public function avoidNameDuplication()
+    {
+        return false;
+    }
+
     protected function getOpencityFieldMapper(): array
     {
         return [

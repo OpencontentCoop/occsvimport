@@ -618,8 +618,18 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $value;
     }
 
-    public function id()
+    public function id(): ?string
     {
         return $this->attribute('_id');
+    }
+
+    public function name(): ?string
+    {
+        return $this->attribute(static::getSortField());
+    }
+
+    public function avoidNameDuplication()
+    {
+        return true;
     }
 }

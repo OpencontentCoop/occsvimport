@@ -105,7 +105,7 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
             ]);
         }
         if ($this->attribute('internal_location') && empty($this->attribute('location'))) {
-            $payload->setData($locale, 'internal_location', '???');
+            $payload->setData($locale, 'internal_location', [OCMigration::getObjectRemoteIdByName($this->attribute('internal_location'))]);
         }
         $payload->setData($locale, 'location', $this->attribute('location'));
         $payload->setData($locale, 'background_color', OpenPABootstrapItaliaOperators::decodeBannerColorSelection($this->attribute('background_color')));

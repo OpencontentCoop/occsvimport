@@ -58,6 +58,6 @@ try {
     $cli->error($e->getTraceAsString());
 }
 
-echo 'aaa';
+$cli->output('Done');
 
 $script->shutdown();

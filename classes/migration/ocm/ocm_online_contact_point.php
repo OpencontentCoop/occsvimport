@@ -199,7 +199,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
 
     public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
     {
-        return parent::getIdListByName($name, $field, 'Contatti ');
+        return parent::getIdListByName($name, $field, $tryWithPrefix);
     }
 
 }

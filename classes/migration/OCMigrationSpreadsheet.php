@@ -953,7 +953,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->output($e->getMessage());
+                $cli->error($e->getMessage());
             }
         }
 
@@ -999,15 +999,22 @@ class OCMigrationSpreadsheet
         }
 
         $executionInfo = [];
+        $remoteIdCollection = new ArrayObject();
+        $skipPayloadGeneration = [];
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-            $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli));
+            $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli, $options, $remoteIdCollection));
+            if ($executionInfo[$className]['status'] === 'error'){
+                $skipPayloadGeneration[] = $className;
+            }
             self::appendMessageToCurrentStatus($executionInfo);
         }
 
         OCMigration::createPayloadTableIfNeeded($cli);
         foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
-            $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, $validate));
-            self::appendMessageToCurrentStatus($executionInfo);
+            if (!in_array($className, $skipPayloadGeneration)) {
+                $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, $validate));
+                self::appendMessageToCurrentStatus($executionInfo);
+            }
         }
 
         self::setCurrentStatus('pull', 'done', $options);
@@ -1015,7 +1022,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    private function pullByType($className, eZCLI $cli = null): array
+    private function pullByType($className, eZCLI $cli = null, array $options, ArrayObject $remoteIdCollection): array
     {
         $executionInfo = [];
 
@@ -1038,22 +1045,57 @@ class OCMigrationSpreadsheet
 
             $values = $this->getDataHash($sheetTitle);
             $count = 0;
+            $nameCollection = [];
+            $duplicate = [];
             foreach ($values as $value) {
                 /** @var OCMPersistentObject $item */
                 $item = $className::fromSpreadsheet($value);
                 $ignora = isset($value['IGNORA']) && !empty($value['IGNORA']);
+
                 if ($item instanceof eZPersistentObject && !$ignora) {
+                    if (!$item->id()){
+                        $cli->warning( ' - Skip row ' . $item->id() . ' ' . $item->name());
+                        $executionInfo['errors'][$className][$item->attribute('_id')] = [
+                            'message' => 'Empty value in columns ' . $className::getIdColumnLabel(),
+                            'action' => 'pull',
+                        ];
+                        continue;
+                    }
                     try {
+                        if (isset($remoteIdCollection[$item->id()])){
+                            $errorMessage = "Identificativo duplicato: " . $item->id();
+                            $duplicate[$item->id()] = $errorMessage;
+                            throw new InvalidArgumentException($errorMessage);
+                        }
+                        $remoteIdCollection[$item->id()] = $item->name();
+
+                        if ($item->avoidNameDuplication()) {
+                            if (in_array($item->name(), $nameCollection)) {
+                                $errorMessage = "Titolo duplicato: " . $item->name() . ' (identificativo: ' . $item->id(
+                                    ) . ')';
+                                $duplicate[trim($item->name())] = $errorMessage;
+                                throw new InvalidArgumentException($errorMessage);
+                            }
+                            $nameCollection[] = $item->name();
+                        }
+
                         $item->storeThis(false);
+                        if ($cli) {
+                            $cli->output( ' - ' . $item->id() . ' ' . $item->name());
+                        }
                         $count++;
                     } catch (Throwable $e) {
-                        $executionInfo['errors'][$className][$item->attribute('_id')] =
-                            [
-                                'message' => $e->getMessage(),
-                                'action' => 'pull',
-                            ];
+                        $executionInfo['errors'][$className][$item->attribute('_id')] = [
+                            'message' => $e->getMessage(),
+                            'action' => 'pull',
+                        ];
                     }
                 }
+            }
+
+            if (count($duplicate) > 0){
+                $errorMessage = implode('<br />', $duplicate);
+                throw new InvalidArgumentException($errorMessage);
             }
 
             $executionInfo[$className] = [
@@ -1070,7 +1112,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
             ];
             if ($cli) {
-                $cli->output($e->getMessage());
+                $cli->error($e->getMessage());
             }
         }
 
@@ -1166,11 +1208,15 @@ class OCMigrationSpreadsheet
                     $status = $count >= $itemCount ? 'success' : 'warning';
                 }
 
+                $avoidDuplication = '';
+                if (!$item->avoidNameDuplication()){
+                    $avoidDuplication = '<br>(controllo duplicati non eseguito per configurazione)';
+                }
                 $executionInfo[$className] = [
                     'status' => $status,
                     'action' => 'import',
                     'process' => $countIndex . '/' . $itemCount,
-                    'update' => $message,
+                    'update' => $message . $avoidDuplication,
                     'class' => $className,
                 ];
 
@@ -1185,7 +1231,7 @@ class OCMigrationSpreadsheet
                 'message' => $e->getMessage(),
             ];
             if ($cli) {
-                $cli->output($e->getMessage());
+                $cli->error($e->getMessage());
             }
         }
 

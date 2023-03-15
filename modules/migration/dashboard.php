@@ -1,4 +1,5 @@
 <?php
+
 /** @var eZModule $module */
 $module = $Params['Module'];
 $requestAction = $Params['Action'];
@@ -196,19 +197,30 @@ if ($requestAction === 'datatable') {
     $rowCount = 0;
     $length = $context ? 100 : 5000;//@todo $http->getVariable('length', 10);
     $start = 0; //@todo $http->getVariable('start', 0);
+    eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
 
     if (in_array($class, $classes)) {
         if ($context) {
             /** @var eZPersistentObject|ocm_interface $class */
             $rowCount = (int)$class::count($class::definition());
-            $rows = $class::fetchObjectList(
-                $class::definition(),
-                null,
-                null,
-                [$class::getSortField() => 'asc'],
-                ['limit' => $length, 'offset' => $start],
-                false
-            );
+
+            function getRows($class){
+                return $class::fetchObjectList(
+                    $class::definition(),
+                    null,
+                    null,
+                    [$class::getSortField() => 'asc'],
+                    ['limit' => $length, 'offset' => $start],
+                    false
+                );
+            }
+
+            try {
+                $rows = getRows($class);
+            }catch (eZDBException $e){
+                OCMigration::createTableIfNeeded();
+                $rows = getRows($class);
+            }
         }else{
             $rowCount = (int)OCMPayload::count(OCMPayload::definition(), ['type' => $class, 'error' => ['!=', '']]);
             $rows = OCMPayload::fetchObjectList(
