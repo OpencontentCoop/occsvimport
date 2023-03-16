@@ -199,7 +199,7 @@
                 url: BaseUrl+'/datatable/'+type,
                 type: 'POST',
                 data: {
-                  ezxform_token: $('[name="ezxform_token"]').attr('title')
+                  ezxform_token: $('[name="ezxform_token"]').attr('value')
                 }
               },
               processing: true,
