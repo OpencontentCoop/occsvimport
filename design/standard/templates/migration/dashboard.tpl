@@ -214,9 +214,13 @@
 
         var parseStatus = function (data, cb, context) {
           if (data.status === 'error') {
-            $('.alert-danger')
-              .removeClass('d-none')
-              .html(data.message);
+            if (data.message.startsWith('<!DOCTYPE')){
+                $('body').replaceWith(data.message);
+            }else {
+              $('.alert-danger')
+                .removeClass('d-none')
+                .html(data.message);
+            }
             resetActions();
           } else if (data.status === 'unknown') {
             resetActions();
