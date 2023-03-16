@@ -1054,7 +1054,9 @@ class OCMigrationSpreadsheet
 
                 if ($item instanceof eZPersistentObject && !$ignora) {
                     if (!$item->id()){
-                        $cli->warning( ' - Skip row ' . $item->id() . ' ' . $item->name());
+                        if ($cli) {
+                            $cli->warning(' - Skip row ' . $item->id() . ' ' . $item->name());
+                        }
                         $executionInfo['errors'][$className][$item->attribute('_id')] = [
                             'message' => 'Empty value in columns ' . $className::getIdColumnLabel(),
                             'action' => 'pull',
