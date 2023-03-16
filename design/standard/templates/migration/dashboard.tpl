@@ -197,7 +197,10 @@
               columns: columns,
               ajax: {
                 url: BaseUrl+'/datatable/'+type,
-                type: 'POST'
+                type: 'POST',
+                data: {
+                  ezxform_token: document.getElementById('ezxform_token_js').getAttribute('title')
+                }
               },
               processing: true,
               serverSide: true
