@@ -252,19 +252,11 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
      */
     private function discoverParentNode(): int
     {
-        if (in_array($this->id(), ocm_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
-            return $this->getOrariStruttureParentNode();
+        if (!empty(ocm_public_service::fetchByField('has_online_contact_point', $this->attribute('name')))) {
+            return $this->getOrariServiziParentNode();
         }
 
-        if (in_array($this->id(), ocm_public_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
-            return $this->getOrariStruttureParentNode();
-        }
-
-        if (in_array($this->id(), ocm_private_organization::fetchByField('has_online_contact_point', $this->attribute('name')))) {
-            return $this->getOrariStruttureParentNode();
-        }
-
-        return $this->getOrariServiziParentNode();
+        return $this->getOrariStruttureParentNode();
     }
 
     /**
