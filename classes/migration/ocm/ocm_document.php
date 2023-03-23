@@ -1166,6 +1166,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Pubblicazione di matrimonio" => "Documenti albo pretorio",
             "Atto generico" => "Documenti albo pretorio",
             "Avviso" => "Documenti albo pretorio",
+            "Avviso/Manifesto" => "Documenti albo pretorio",
             "Bando" => "Documenti albo pretorio",
             "Pubblicazione esterna" => "Documenti albo pretorio",
             "Atto di terzi" => "Documenti albo pretorio",
@@ -1209,8 +1210,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
         }
 
-        return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
-//        return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
+//        return $this->getNodeIdFromRemoteId($containers[$map[$types[0]]]);
+        return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
     }
 
     public static function getDateValidationHeaders(): array
