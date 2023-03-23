@@ -356,7 +356,6 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-
     public static function getColumnName(): string
     {
         return 'Persona che ha il ruolo*';
@@ -367,5 +366,8 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         return 110;
     }
 
-
+    public function avoidNameDuplication()
+    {
+        return false;
+    }
 }
