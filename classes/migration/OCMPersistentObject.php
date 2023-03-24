@@ -502,10 +502,10 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $parts = explode(' ', $name);
         $email = array_pop($parts);
 
-        return [
+        return [[
             'name' => trim(implode(' ', $parts)),
             'email' => $email,
-        ];
+        ]];
     }
 
     protected static function getBinaryPayload(string $data, bool $isMultiple = true)
