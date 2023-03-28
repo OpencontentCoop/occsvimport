@@ -369,7 +369,8 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
 
         $payload->setData($locale, 'takes_place_in', ocm_place::getIdListByName($this->attribute('takes_place_in')));
         $payload->setData($locale, 'attendee', ocm_public_person::getIdListByName($this->attribute('attendee')));
-        $payload->setData($locale, 'is_accessible_for_free', intval($this->attribute('is_accessible_for_free')));
+
+        $payload->setData($locale, 'is_accessible_for_free', intval($this->attribute('is_accessible_for_free') != ''));
         $payload->setData($locale, 'cost_notes', trim($this->attribute('cost_notes')));
 //@todo
 //        $payload->setData($locale, 'has_offer', trim($this->attribute('has_offer')));
