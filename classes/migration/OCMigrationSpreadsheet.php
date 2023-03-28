@@ -1052,6 +1052,10 @@ class OCMigrationSpreadsheet
                 $item = $className::fromSpreadsheet($value);
                 $ignora = isset($value['IGNORA']) && !empty($value['IGNORA']);
 
+                if ($item instanceof eZPersistentObject && $ignora){
+                    if ($cli) $cli->warning(' - Skip row by source data' . $item->id() . ' ' . $item->name());
+                }
+
                 if ($item instanceof eZPersistentObject && !$ignora) {
                     if (!$item->id()){
                         if ($cli) {
