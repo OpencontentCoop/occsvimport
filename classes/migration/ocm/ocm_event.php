@@ -232,7 +232,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             "Organizzato da" => $this->attribute('organizer'),
             "Patrocinato da" => $this->attribute('funder'),
             "Sponsorizzato da" => $this->attribute('sponsor'),
-            "Appuntamenti" => $this->attribute('related_event'),
+            "Appuntamenti" => '',
             "Persone o organizzazioni" => $this->attribute('composer'),
             "Chi presenta" => $this->attribute('performer'),
             "Servizio di traduzione curato da" => $this->attribute('translator'),
@@ -388,15 +388,12 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         $payloads = [self::getImportPriority() => $payload];
         $subEvents = ocm_event::getIdListByName($this->attribute('sub_event_of'), 'event_title');
-        $related = ocm_event::getIdListByName($this->attribute('related_event'), 'event_title');
-        if (count($subEvents) > 0 || count($related) > 0) {
+        if (count($subEvents) > 0) {
             $payload2 = clone $payload;
             $payload2->unSetData();
             $payload2->setData($locale, 'sub_event_of', $subEvents);
-            $payload2->setData($locale, 'related_event', $related);
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'sub_event_of', $subEvents);
-                $payload2->setData('ger-DE', 'related_event', $related);
             }
             $payloads[ocm_event::getImportPriority()+1] = $payload2;
         }

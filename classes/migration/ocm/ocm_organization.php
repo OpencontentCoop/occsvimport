@@ -448,7 +448,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         }
 
         if (in_array('Area', $this->formatTags($this->attribute('type')))){
-            $this->getNodeIdFromRemoteId('899b1ac505747c0d8523dfe12751eaae'); //aree
+            return $this->getNodeIdFromRemoteId('899b1ac505747c0d8523dfe12751eaae'); //aree
         }
 
         return $this->getNodeIdFromRemoteId('a9d783ef0712ac3e37edb23796990714'); // Uffici
