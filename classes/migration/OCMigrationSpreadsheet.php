@@ -314,6 +314,12 @@ class OCMigrationSpreadsheet
     public static function getMasterSpreadsheetHelpTexts($sheetTitle, $master = null): array
     {
         $sheet = self::getMasterSpreadsheet($master)->getByTitle($sheetTitle);
+
+        return self::getHelpTexts($sheetTitle, $sheet);
+    }
+
+    private static function getHelpTexts($sheetTitle, $sheet): array
+    {
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
         $client = self::instanceGoogleSheetClient();
@@ -397,10 +403,31 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public function updateHelper($className, $master = null): ?int
+    public function updateHelper($className, $master = null, $dryRun = true): ?int
     {
         $sheetTitle = $className::getSpreadsheetTitle();
         $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle, $master);
+        if ($dryRun){
+            $currentHelper = self::getHelpTexts($sheetTitle,
+                self::instanceGoogleSheet(self::getConnectedSpreadSheet())->getByTitle($sheetTitle)
+            );
+            $cli = eZCLI::instance();
+            $cli->output();
+            foreach($currentHelper as $header => $text){
+                $newText = $helper[$header] ?? '';
+                $cli->output($header);
+                if (!empty($text) && !isset($helper[$header])){
+                    $cli->error('missing ' . $header);
+                }
+                if ($newText !== $text){
+                    $cli->output(' < ' . $text);
+                    $cli->warning(' > ' . $text);
+                }
+                $cli->output();
+            }
+            return 0;
+        }
+
         $headers = $this->getHeaders($sheetTitle);
         $value = [];
         foreach ($headers as $header) {
