@@ -581,25 +581,31 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             }
         }
 
-        $payloadData = $payload->getData();
         $defaultLocale = 'ita-IT';
+        $payloadData = $payload->getData();
+
         if (!empty($translationsLocalized)) {
+
+            $appendLocales = array_keys($translationsLocalized);
+            $payload->setLanguages(
+                array_unique(
+                    array_merge($payload->getMetadaData('languages'), $appendLocales)
+                )
+            );
+            foreach ($payloadData[$defaultLocale] as $identifier => $value){
+                foreach ($appendLocales as $appendLocale){
+                    if (isset($translationsLocalized[$appendLocale][$identifier])){
+                        $payload->setData($appendLocale, $identifier, $translationsLocalized[$appendLocale][$identifier]);
+                        unset($translationsLocalized[$appendLocale][$identifier]);
+                    }else{
+                        $payload->setData($appendLocale, $identifier, $value);
+                    }
+                }
+            }
+
             foreach ($translationsLocalized as $translationLocale => $translations) {
                 foreach ($translations as $identifier => $value) {
-                    if (!isset($payloadData[$translationLocale][$identifier])) {
-
-                        if (!isset($payloadData[$translationLocale]) && isset($payloadData[$defaultLocale][$identifier])) {
-                            $payload->setLanguages(
-                                array_unique(
-                                    array_merge($payload->getMetadaData('languages'), [$translationLocale])
-                                )
-                            );
-                            foreach ($payloadData[$defaultLocale] as $key => $datum){
-                                $payload->setData($translationLocale, $key, $datum);
-                            }
-                        }
-                        $payload->setData($translationLocale, $identifier, $value);
-                    }
+                    $payload->setData($translationLocale, $identifier, $value);
                 }
             }
         }
