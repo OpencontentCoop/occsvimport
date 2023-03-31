@@ -315,16 +315,16 @@ class OCMigrationSpreadsheet
     {
         $sheet = self::getMasterSpreadsheet($master)->getByTitle($sheetTitle);
 
-        return self::getHelpTexts($sheetTitle, $sheet);
+        return self::getHelpTexts($sheetTitle, $sheet, self::$masterSpreadsheetId);
     }
 
-    private static function getHelpTexts($sheetTitle, $sheet): array
+    private static function getHelpTexts($sheetTitle, $sheet, $id): array
     {
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
         $client = self::instanceGoogleSheetClient();
         $firstRows = $client->getGoogleSheetService()->spreadsheets_values->get(
-            self::$masterSpreadsheetId,
+            $id,
             $range
         )->getValues();
 
@@ -403,38 +403,38 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public function updateHelper($className, $master = null, $dryRun = true): ?int
+    public function updateHelper($className, $master = null, $dryRun = false, $verbose = false): ?int
     {
         $sheetTitle = $className::getSpreadsheetTitle();
         $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle, $master);
-        if ($dryRun){
-            $currentHelper = self::getHelpTexts($sheetTitle,
-                self::instanceGoogleSheet(self::getConnectedSpreadSheet())->getByTitle($sheetTitle)
-            );
-            $cli = eZCLI::instance();
-            $cli->output();
-            foreach($currentHelper as $header => $text){
-                $newText = $helper[$header] ?? '';
-                $cli->output($header);
-                if (!empty($text) && !isset($helper[$header])){
-                    $cli->error('missing ' . $header);
-                }
-                if ($newText !== $text){
-                    $cli->output(' < ' . $text);
-                    $cli->warning(' > ' . $text);
-                }
-                $cli->output();
+
+        $currentHelper = self::getHelpTexts($sheetTitle,
+            self::instanceGoogleSheet(self::getConnectedSpreadSheet())->getByTitle($sheetTitle),
+            self::getConnectedSpreadSheet()
+        );
+
+        $value = [];
+        $cli = eZCLI::instance();
+        if ($verbose) $cli->output();
+        foreach($currentHelper as $header => $text){
+            $newText = $helper[$header] ?? '';
+            $value[$header] = trim($newText);
+            if (!empty($text) && !isset($helper[$header])){
+                if ($verbose) $cli->error('missing ' . $header);
+                $value[$header] = $text;
             }
+            if (trim($newText) !== trim($text)){
+                if ($verbose) $cli->output($header);
+                if ($verbose) $cli->output(' < ' . $text);
+                if ($verbose) $cli->warning(' > ' . $value[$header]);
+            }
+        }
+
+        if ($dryRun){
             return 0;
         }
 
-        $headers = $this->getHeaders($sheetTitle);
-        $value = [];
-        foreach ($headers as $header) {
-            $value[$header] = $helper[$header] ?? '';
-        }
         $values = [array_values($value)];
-
         $body = new Google_Service_Sheets_ValueRange([
             'values' => $values,
         ]);
@@ -442,7 +442,7 @@ class OCMigrationSpreadsheet
             'valueInputOption' => 'USER_ENTERED',
         ];
 
-        $colCount = count($headers);
+        $colCount = count($currentHelper);
         $range = "$sheetTitle!R2C1:R2C$colCount";
         $updateRows = (int)$this->googleSheetService->spreadsheets_values->update(
             $this->spreadsheetId,
