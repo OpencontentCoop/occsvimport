@@ -12,18 +12,20 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[only:]",
+    "[only:][master:]",
     "",
     [
         'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
+        'master' => 'Custom master spreadsheet'
     ]
 );
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 
 $classFilter = $options['only'] ? explode(',', $options['only']) : [];
+$master = $options['master'];
 
-if (empty($classFilter)) {
+if (empty($classFilter) && !$master) {
     $cli->output('Update vocabolari');
     OCMigrationSpreadsheet::instance()->updateVocabolaries();
 
@@ -34,7 +36,7 @@ if (empty($classFilter)) {
 foreach (OCMigration::getAvailableClasses($classFilter) as $className) {
     $cli->output($className);
     try {
-        OCMigrationSpreadsheet::instance()->updateHelper($className);
+        OCMigrationSpreadsheet::instance()->updateHelper($className, $master);
     } catch (Throwable $e) {
         $cli->error($e->getMessage());
         if ($options['verbose']) $cli->error($e->getTraceAsString());
