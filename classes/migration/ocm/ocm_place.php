@@ -379,7 +379,9 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'help', ocm_online_contact_point::getIdListByName($this->attribute('help')));
         $payload->setData($locale, 'more_information', $this->attribute('more_information'));
         $payload->setData($locale, 'identifier', $this->attribute('identifier'));
-        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
+        $deAddress = json_decode($this->attribute('has_address'), true);
+        $deAddress['address'] = $this->attribute('de_has_address');
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload, ['de_has_address' => $deAddress]);
         $payloads = [self::getImportPriority() => $payload];
 
         $offices = ocm_organization::getIdListByName($this->attribute('has_office'), 'legal_name');

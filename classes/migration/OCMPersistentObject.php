@@ -570,14 +570,18 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $index;
     }
 
-    protected function appendTranslationsToPayloadIfNeeded(PayloadBuilder $payload)
+    protected function appendTranslationsToPayloadIfNeeded(PayloadBuilder $payload, $serializers = array())
     {
         $fields = static::$fields;
         $translationsLocalized = [];
         foreach ($fields as $field) {
             if (strpos($field, 'de_') === 0 && !empty($this->attribute($field))) {
                 $attributeIdentifier = substr($field, 3);
-                $translationsLocalized['ger-DE'][$attributeIdentifier] = $this->attribute($field);
+                if (isset($serializers[$field])){
+                    $translationsLocalized['ger-DE'][$attributeIdentifier] = $serializers[$field];
+                }else {
+                    $translationsLocalized['ger-DE'][$attributeIdentifier] = $this->attribute($field);
+                }
             }
         }
 
