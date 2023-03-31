@@ -284,22 +284,24 @@ class OCMigrationSpreadsheet
         return self::$googleSheetClient;
     }
 
-    public static function getMasterSpreadsheet(): ?GoogleSheet
+    public static function getMasterSpreadsheet($spreadsheetUrl = null): ?GoogleSheet
     {
         if (self::$masterSpreadsheet === null) {
             $context = OCMigration::discoverContext();
             if ($context) {
-                $shortUrl = 'https://link.opencontent.it/new-kit-' . $context;
-                $ch = curl_init();
-                $timeout = 0;
-                curl_setopt($ch, CURLOPT_URL, $shortUrl);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-                curl_setopt($ch, CURLOPT_HEADER, true);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                // Getting binary data
-                curl_exec($ch);
-                $info = curl_getinfo($ch);
-                $spreadsheetUrl = $info['redirect_url'];
+                if (!$spreadsheetUrl) {
+                    $shortUrl = 'https://link.opencontent.it/new-kit-' . $context;
+                    $ch = curl_init();
+                    $timeout = 0;
+                    curl_setopt($ch, CURLOPT_URL, $shortUrl);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+                    curl_setopt($ch, CURLOPT_HEADER, true);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                    // Getting binary data
+                    curl_exec($ch);
+                    $info = curl_getinfo($ch);
+                    $spreadsheetUrl = $info['redirect_url'];
+                }
                 self::$masterSpreadsheetId = OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri($spreadsheetUrl);
                 self::$masterSpreadsheet = self::instanceGoogleSheet(self::$masterSpreadsheetId);
                 self::$masterSpreadsheetUrl = $spreadsheetUrl;
@@ -309,9 +311,9 @@ class OCMigrationSpreadsheet
         return self::$masterSpreadsheet;
     }
 
-    public static function getMasterSpreadsheetHelpTexts($sheetTitle): array
+    public static function getMasterSpreadsheetHelpTexts($sheetTitle, $master = null): array
     {
-        $sheet = self::getMasterSpreadsheet()->getByTitle($sheetTitle);
+        $sheet = self::getMasterSpreadsheet($master)->getByTitle($sheetTitle);
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
         $client = self::instanceGoogleSheetClient();
@@ -395,10 +397,10 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public function updateHelper($className): ?int
+    public function updateHelper($className, $master = null): ?int
     {
         $sheetTitle = $className::getSpreadsheetTitle();
-        $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle);
+        $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle, $master);
         $headers = $this->getHeaders($sheetTitle);
         $value = [];
         foreach ($headers as $header) {
