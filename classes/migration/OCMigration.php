@@ -980,4 +980,5 @@ class OCMigration extends eZPersistentObject
         "Vita lavorativa" => 'topic_10',
         "Volontariato" => 'topic_2_volontariato',
     ];
+
 }

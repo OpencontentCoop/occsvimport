@@ -230,7 +230,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 //todo
 //        $payload->setData($locale, 'image_file', trim($this->attribute('image_file')));
         $payload->setData($locale, 'body', trim($this->attribute('body')));
-        $payload->setData($locale, 'people', ocm_public_person::getIdListByName($this->attribute('people')));
+        $payload->setData($locale, 'people', ocm_public_person::getTypedPersonIdListByName($this->attribute('people')));
         $payload->setData($locale, 'location', ocm_place::getIdListByName($this->attribute('location')));
         $payload->setData($locale, 'video', trim($this->attribute('video')));
         $payload->setData($locale, 'author', ocm_organization::getIdListByName($this->attribute('author')));

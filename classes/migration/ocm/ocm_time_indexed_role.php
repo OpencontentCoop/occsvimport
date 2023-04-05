@@ -222,6 +222,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
     {
         $competences = json_decode($this->attribute('competences'), true);
         $delegations = json_decode($this->attribute('delegations'), true);
+
         return [
             "Identificativo incarico*" => $this->attribute('_id'),
             "Titolo dell'incarico" => $this->attribute('label'),
@@ -235,10 +236,10 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             "Data conclusione incarico" => $this->attribute('end_time'),
             "Data insediamento" => $this->attribute('data_insediamento'),
             "Atto di nomina" => $this->attribute('atto_nomina'),
-            "Competenze" => implode(PHP_EOL, $competences['ita-IT']),
-            'Kompetenzen [de]' => implode(PHP_EOL, $competences['ger-DE'] ?? []),
-            "Deleghe" => implode(PHP_EOL, $delegations['ita-IT']),
-            "Delegationen [de]" => implode(PHP_EOL, $delegations['ger-DE'] ?? []),
+            "Competenze" => implode(PHP_EOL, array_column($competences['ita-IT'], 'competence')),
+            'Kompetenzen [de]' => implode(PHP_EOL, array_column($competences['ger-DE'], 'competence')),
+            "Deleghe" => implode(PHP_EOL, array_column($delegations['ita-IT'], 'delega')),
+            "Delegationen [de]" => implode(PHP_EOL, array_column($delegations['ger-DE'], 'delega')),
             "Incarichi di posizione organizzativa" => $this->attribute('organizational_position'),
             "Incarico dirigenziale" => $this->attribute('incarico_dirigenziale'),
             "Ruolo principale" => $this->attribute('ruolo_principale'),

@@ -1249,7 +1249,7 @@ class OCMigrationSpreadsheet
                 }
                 $executionInfo[$className] = [
                     'status' => $status,
-                    'action' => 'import',
+                    'action' => 'pull',
                     'process' => $countIndex . '/' . $itemCount,
                     'update' => $message . $avoidDuplication,
                     'class' => $className,
