@@ -136,7 +136,11 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'filename' => $this->attribute('image___name'),
         ]);
         $payload->setData($locale, 'tags', $this->attribute('tags'));
-        $payload->setData($locale, 'license', $this->attribute('license'));
+        $license = 'Creative Commons Attribution 4.0 International (CC BY 4.0)';
+        if (!empty($this->attribute('license'))){
+            $license = $this->attribute('license');
+        }
+        $payload->setData($locale, 'license', $this->formatTags($license));
         $payload->setData($locale, 'proprietary_license', $this->attribute('proprietary_license'));
         $payload->setData($locale, 'proprietary_license_source', $this->attribute('proprietary_license_source'));
         $payload->setData($locale, 'author', $this->attribute('author'));
@@ -173,6 +177,37 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $names = explode(PHP_EOL, $name);
         if (!self::isEmptyArray($names)){
 
+            foreach ($names as $maybeAnUrl){
+                if (strpos($name, '/var/') !== false){
+                    if (strpos($maybeAnUrl, 'http') === false){
+                        $url = $maybeAnUrl;
+                        $anImageQuery = ocm_image::fetchObjectList(
+                            ocm_image::definition(), null, null, null, ['limit' => 1]
+                        );
+                        if (isset($anImageQuery[0])){
+                            $baseUrl = parse_url($anImageQuery[0]->attribute('_original_url'), PHP_URL_HOST);
+                            $url = 'https://' . $baseUrl . $url;
+                        }
+
+                        $image = new ocm_image();
+                        $name = OpenPABootstrapItaliaOperators::cleanFileName(basename($url));
+                        $image->setAttribute('_id', 'ocm_autoimage_' . md5($url));
+                        $image->setAttribute('name', $name);
+                        $image->setAttribute('image___name', basename($url));
+                        $image->setAttribute('image___url', $url);
+                        $image->setAttribute('author', $name);
+                        $image->setAttribute('de_author', $name);
+                        OCMPayload::create(
+                            $image->attribute('_id'),
+                            'ocm_image',
+                            ocm_image::getImportPriority(),
+                            $image->generatePayload()->getArrayCopy()
+                        );
+                        $data[] = $image->id();
+                    }
+                }
+            }
+
             $names = self::trimArray($names);
             /** @var ocm_image[] $list */
             $list = ocm_image::fetchObjectList(
@@ -196,6 +231,11 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     public function storePayload(): int
     {
         return 0;
+    }
+
+    public function forceStorePayload(): int
+    {
+        return parent::storePayload();
     }
 
     public static function checkPayloadGeneration(): bool

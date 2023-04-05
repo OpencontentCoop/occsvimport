@@ -485,9 +485,9 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 }, $names);
             }
         }
-
+        $names = explode(PHP_EOL, OCMigrationVocs::filterVocs($names));
         if (!self::isEmptyArray($names)) {
-            return OCMigrationVocs::filterVocs($names);
+            return $names;
         }
 
         return [];
@@ -517,7 +517,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $items = explode(PHP_EOL, $data);
         foreach ($items as $item) {
             $values[] = [
-                'url' => $item,
+                'url' => str_replace('http://', 'https://', $item),
                 'filename' => basename($item),
             ];
         }
