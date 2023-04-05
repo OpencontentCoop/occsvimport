@@ -33,7 +33,7 @@ function jsonEncodeError(Throwable $e)
     return json_encode([
         'status' => 'error',
         'message' => $e->getMessage(),
-//        'trace' => $e->getTraceAsString(),
+        'trace' => explode(PHP_EOL, $e->getTraceAsString()),
     ]);
 }
 
@@ -122,7 +122,11 @@ if ($requestAction === 'store_payload' && !empty($requestId) && $http->hasVariab
             /** @var OCMPersistentObject[] $items */
             $items = $class::fetchByField('_id', $requestId);
             if (isset($items[0])) {
-                $items[0]->storePayload();
+                if (method_exists($items[0], 'forceStorePayload')){ // image
+                    $items[0]->forceStorePayload();
+                }else {
+                    $items[0]->storePayload();
+                }
                 echo json_encode(
                     $items[0]->generatePayload()
                 );
