@@ -601,9 +601,10 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
 
             /** @var ocm_public_person[] $list */
             $list = static::fetchObjectList(
-                static::definition(), ['_id'],
+                static::definition(), null,
                 ["concat_ws(' ', family_name, given_name)" => [$names]]
             );
+
             foreach ($list as $item){
                 if ($item->getPersonType()){
                     $data[] = $item->attribute('_id');
