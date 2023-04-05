@@ -225,7 +225,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         if (!empty($this->attribute('has_logo')) && (strpos($this->attribute('has_logo'), '/') !== false)) {
             $logoUrl = $this->attribute('has_logo');
             if (strpos($logoUrl, 'http') === false){
-                $baseUrl = parse_url($this->attribute('original_url'), PHP_URL_HOST);
+                $baseUrl = parse_url($this->attribute('_original_url'), PHP_URL_HOST);
                 $logoUrl = 'https://' . $baseUrl . $logoUrl;
             }
             $payload->setData($locale, 'has_logo', [
