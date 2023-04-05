@@ -161,7 +161,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'altre_cariche' => OCMigration::getMapperHelper('assunzione_cariche'),
             'eventuali_incarichi' => false,
             'dichiarazione_incompatibilita' => false,
-            'notes' => false,
+            'notes' => OCMigration::getMapperHelper('nota'),
             'de_abstract' => false,
             'de_bio' => false,
             'de_situazione_patrimoniale' => false,
