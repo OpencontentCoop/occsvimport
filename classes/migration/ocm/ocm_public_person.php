@@ -467,16 +467,58 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
     // 50f295ca2a57943b195fa8ffc6b909d8 pol
     private function discoverParentNode(): int
     {
+        $type = $this->getPersonType();
+        if ($type) {
+            $remoteId = $type == 'Amministrativo' ? '3da91bfec50abc9740f0f3d62c8aaac4' : '50f295ca2a57943b195fa8ffc6b909d8';
+            $this->getNodeIdFromRemoteId($remoteId);
+        }
+
+        return $this->getUntypedParentNode();
+    }
+
+    private function getUntypedParentNode()
+    {
+        $remoteId = '01268e2ede40faaa233c64acc189c5cc'; // Cessati dall'incarico
+        $object = eZContentObject::fetchByRemoteID($remoteId);
+        if ($object instanceof eZContentObject){
+            return (int)$object->mainNodeID();
+        }
+
+        $remoteId = 'ocm_cessati'; // temp cessati dall'incarico
+        $object = eZContentObject::fetchByRemoteID($remoteId);
+        if ($object instanceof eZContentObject){
+            return (int)$object->mainNodeID();
+        }
+
+        $object = eZContentFunctions::createAndPublishObject([
+            'parent_node_id' => eZINI::instance('content.ini')->variable('NodeSettings', 'MediaRootNode'),
+            'remote_id' => $remoteId,
+            'class_identifier' => 'folder',
+            'attributes' => [
+                'name' => "Cessati dall'incarico"
+            ]
+        ]);
+        if ($object instanceof eZContentObject){
+            return (int)$object->mainNodeID();
+        }
+
+        return false;
+    }
+
+    public function getPersonType(): ?string
+    {
         $name = $this->attribute('family_name') . ' ' . $this->attribute('given_name');
         /** @var ocm_time_indexed_role[] $rows */
         $rows = ocm_time_indexed_role::fetchByField('person', $name);
-        $type = 'Amministrativo';
-        if (isset($rows[0])){
+        $type = false;
+        foreach ($rows as $row){
             $type = $rows[0]->attribute('type');
+            if (!empty($type)){
+                return $type;
+            }
         }
-        $remoteId = $type == 'Amministrativo' ? '3da91bfec50abc9740f0f3d62c8aaac4' : '50f295ca2a57943b195fa8ffc6b909d8';
 
-        return $this->getNodeIdFromRemoteId($remoteId);
+        return $type;
     }
 
     public static function getRangeValidationHash(): array
@@ -543,6 +585,29 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
                 ["concat_ws(' ', family_name, given_name)" => [$names]]
             );
             $data = array_column($list, '_id');
+        }
+
+        return $data;
+    }
+
+    public static function getTypedPersonIdListByName($name)
+    {
+        $data = [];
+        $names = explode(PHP_EOL, $name);
+        if (!self::isEmptyArray($names)){
+
+            $names = self::trimArray($names);
+
+            /** @var ocm_public_person[] $list */
+            $list = static::fetchObjectList(
+                static::definition(), ['_id'],
+                ["concat_ws(' ', family_name, given_name)" => [$names]]
+            );
+            foreach ($list as $item){
+                if ($item->getPersonType()){
+                    $data[] = $item->attribute('_id');
+                }
+            }
         }
 
         return $data;

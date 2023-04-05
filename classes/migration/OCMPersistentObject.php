@@ -487,7 +487,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
 
         if (!self::isEmptyArray($names)) {
-            return $names;
+            return OCMigrationVocs::filterVocs($names);
         }
 
         return [];
