@@ -468,9 +468,10 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
     private function discoverParentNode(): int
     {
         $type = $this->getPersonType();
+
         if ($type) {
             $remoteId = $type == 'Amministrativo' ? '3da91bfec50abc9740f0f3d62c8aaac4' : '50f295ca2a57943b195fa8ffc6b909d8';
-            $this->getNodeIdFromRemoteId($remoteId);
+            return $this->getNodeIdFromRemoteId($remoteId);
         }
 
         return $this->getUntypedParentNode();
