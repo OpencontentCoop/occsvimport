@@ -642,4 +642,13 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     {
         return true;
     }
+
+    /**
+     * @return void
+     * @throw RuntimeException
+     */
+    public function checkRequiredColumns()
+    {
+        //throw new RuntimeException();
+    }
 }
