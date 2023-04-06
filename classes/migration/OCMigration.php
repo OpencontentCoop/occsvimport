@@ -197,7 +197,7 @@ class OCMigration extends eZPersistentObject
                 $ocmList[] = $class;
             }
         }
-
+        rsort($ocmList);
         return $ocmList;
     }
 
