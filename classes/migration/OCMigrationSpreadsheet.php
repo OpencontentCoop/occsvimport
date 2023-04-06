@@ -1104,10 +1104,11 @@ class OCMigrationSpreadsheet
                         }
                         $remoteIdCollection[$item->id()] = $item->name();
 
+                        $item->checkRequiredColumns();
+
                         if ($item->avoidNameDuplication()) {
                             if (in_array($item->name(), $nameCollection)) {
-                                $errorMessage = "Titolo duplicato: " . $item->name() . ' (identificativo: ' . $item->id(
-                                    ) . ')';
+                                $errorMessage = "Titolo duplicato: " . $item->name() . ' (identificativo: ' . $item->id() . ')';
                                 $duplicate[trim($item->name())] = $errorMessage;
                                 throw new InvalidArgumentException($errorMessage);
                             }

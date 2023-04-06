@@ -130,6 +130,8 @@ if ($requestAction === 'store_payload' && !empty($requestId) && $http->hasVariab
                 echo json_encode(
                     $items[0]->generatePayload()
                 );
+            } else {
+                throw new Exception("$requestId type not found");
             }
         }else{
             throw new Exception("$class type not found");
