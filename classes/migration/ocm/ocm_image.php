@@ -131,9 +131,13 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
 
         $payload->setData($locale, 'name', $this->attribute('name'));
         $payload->setData($locale, 'caption', $this->attribute('caption'));
+        $filename = $this->attribute('image___name');
+        if (empty($filename)){
+            $filename = basename($this->attribute('image___url'));
+        }
         $payload->setData($locale, 'image', [
             'url' => $this->attribute('image___url'),
-            'filename' => $this->attribute('image___name'),
+            'filename' => $filename,
         ]);
         $payload->setData($locale, 'tags', $this->attribute('tags'));
         $license = 'Creative Commons Attribution 4.0 International (CC BY 4.0)';
