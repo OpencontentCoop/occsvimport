@@ -6,6 +6,8 @@ use Opencontent\Opendata\Api\Exception\DuplicateRemoteIdException;
 
 class OCMPayload extends eZPersistentObject
 {
+    private $source = false;
+
     public static function definition()
     {
         return [
@@ -154,5 +156,21 @@ class OCMPayload extends eZPersistentObject
             $this->store();
             throw $e;
         }
+    }
+
+    public function getSourceItem(): ?OCMPersistentObject
+    {
+        if ($this->source === false){
+            $this->source = null;
+            $type = $this->attribute('type');
+            if (OCMigration::isValidClass($type)){
+                $items = $type::fetchByField('_id', $this->id());
+                if (isset($items[0])) {
+                    $this->source = $items[0];
+                }
+            }
+        }
+
+        return $this->source;
     }
 }

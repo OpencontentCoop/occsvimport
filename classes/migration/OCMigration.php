@@ -7,7 +7,7 @@ class OCMigration extends eZPersistentObject
 {
     final public static function version()
     {
-        return '1.1.0';
+        return '1.2.0';
     }
 
     /**
@@ -183,6 +183,11 @@ class OCMigration extends eZPersistentObject
         $this->info(count($nodes) . ' node founds');
 
         return $nodes;
+    }
+
+    final public static function isValidClass($class): bool
+    {
+        return strpos($class, 'ocm_') !== false && in_array('ocm_interface', class_implements($class));
     }
 
     final public static function getAvailableClasses($namesFilter = [])
