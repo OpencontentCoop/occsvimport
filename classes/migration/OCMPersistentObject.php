@@ -651,4 +651,17 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
     {
         //throw new RuntimeException();
     }
+
+    public function getSpreadsheetRow()
+    {
+        $rowLink = OCMigrationSpreadsheet::instance()->getRowLink(
+            static::getSpreadsheetTitle(),
+            static::getIdColumnLabel(),
+            $this->id()
+        );
+        if (!$rowLink) {
+            throw new Exception('Error creating spreadsheet link');
+        }
+        return $rowLink;
+    }
 }

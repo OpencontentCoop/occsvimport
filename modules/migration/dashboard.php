@@ -197,12 +197,36 @@ if (in_array($requestAction, $classes) && !empty($requestId)) {
     eZExecution::cleanExit();
 }
 
+if ($requestAction === 'link') {
+    [$class, $id] = explode(':', base64_decode($requestId), 2);
+    try {
+        if (in_array($class, $classes)) {
+            /** @var OCMPersistentObject $item */
+            $item = (new $class)->fetch($id);
+            if ($item) {
+                $location = $item->getSpreadsheetRow();
+                eZHTTPTool::redirect($location);
+                eZExecution::cleanExit();
+            }else {
+                throw new Exception("$id not found");
+            }
+        }else {
+            throw new Exception("$class not found");
+        }
+    } catch (Throwable $e) {
+        echo jsonEncodeError($e);
+    }
+    header('Content-Type: application/json');
+    header('HTTP/1.1 200 OK');
+    eZExecution::cleanExit();
+}
+
 if ($requestAction === 'datatable') {
     $class = $requestId;
     $rows = [];
     $rowCount = 0;
-    $length = $context ? 100 : 5000;//@todo $http->getVariable('length', 10);
-    $start = 0; //@todo $http->getVariable('start', 0);
+    $length = $http->variable('length', 10);
+    $start = $http->variable('start', 0);
     eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
 
     if (in_array($class, $classes)) {
@@ -210,8 +234,8 @@ if ($requestAction === 'datatable') {
             /** @var eZPersistentObject|ocm_interface $class */
             $rowCount = (int)$class::count($class::definition());
 
-            function getRows($class){
-                return $class::fetchObjectList(
+            function getRows($class, $length, $start){
+                $rows = $class::fetchObjectList(
                     $class::definition(),
                     null,
                     null,
@@ -219,27 +243,45 @@ if ($requestAction === 'datatable') {
                     ['limit' => $length, 'offset' => $start],
                     false
                 );
+                foreach ($rows as $index => $row){
+                    $itemUrl = '/migration/dashboard/link/' . base64_encode($class . ':' . $row['_id']);
+                    eZURI::transformURI($itemUrl, false, 'full');
+                    $rows[$index]['_id'] = $itemUrl . '#' . $row['_id'] . '#' . $class;
+                }
+                return $rows;
             }
 
             try {
-                $rows = getRows($class);
+                $rows = getRows($class, $length, $start);
             }catch (eZDBException $e){
                 OCMigration::createTableIfNeeded();
-                $rows = getRows($class);
+                $rows = getRows($class, $length, $start);
             }
         }else{
             $rowCount = (int)OCMPayload::count(OCMPayload::definition(), ['type' => $class, 'error' => ['!=', '']]);
-            $rows = OCMPayload::fetchObjectList(
+            /** @var OCMPayload[] $data */
+            $data = OCMPayload::fetchObjectList(
                 OCMPayload::definition(),
-                ['id', 'modified_at', 'executed_at', 'error'],
+                null,
                 ['type' => $class, 'error' => ['!=', '']],
                 ['executed_at' => 'asc'],
                 ['limit' => $length, 'offset' => $start],
-                false
+                true
             );
-            foreach ($rows as $index => $row){
-                $rows[$index]['modified_at'] = empty($row['modified_at']) ? '' : date('D, d M Y H:i:s', $row['modified_at']);
-                $rows[$index]['executed_at'] = empty($row['executed_at']) ? '' : date('D, d M Y H:i:s', $row['executed_at']);
+            foreach ($data as $index => $item){
+                $timeData = [
+                    'modified_at' => empty($item->attribute('modified_at')) ? '' : date('d M Y H:i:s', $item->attribute('modified_at')),
+                    'executed_at' => empty($item->attribute('executed_at')) ? '' : date('d M Y H:i:s', $item->attribute('executed_at'))
+                ];
+
+                $itemUrl = '/migration/dashboard/link/' . base64_encode($class . ':' . $item->id());
+                eZURI::transformURI($itemUrl, false, 'full');
+
+                $rows[$index]['id'] = $itemUrl . '#' . $item->id();
+                $rows[$index]['title'] = $item->getSourceItem() ? $item->getSourceItem()->name() : '';
+                $rows[$index]['original_url'] = $item->getSourceItem() ? $item->getSourceItem()->attribute('_original_url') : '';
+                $rows[$index]['info'] = $timeData;
+                $rows[$index]['error'] = $item->attribute('error');
             }
         }
     }
@@ -248,7 +290,7 @@ if ($requestAction === 'datatable') {
         'draw' => $http->hasVariable('draw') ? ($http->variable('draw') + 1) : 0,
         'recordsTotal' => $rowCount,
         'recordsFiltered' => $rowCount,
-        'data' => $rows,
+        'data' => array_values($rows),
         'params' => [],
     ];
     header('Content-Type: application/json');
@@ -269,7 +311,15 @@ if ($requestAction === 'fields') {
     if ($context) {
         $class = $requestId;
         if (in_array($class, $classes)) {
+            $data[] = [
+                'data' => '_id',
+                'title' => 'id',
+                'name' => '_id',
+                'searchable' => false,
+                'sortable' => false,
+            ];
             foreach ($class::definition()['fields'] as $field) {
+                if ($field['name'] === '_id') continue;
                 $data[] = [
                     'data' => $field['name'],
                     'title' => trim(str_replace('_', ' ', $field['name'])),
@@ -280,7 +330,7 @@ if ($requestAction === 'fields') {
             }
         }
     }else {
-        foreach (['id', 'modified_at', 'executed_at', 'error'] as $field) {
+        foreach (['id', 'title', 'original_url', 'error', 'info'] as $field) {
             $data[] = [
                 'data' => $field,
                 'title' => trim(str_replace('_', ' ', $field)),

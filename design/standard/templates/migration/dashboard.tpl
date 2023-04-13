@@ -10,14 +10,14 @@
         'moment-with-locales.min.js',
         'handlebars.min.js',
         'alpaca.min.js',
-        'jquery.dataTables.js',
-        'dataTables.responsive.min.js',
-        'dataTables.bootstrap.js'
+        'jq.dt.min.js',
+        'dt.b4.min.js',
+        'dataTables.responsive.min.js'
     ))}
     {ezcss_load(array(
         'bootstrap.min.css',
         'glyphicon.css',
-        'dataTables.bootstrap.css',
+        'dt.b4.min.css',
         'responsive.dataTables.min.css'
     ))}
 </head>
@@ -63,7 +63,7 @@
 
             <div class="my-4 actions">
 
-                    <td class="container options mb-4">
+                    <div class="container options mb-4">
                         <table class="table">
                             <tr>
                                 <th colspan="2"><a href="#" class="btn btn-sm btn-link" id="CheckAll" title="Inverti selezione"><span class="glyphicon glyphicon-check"></span> Inverti selezione</a></th>
@@ -157,8 +157,8 @@
                 </ul>
             </div>
             <div class="col-12">
-                <div>
-                    <table id="data" class="table table-bordered table-sm display responsive no-wrap w-100" cellpadding="0" cellspacing="0"></table>
+                <div class="my-3">
+                    <table id="data" class="table table-striped table-bordered table-sm display responsive no-wrap w-100" cellpadding="0" cellspacing="0"></table>
                 </div>
             </div>
         {/if}
@@ -189,11 +189,41 @@
           }
           var type = $('.nav-link.active').data('identifier');
           data.html('');
+
+          var renderField = function ( data, type, row, meta ) {
+            if (typeof data === 'object') {
+              return '<small style="font-size:.7em; white-space:nowrap">Ultima modifica: ' + data.modified_at + '</small><br />' +
+                '<small style="font-size:.7em; white-space:nowrap">Ultima esecuzione: ' + data.executed_at + '</small>';
+            }
+            if (typeof data === 'string' && data.startsWith('http')){
+              var splitted = data.split('#');
+              var name = splitted[1] ?? data;
+              var extra = '';
+              if (name !== data){
+                var className = splitted[2] ?? '';
+                var extraLink = '#';
+                if (className.length > 0){
+                  extraLink = '/migration/dashboard/'+className+'/'+name;
+                  extra = ' <a target="_blank" class="badge badge-info float-right m-1" href="'+extraLink+'">Data</a>';
+                }else{
+                  extraLink = '/migration/dashboard/payload/'+name;
+                  extra = ' <a target="_blank" class="badge badge-info float-right m-1" href="'+extraLink+'">Payload</a>';
+                }
+              }
+              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><small>'+name+'</small></a>'+extra;
+            }
+            return data;
+          }
+
           $.getJSON(BaseUrl+'/fields/'+type, function (columns) {
+            $.each(columns, function (){
+              this.render = renderField;
+            })
             data.DataTable({
-              dom: 'it', //@todo pr
-              pageLength: Context ? 100 : 5000,
               responsive: true,
+              dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" +
+                "<'row'<'col-sm-12'tr>>",
               columns: columns,
               ajax: {
                 url: BaseUrl+'/datatable/'+type,

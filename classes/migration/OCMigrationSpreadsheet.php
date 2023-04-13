@@ -1472,4 +1472,18 @@ class OCMigrationSpreadsheet
         }
         return $this->dataHash[$sheetTitle];
     }
+
+    public function getRowLink($sheetTitle, $label, $value): ?string
+    {
+        $sheet = $this->spreadsheet->getByTitle($sheetTitle);
+        $dataHash = $this->getDataHash($sheetTitle);
+        $range = '';
+        foreach ($dataHash as $index => $hash){
+            if ($hash[$label] == $value){
+                $row = $index + self::$dataStartAtRow;
+                $range = "&range={$row}:{$row}";
+            }
+        }
+        return 'https://docs.google.com/spreadsheets/d/' . $this->spreadsheetId . '/edit#gid=' . $sheet->getProperties()->getSheetId() . $range;
+    }
 }
