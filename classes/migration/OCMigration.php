@@ -582,6 +582,11 @@ class OCMigration extends eZPersistentObject
             $tree[] = $item;
         }
         $tree = array_unique($tree);
+
+        if (empty($tree)){
+            return [];
+        }
+
         $rows = eZPersistentObject::fetchObjectList(
             eZContentObject::definition(),
             ['remote_id'], ['remote_id' => [$tree]],
