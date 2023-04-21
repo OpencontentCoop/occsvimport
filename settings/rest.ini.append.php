@@ -7,7 +7,7 @@ ProviderClass[ocm]=OCMProvider
 ApplicationCache=disabled
 
 [RouteSettings]
-SkipFilter[]=OpenApiController_*
+SkipFilter[]=OCMController_*
 
 [Authentication]
 AuthenticationStyle=OpenApiBasicAuthStyle
