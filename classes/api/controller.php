@@ -110,4 +110,15 @@ class OCMController extends ezpRestMvcController
 
         return $result;
     }
+
+    public function doGetTrasparenza()
+    {
+        $result = new ezpRestMvcResult();
+        $data = eZSiteData::fetchByName('ocm_trasparenza');
+        if ($data instanceof eZSiteData){
+            $result->variables = json_decode($data->attribute('value'), true);
+        }
+
+        return $result;
+    }
 }
