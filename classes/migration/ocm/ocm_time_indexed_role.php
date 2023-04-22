@@ -316,8 +316,14 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'ruolo_principale', self::getBooleanPayload($this->attribute('ruolo_principale')));
         $payload->setData($locale, 'priorita', (int)$this->attribute('priorita'));
         $payload->setData($locale, 'notes', $this->attribute('notes'));
+
         $payload->setData($locale, 'competences', json_decode($this->attribute('competences'))->{'ita-IT'});
-        $payload->setData($locale, 'delegations', json_decode($this->attribute('delegations'))->{'ita-IT'});
+
+        $delegations = json_decode($this->attribute('delegations'))->{'ita-IT'};
+        if (!empty($delegations)){
+
+        }
+        $payload->setData($locale, 'delegations', $delegations);
 
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }

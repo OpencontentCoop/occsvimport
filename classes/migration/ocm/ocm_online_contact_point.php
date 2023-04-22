@@ -19,6 +19,8 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         'de_name',
         'contact',
         'phone_availability_time',
+        'note',
+        'de_note',
     ];
 
     protected function getOpencityFieldMapper(): array
@@ -32,6 +34,10 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             },
             'contact' => OCMigration::getMapperHelper('contact'),
             'phone_availability_time' => OCMigration::getMapperHelper('phone_availability_time'),
+            'note' => false,
+            'de_note' => function(Content $content){
+                return $content->data['ger-DE']['note']['content'] ?? '';
+            },
         ];
     }
 
@@ -69,6 +75,9 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $data['Tipo di contatto ' . $indexLabel] = $contacts['ita-IT'][$x]['contact'] ?? '';
             $data['Kontakt ' . $indexLabelRequired . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
         }
+
+        $data['Note'] = $this->attribute('note');
+        $data['Hinweise (de)'] = $this->attribute('de_note');
 
         $data['Pagina contenitore'] = $this->attribute('_parent_name');
         $data['Url originale'] = $this->attribute('_original_url');
@@ -112,6 +121,9 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             }
         }
         $item->setAttribute('contact', json_encode($contacts));
+
+        $item->setAttribute('note', $row['Note'] ?? '');
+        $item->setAttribute('de_note', $row['Hinweise (de)'] ?? '');
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

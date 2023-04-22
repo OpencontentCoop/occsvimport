@@ -6,6 +6,13 @@ class OCMProvider implements ezpRestProviderInterface
     {
         $version = 1;
         return [
+            'getOCMTrasparenza' => new ezpRestVersionedRoute(new OpenApiRailsRoute(
+                '/trasparenza',
+                'OCMController',
+                'getTrasparenza',
+                [],
+                'http-get'
+            ), $version),
             'getOCMField' => new ezpRestVersionedRoute(new OpenApiRailsRoute(
                 '/:collection/:item/:field',
                 'OCMController',
