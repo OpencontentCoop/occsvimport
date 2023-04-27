@@ -784,7 +784,7 @@ class OCMigrationSpreadsheet
         foreach ($headers as $index => $header) {
             $prefix = '';
             if ($index > 25) {
-                $index = $index - 25;
+                $index = $index - 26;
                 $prefix = 'A';
             }
             if ($column == $header) {

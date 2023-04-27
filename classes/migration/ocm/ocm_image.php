@@ -189,14 +189,20 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
                         $anImageQuery = ocm_image::fetchObjectList(
                             ocm_image::definition(), null, ['_original_url' => ['like', 'http%']], null, ['limit' => 1]
                         );
-                        if (!isset($anImageQuery[0])){
-                            $anImageQuery = ocm_online_contact_point::fetchObjectList(
-                                ocm_online_contact_point::definition(), null, ['_original_url' => ['like', 'http%']], null, ['limit' => 1]
-                            );
+                        $anImage = $anImageQuery[0] ?? false;
+                        while ($anImage === false){
+                            foreach (OCMigration::getAvailableClasses() as $class){
+                                $anImageQuery = $class::fetchObjectList(
+                                    $class::definition(), null, ['_original_url' => ['like', 'http%']], null, ['limit' => 1]
+                                );
+                                $anImage = $anImageQuery[0] ?? false;
+                                if ($anImage){
+                                    break;
+                                }
+                            }
                         }
-
-                        if (isset($anImageQuery[0])){
-                            $baseUrl = parse_url($anImageQuery[0]->attribute('_original_url'), PHP_URL_HOST);
+                        if ($anImage instanceof OCMPersistentObject){
+                            $baseUrl = parse_url($anImage->attribute('_original_url'), PHP_URL_HOST);
                             $url = 'https://' . $baseUrl . $url;
                         }
 

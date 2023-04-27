@@ -147,7 +147,13 @@
     <div class="row">
         {if $migration_spreadsheet}
             <div class="col-12">
-                <h2 class="my-4">{if $context}Anteprima dati da esportare{else}Errori di importazione{/if}</h2>
+                <h2 class="my-4">{if $context}Anteprima dati da esportare{/if}</h2>
+                {if $context|not()}
+                    <select id="useContext" name="useContext" class="form-control form-control-lg" style="width: 300px;font-weight: bold">
+                        <option value="0" selected="selected">Errori di importazione</option>
+                        <option value="1">Dati letti dallo spreadsheet</option>
+                    </select>
+                {/if}
             </div>
             <div class="col-12">
                 <ul class="nav nav-tabs">
@@ -174,6 +180,8 @@
 {literal}
     <script type="text/javascript">
       $(document).ready(function () {
+
+        $.fn.dataTable.ext.errMode = 'throw';
 
         $('#CheckAll').on('click', function (e) {
           $('[name="Only"]').each(function (){
@@ -204,18 +212,27 @@
                 var extraLink = '#';
                 if (className.length > 0){
                   extraLink = '/migration/dashboard/'+className+'/'+name;
-                  extra = ' <a target="_blank" class="badge badge-info float-right m-1" href="'+extraLink+'">Data</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Data</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/openpa/object/'+row['__id']+'">Local content</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/opendata/api/content/read/'+row['__id']+'">Local api content</a>';
                 }else{
                   extraLink = '/migration/dashboard/payload/'+name;
-                  extra = ' <a target="_blank" class="badge badge-info float-right m-1" href="'+extraLink+'">Payload</a>';
+                  extra = ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Payload</a>';
                 }
               }
-              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><small>'+name+'</small></a>'+extra;
+              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><small>'+name+'</small></a><span class="d-block text-nowrap">'+extra+'</span>';
             }
             return data;
           }
 
-          $.getJSON(BaseUrl+'/fields/'+type, function (columns) {
+          var useContextSelect = $('#useContext');
+          var useContext = useContextSelect.length > 0 ? useContextSelect.val() : 1;
+          if (useContextSelect){
+            useContextSelect.on('change', function(){
+              $('.nav-link.active').trigger('click');
+            })
+          }
+          $.getJSON(BaseUrl+'/fields/'+type+'?useContext='+useContext, function (columns) {
             $.each(columns, function (){
               this.render = renderField;
             })
@@ -226,7 +243,7 @@
                 "<'row'<'col-sm-12'tr>>",
               columns: columns,
               ajax: {
-                url: BaseUrl+'/datatable/'+type,
+                url: BaseUrl+'/datatable/'+type+'?useContext='+useContext,
                 type: 'POST',
                 data: {
                   ezxform_token: $('[name="ezxform_token"]').attr('value')

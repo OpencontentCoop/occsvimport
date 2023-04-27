@@ -228,9 +228,9 @@ if ($requestAction === 'datatable') {
     $length = $http->variable('length', 10);
     $start = $http->variable('start', 0);
     eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
-
+    $withContext = $context ?: $http->variable('useContext');
     if (in_array($class, $classes)) {
-        if ($context) {
+        if ($withContext) {
             /** @var eZPersistentObject|ocm_interface $class */
             $rowCount = (int)$class::count($class::definition());
 
@@ -247,6 +247,7 @@ if ($requestAction === 'datatable') {
                     $itemUrl = '/migration/dashboard/link/' . base64_encode($class . ':' . $row['_id']);
                     eZURI::transformURI($itemUrl, false, 'full');
                     $rows[$index]['_id'] = $itemUrl . '#' . $row['_id'] . '#' . $class;
+                    $rows[$index]['__id'] = $row['_id'];
                 }
                 return $rows;
             }
@@ -278,6 +279,7 @@ if ($requestAction === 'datatable') {
                 eZURI::transformURI($itemUrl, false, 'full');
 
                 $rows[$index]['id'] = $itemUrl . '#' . $item->id();
+                $rows[$index]['__id'] = $item->id();
                 $rows[$index]['title'] = $item->getSourceItem() ? $item->getSourceItem()->name() : '';
                 $rows[$index]['original_url'] = $item->getSourceItem() ? $item->getSourceItem()->attribute('_original_url') : '';
                 $rows[$index]['info'] = $timeData;
@@ -308,7 +310,8 @@ if ($requestAction === 'datatable') {
 
 if ($requestAction === 'fields') {
     $data = [];
-    if ($context) {
+    $withContext = $context ?: $http->variable('useContext');
+    if ($withContext) {
         $class = $requestId;
         if (in_array($class, $classes)) {
             $data[] = [

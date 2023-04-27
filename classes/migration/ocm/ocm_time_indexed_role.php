@@ -317,15 +317,34 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'priorita', (int)$this->attribute('priorita'));
         $payload->setData($locale, 'notes', $this->attribute('notes'));
 
-        $payload->setData($locale, 'competences', json_decode($this->attribute('competences'))->{'ita-IT'});
+        $this->setMatrixDataToPayload('delegations', $payload);
+        $this->setMatrixDataToPayload('competences', $payload);
 
-        $delegations = json_decode($this->attribute('delegations'))->{'ita-IT'};
-        if (!empty($delegations)){
-
-        }
-        $payload->setData($locale, 'delegations', $delegations);
+        $payload->setData($locale, 'person', ['1a73e17ef1ecc62796ef3e640f3cab06']);
+        $payload->setData($locale, 'for_entity', ['7527419b2d5fde514875e35da20bfe1e']);
 
         return $this->appendTranslationsToPayloadIfNeeded($payload);
+    }
+
+    private function setMatrixDataToPayload($field, \Opencontent\Opendata\Rest\Client\PayloadBuilder $payload)
+    {
+        $fieldItemLabel = $field === 'delegations' ? 'delega' : 'competence';
+        $fieldValues = json_decode($this->attribute($field));
+        if (!empty($fieldValues)){
+            $dataValues = [];
+            foreach ($fieldValues as $l => $values){
+                foreach ($values as $value){
+                    if (!empty($value) && $value !== 'Caricamento in corso...'){
+                        $dataValues[$l][] = [
+                            $fieldItemLabel => $value
+                        ];
+                    }
+                }
+                if (!empty($dataValues[$l])){
+                    $payload->setData($l, $field, $dataValues[$l]);
+                }
+            }
+        }
     }
 
     public static function getDateValidationHeaders(): array
