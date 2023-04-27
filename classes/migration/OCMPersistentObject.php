@@ -353,6 +353,15 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             'content-type' => 'Tipi di contenuto',
             'popolazione' => 'Fasce generali di popolazione',
             'giuridica' => 'Forma giuridica',
+            'service_status' => 'Stato del servizio',
+            'service_category' => 'Categoria del servizio',
+            'service_io' => 'Input-Output',
+            'service_interaction' => 'Livello di interattività',
+            'service_nace' => 'NACE',
+            'service_auth' => 'Tipo di autenticazione',
+            'service_channel' => 'Tipologia del canale del servizio',
+            'service_procedure' => 'Tipologia di procedimento',
+            'lingue' => 'Lingue',
         ];
         if (!isset($identifiers[$identifier])) {
             throw new Exception("Invalid voc identifier $identifier");

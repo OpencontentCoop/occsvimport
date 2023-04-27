@@ -38,6 +38,9 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
         $this->fillByType($namesFilter, $isUpdate, 'ocm_link', ['link']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_private_organization', ['private_organization']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_public_organization', ['public_organization']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_public_service', ['public_service']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_output', ['output']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_channel', ['channel']);
     }
 
     /**

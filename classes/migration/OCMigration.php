@@ -510,6 +510,10 @@ class OCMigration extends eZPersistentObject
                             }
 
                         case eZTagsType::DATA_TYPE_STRING:
+                            $attribute = eZContentObjectAttribute::fetch($fieldInfo['id'], $fieldInfo['version']);
+                            if ($attribute instanceof eZContentObjectAttribute){
+                                return OCMigrationVocs::filterVocs($attribute->content()->attribute('keywords'));
+                            }
                             return OCMigrationVocs::filterVocs($contentValue);
 
                         default:
