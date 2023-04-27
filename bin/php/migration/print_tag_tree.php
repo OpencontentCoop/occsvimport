@@ -71,11 +71,11 @@ function readRicorsive($tag, $onlyChild)
     foreach ($tag['children'] as $child){
         if (!$onlyChild || ($onlyChild && !$child['hasChildren'])) {
             $list[] = $child['keywordTranslations'][$locale];
-            foreach ($child['synonyms'] as $lang => $synonym) {
-                if ($lang === $locale) {
-                    $list[] = $synonym;
-                }
-            }
+//            foreach ($child['synonyms'] as $lang => $synonym) {
+//                if ($lang === $locale) {
+//                    $list[] = $synonym;
+//                }
+//            }
         }
         readRicorsive($child, $onlyChild);
     }
