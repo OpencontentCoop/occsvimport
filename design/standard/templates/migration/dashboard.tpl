@@ -217,10 +217,14 @@
                   extra += ' <a target="_blank" class="badge badge-info m-1" href="/opendata/api/content/read/'+row['__id']+'">Local api content</a>';
                 }else{
                   extraLink = '/migration/dashboard/payload/'+name;
-                  extra = ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Payload</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Payload</a>';
+                  extraLink = '/migration/dashboard/import/'+name;
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Re-import</a>';
+                  extraLink = '/migration/dashboard/store_payload/'+name+'?type='+row['__type'];
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Re-generate payload</a>';
                 }
               }
-              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><small>'+name+'</small></a><span class="d-block text-nowrap">'+extra+'</span>';
+              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><code>'+name+'</code></a><span class="d-block text-nowrap">'+extra+'</span>';
             }
             return data;
           }

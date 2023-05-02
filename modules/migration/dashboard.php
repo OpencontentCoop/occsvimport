@@ -131,7 +131,7 @@ if ($requestAction === 'store_payload' && !empty($requestId) && $http->hasVariab
                     $items[0]->generatePayload()
                 );
             } else {
-                throw new Exception("$requestId type not found");
+                throw new Exception("$class $requestId not found");
             }
         }else{
             throw new Exception("$class type not found");
@@ -280,6 +280,7 @@ if ($requestAction === 'datatable') {
 
                 $rows[$index]['id'] = $itemUrl . '#' . $item->id();
                 $rows[$index]['__id'] = $item->id();
+                $rows[$index]['__type'] = $class;
                 $rows[$index]['title'] = $item->getSourceItem() ? $item->getSourceItem()->name() : '';
                 $rows[$index]['original_url'] = $item->getSourceItem() ? $item->getSourceItem()->attribute('_original_url') : '';
                 $rows[$index]['info'] = $timeData;

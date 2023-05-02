@@ -39,11 +39,13 @@ try {
         throw new Exception("Object is not trasparenza");
     }
     $walker->walk($object->mainNode());
-
+    $stats = $walker->getStats();
     print_r($walker->getStats());
     $value = json_encode($data->getArrayCopy());
     if ($options['file']){
-        file_put_contents( OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_t.json', $value);
+        eZDir::mkdir('migration');
+        file_put_contents( 'migration/'. OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_t.json', $value);
+        file_put_contents( 'migration/stats_'. OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_t.json', json_encode($stats));
     }
 //    $cli->output($value);
     eZSiteData::create('ocm_trasparenza', $value)->store();

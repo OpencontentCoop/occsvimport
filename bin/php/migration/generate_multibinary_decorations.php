@@ -12,7 +12,7 @@ $script = eZScript::instance([
 $script->startup();
 
 $options = $script->getOptions(
-    '[class:]',
+    '[file]',
     '',
     [
     ]
@@ -20,6 +20,9 @@ $options = $script->getOptions(
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 $cli = eZClI::instance();
+
+$idList = [];
+
 try {
     $user = eZUser::fetchByName('admin');
     eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
@@ -53,11 +56,11 @@ try {
                     foreach ($filePaths as $stringItem) {
                         $filePathParts = explode('##', $stringItem);
                         if (
-                            (isset($filePathParts[1]) && !empty($filePathParts[1]))
-                            || isset($filePathParts[2]) && !empty($filePathParts[2])
+                            isset($filePathParts[2]) && !empty($filePathParts[2])
                             || isset($filePathParts[3]) && !empty($filePathParts[3])
                         ){
                             $count++;
+                            $idList[$object->attribute('remote_id')][$attributeIdentifier][] = $filePathParts;
                         }
                     }
                 }
@@ -67,6 +70,11 @@ try {
             $cli->output($classIdentifier . ' -> ' . $count);
         }
     }
+
+    if ($options['file']){
+        file_put_contents( OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_md.json', json_encode($idList));
+    }
+    eZSiteData::create('ocm_trasparenza', json_encode($idList))->store();
 
     $script->shutdown();
 } catch (Exception $e) {
