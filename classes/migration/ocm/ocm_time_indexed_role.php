@@ -320,9 +320,6 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $this->setMatrixDataToPayload('delegations', $payload);
         $this->setMatrixDataToPayload('competences', $payload);
 
-        $payload->setData($locale, 'person', ['1a73e17ef1ecc62796ef3e640f3cab06']);
-        $payload->setData($locale, 'for_entity', ['7527419b2d5fde514875e35da20bfe1e']);
-
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
