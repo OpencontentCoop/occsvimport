@@ -60,7 +60,7 @@ class OCMImporter
         }
         $this->client = $client;
         $this->readClient = $readClient;
-        $this->settings = array_merge_recursive(
+        $this->settings = array_merge(
             [
                 'update-content' => false,
                 'skip-classes' => [
@@ -255,7 +255,7 @@ class OCMImporter
             return (int)$localObject->attribute('id');
         }
 
-        if (in_array($classIdentifier, $this->settings['skip-classes'])) {
+        if (in_array($classIdentifier, $this->settings['skip-classes']) || in_array('*', $this->settings['skip-classes'])) {
             $this->log(
                 'Skip '
                 . $classIdentifier . ' - '
@@ -268,6 +268,10 @@ class OCMImporter
         $isRemapped = false;
         if (isset($this->settings['remap-classes'][$classIdentifier])) {
             $classIdentifier = $this->settings['remap-classes'][$classIdentifier];
+            $isRemapped = true;
+        }
+        if (!$isRemapped && isset($this->settings['remap-classes']['*'])){
+            $classIdentifier = $this->settings['remap-classes']['*'];
             $isRemapped = true;
         }
 

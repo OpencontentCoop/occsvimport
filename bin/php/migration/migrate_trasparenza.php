@@ -14,7 +14,7 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[root:][file:][base_url:][u:][p:][dry-run]",
+    "[root:][file:][base_url:][u:][p:][dry-run][skip-all]",
     "",
     []
 );
@@ -40,10 +40,14 @@ if (!$tree) {
 
 $dryRun = $options['dry-run'];
 
-//a7075f078f01e8a7247b7a2cd31e404e
-
+$settings = [];
+if ($options['skip-all']){
+    $settings = [
+        'skip-classes' => ['*']
+    ];
+}
 try {
-    $importer = new OCMImporter($baseUrl, $options['u'], $options['p']);
+    $importer = new OCMImporter($baseUrl, $options['u'], $options['p'], $settings);
     if ($options['dry-run']) {
         $importer->setAsDryRun();
     }
@@ -52,7 +56,8 @@ try {
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }
-    $script->shutdown();
+
+$script->shutdown();
 
 
 
