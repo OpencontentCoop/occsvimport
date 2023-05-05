@@ -249,11 +249,11 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 
     protected function discoverParentNode(): int
     {
-        if (in_array('Avviso', $this->formatTags($this->attribute('type')))){
+        if (in_array('Avviso', $this->formatTags($this->attribute('content_type')))){
             return $this->getNodeIdFromRemoteId('9a1756e11164d0d550ee950657154db8');
         }
 
-        if (in_array('Comunicato stampa', $this->formatTags($this->attribute('type')))){
+        if (in_array('Comunicato stampa', $this->formatTags($this->attribute('content_type')))){
             return $this->getNodeIdFromRemoteId('16a65071f99a1be398a677e5e4bef93f');
         }
 
