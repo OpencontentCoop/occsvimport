@@ -152,19 +152,25 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
 
     /**
      * @param eZContentObjectTreeNode $node
+     * @params bool $onlyChild
      * @return eZContentObjectTreeNode[]
      */
-    public static function getAttachmentsByNode($node): array
+    public static function getAttachmentsByNode($node, $onlyChild = true): array
     {
         if (!$node instanceof eZContentObjectTreeNode){
             return [];
         }
-        return $node->subTree([
+        $params = [
             'Depth' => 1,
             'DepthOperator' => 'eq',
             'ClassFilterType' => 'include',
             'ClassFilterArray' => ['file', 'file_pdf'],
-        ]);
+        ];
+        if (!$onlyChild){
+            unset($params['Depth']);
+            unset($params['DepthOperator']);
+        }
+        return $node->subTree($params);
     }
 
     /**

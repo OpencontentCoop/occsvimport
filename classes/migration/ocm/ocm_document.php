@@ -82,7 +82,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     }
                 }
             }
-            $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+            $onlyChild = $object->attribute('class_identifier') !== 'piano_progetto';
+            $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode(), $onlyChild);
             foreach ($attachments as $attachment) {
                 ocm_file::removeById($attachment->object()->attribute('remote_id'));
                 $url = OCMigrationComunweb::getFileAttributeUrl($attachment);
@@ -919,8 +920,11 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return [
             "Identificativo del documento*" => $this->attribute('_id'),
             "Titolo*" => $this->attribute('name'),
+            "Identificativo" => $this->attribute('has_code'),
             "Protocollo*" => $this->attribute('has_code'),
             "Data protocollazione*" => $this->attribute('data_protocollazione'),
+            "Protocollo" => $this->attribute('has_code'),
+            "Data protocollazione" => $this->attribute('data_protocollazione'),
             "Tipo di documento*" => $this->attribute('document_type'),
             "Argomento*" => $this->attribute('topics'),
             "Descrizione breve*" => $this->attribute('abstract'),
@@ -980,9 +984,23 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
         $item->setAttribute('_id', $row["Identificativo del documento*"]);
         $item->setAttribute('name', $row["Titolo*"]);
-        $item->setAttribute('has_code', $row["Protocollo*"]);
-        $item->setAttribute('protocollo', $row["Protocollo*"]);
-        $item->setAttribute('data_protocollazione', $row["Data protocollazione*"]);
+        if (isset($row["Identificativo"])){
+            $item->setAttribute('has_code', $row["Identificativo"]);
+        }
+
+        if (isset($row["Protocollo*"], $row["Data protocollazione*"])) {
+            $item->setAttribute('protocollo', $row["Protocollo*"]);
+            $item->setAttribute('data_protocollazione', $row["Data protocollazione*"]);
+            if (!isset($row["Identificativo"])) {
+                $item->setAttribute('has_code', $row["Protocollo*"]);
+            }
+        }else{
+            $item->setAttribute('protocollo', $row["Protocollo"]);
+            $item->setAttribute('data_protocollazione', $row["Data protocollazione"]);
+            if (!isset($row["Identificativo"])) {
+                $item->setAttribute('has_code', $row["Protocollo"]);
+            }
+        }
         $item->setAttribute('document_type', $row["Tipo di documento*"]);
         $item->setAttribute('topics', $row["Argomento*"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
