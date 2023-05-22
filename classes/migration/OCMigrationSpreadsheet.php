@@ -1115,6 +1115,8 @@ class OCMigrationSpreadsheet
                             $nameCollection[] = $item->name();
                         }
 
+                        $item->fillOverflowData();
+
                         $item->storeThis(false);
                         if ($cli) {
                             $cli->output( ' - ' . $item->id() . ' ' . $item->name());

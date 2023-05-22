@@ -131,7 +131,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
      * @param eZContentObject|eZContentObjectTreeNode $nodeOrObject
      * @return ?string
      */
-    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file'): ?string
+    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file', $parentAsGroup = null): ?string
     {
         $dataMap = $nodeOrObject->dataMap();
         if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
@@ -144,7 +144,13 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 . '/' . urlencode($file->attribute('original_filename'));
             eZURI::transformURI($url, true, 'full');
             $url = str_replace('http://', 'https://', $url);
-            return $url;
+            ##display_name##display_group
+            $group = '';
+            if ($parentAsGroup){
+                $parent = $nodeOrObject instanceof eZContentObjectTreeNode ? $nodeOrObject->fetchParent() : $nodeOrObject->mainNode()->fetchParent();
+                $group = '|' . $parent->attribute('name');
+            }
+            return $url . '#' . $nodeOrObject->attribute('name') . $group;
         }
 
         return null;
