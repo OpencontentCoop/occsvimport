@@ -86,7 +86,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode(), $onlyChild);
             foreach ($attachments as $attachment) {
                 ocm_file::removeById($attachment->object()->attribute('remote_id'));
-                $url = OCMigrationComunweb::getFileAttributeUrl($attachment);
+                $url = OCMigrationComunweb::getFileAttributeUrl($attachment, 'file', ($onlyChild === false));
                 if ($url) {
                     $data[] = $url;
                 }
@@ -1065,7 +1065,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'data_protocollazione', $data_protocollazione);
         $payload->setData($locale, 'document_type', $this->formatTags($this->attribute('document_type')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
-        $payload->setData($locale, 'abstract', trim($this->attribute('abstract')));
+        $payload->setData($locale, 'abstract', trim(strip_tags($this->attribute('abstract'))));
         $payload->setData($locale, 'file', $this->formatBinary($this->attribute('file'), false));
         $payload->setData($locale, 'license', $this->formatTags($this->attribute('license')));
         $payload->setData($locale, 'format', $this->formatTags($this->attribute('format')));
