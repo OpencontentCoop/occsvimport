@@ -259,4 +259,23 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     {
         return false;
     }
+
+    public static function getDefaultImage($context)
+    {
+        $image = new ocm_image();
+        $url = 'https://s3.eu-west-1.amazonaws.com/static.opencity.opencontent.it/migration/default_' . $context . '.jpg';
+        $name = 'Immagine predefinita';
+        $image->setAttribute('_id', 'ocm_default_image_' . md5($url));
+        $image->setAttribute('name', $name);
+        $image->setAttribute('image___name', basename($url));
+        $image->setAttribute('image___url', $url);
+        $image->setAttribute('author', 'Assistente migrazione');
+        OCMPayload::create(
+            $image->attribute('_id'),
+            'ocm_image',
+            ocm_image::getImportPriority(),
+            $image->generatePayload()->getArrayCopy()
+        );
+        return [$image->id()];
+    }
 }

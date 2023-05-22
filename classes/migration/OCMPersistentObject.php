@@ -525,9 +525,21 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
         $items = explode(PHP_EOL, $data);
         foreach ($items as $item) {
+            $displayName = $group = $text = '';
+            if (stripos($item, '#') !== false){
+                $parts = explode('#', $item);
+                $subParts = explode('|', $parts[1]);
+                $displayName = $subParts[0];
+                $group = $subParts[1] ?? '';
+                $text = $subParts[2] ?? '';
+                $item = $parts[0];
+            }
             $values[] = [
                 'url' => str_replace('http://', 'https://', $item),
                 'filename' => basename($item),
+                'displayName' => $displayName,
+                'group' => $group,
+                'text' => $text,
             ];
         }
         if (!$isMultiple && !empty($values)) {
@@ -672,5 +684,25 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             throw new Exception('Error creating spreadsheet link');
         }
         return $rowLink;
+    }
+
+    public function fillOverflowData()
+    {
+        foreach ($this->attributes() as $attributeKey){
+            $data = $this->attribute($attributeKey);
+            $isAnOverflowField = strpos($data, 'Il valore di questo campo supera il limite di caratteri ammessi') !== false;
+            $isAnOverrideField = strpos($data,'#' . $this->id()) !== false;
+            if ($isAnOverflowField || $isAnOverrideField){
+                $baseUrl = parse_url($this->attribute('_original_url'), PHP_URL_HOST);
+                $className = str_replace('ocm_', '', get_class($this));
+                $remoteUrl = 'https://' . $baseUrl . '/api/ocm/v1/' . $className . '/' . $this->id();
+                $remoteData = json_decode(file_get_contents($remoteUrl), true);
+                $remoteAttributeData = $remoteData['item'][$attributeKey] ?? null;
+                if ($remoteAttributeData){
+                    $this->setAttribute($attributeKey, $remoteAttributeData);
+                    $this->store();
+                }
+            }
+        }
     }
 }
