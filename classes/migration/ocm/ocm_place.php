@@ -372,7 +372,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'accessibility', $this->attribute('accessibility'));
         $payload->setData($locale, 'contains_place', ocm_online_contact_point::getIdListByName($this->attribute('contains_place')));
         $images = ocm_image::getIdListByName($this->attribute('image'));
-        if (empty($images) || $this->attribute('image') === 'default'){
+        if (empty($images) || strtolower($this->attribute('image')) === 'default'){
             $images = ocm_image::getDefaultImage('place');
         }
         $payload->setData($locale, 'image', $images);

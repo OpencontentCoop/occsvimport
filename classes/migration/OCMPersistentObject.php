@@ -534,9 +534,16 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 $text = $subParts[2] ?? '';
                 $item = $parts[0];
             }
+
+            $filename = basename($item);
+            $suffix = eZFile::suffix($filename);
+            if ($suffix == $filename || strpos($suffix, '?') !== false) {
+                $filename = self::getFileNameFromContentDisposition($item);
+            }
+
             $values[] = [
                 'url' => str_replace('http://', 'https://', $item),
-                'filename' => basename($item),
+                'filename' => $filename,
                 'displayName' => $displayName,
                 'group' => $group,
                 'text' => $text,
@@ -547,6 +554,35 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
 
         return $values;
+    }
+
+    private static function getFileNameFromContentDisposition($url)
+    {
+        $filename = basename($url);
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, (int)eZINI::instance('sqliimport.ini')->variable('ImportSettings', 'StreamTimeout'));
+        curl_setopt($ch, CURLOPT_FAILONERROR, true);
+        curl_setopt($ch, CURLOPT_FILETIME, true);
+        curl_setopt($ch, CURLOPT_NOBODY, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, eZStaticCache::USER_AGENT);
+        $headers = curl_exec($ch);
+        $parsedHeaders = array_map(function ($x) {
+            return array_map("trim", explode(":", $x, 2));
+        }, array_filter(array_map("trim", explode("\n", $headers))));
+        foreach ($parsedHeaders as $line) {
+            if (strtolower(trim($line[0])) == 'content-disposition') {
+                $parts = explode('filename=', $line[1]);
+                if (!isset($parts[1])) {
+                    $parts = explode("filename*=UTF-8''", $line[1]);
+                }
+                $filename = urldecode(trim(array_pop($parts), '"'));
+            }
+        }
+
+        return $filename;
     }
 
     public static function fetchByField($field, $name): array
@@ -691,7 +727,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         foreach ($this->attributes() as $attributeKey){
             $data = $this->attribute($attributeKey);
             $isAnOverflowField = strpos($data, 'Il valore di questo campo supera il limite di caratteri ammessi') !== false;
-            $isAnOverrideField = strpos($data,'#' . $this->id()) !== false;
+            $isAnOverrideField = $data == $this->id();
             if ($isAnOverflowField || $isAnOverrideField){
                 $baseUrl = parse_url($this->attribute('_original_url'), PHP_URL_HOST);
                 $className = str_replace('ocm_', '', get_class($this));
