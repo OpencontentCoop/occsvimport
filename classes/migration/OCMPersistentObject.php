@@ -727,17 +727,15 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         foreach ($this->attributes() as $attributeKey){
             $data = $this->attribute($attributeKey);
             $isAnOverflowField = strpos($data, 'Il valore di questo campo supera il limite di caratteri ammessi') !== false;
-            $isAnOverrideField = $data == $this->id();
+            $isAnOverrideField = $data == $this->id() && $attributeKey !== '_id';
             if ($isAnOverflowField || $isAnOverrideField){
                 $baseUrl = parse_url($this->attribute('_original_url'), PHP_URL_HOST);
                 $className = str_replace('ocm_', '', get_class($this));
                 $remoteUrl = 'https://' . $baseUrl . '/api/ocm/v1/' . $className . '/' . $this->id();
                 $remoteData = json_decode(file_get_contents($remoteUrl), true);
-                $remoteAttributeData = $remoteData['item'][$attributeKey] ?? null;
-                if ($remoteAttributeData){
-                    $this->setAttribute($attributeKey, $remoteAttributeData);
-                    $this->store();
-                }
+                $remoteAttributeData = $remoteData[$attributeKey] ?? '';
+                $this->setAttribute($attributeKey, $remoteAttributeData);
+                $this->store();
             }
         }
     }
