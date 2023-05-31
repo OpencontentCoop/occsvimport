@@ -1030,7 +1030,9 @@ class OCMigrationSpreadsheet
         $executionInfo = [];
         $remoteIdCollection = new ArrayObject();
         $skipPayloadGeneration = [];
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+        $availableClasses = OCMigration::getAvailableClasses($options['class_filter'] ?? []);
+        $availableClasses = array_reverse($availableClasses);
+        foreach ($availableClasses as $className) {
             $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli, $options, $remoteIdCollection));
             if ($executionInfo[$className]['status'] === 'error'){
                 $skipPayloadGeneration[] = $className;
@@ -1098,11 +1100,15 @@ class OCMigrationSpreadsheet
                     }
                     try {
                         if (isset($remoteIdCollection[$item->id()])){
-                            $errorMessage = "Identificativo duplicato: " . $item->id();
-                            $duplicate[$item->id()] = $errorMessage;
-                            throw new InvalidArgumentException($errorMessage);
+                            if ($className === 'ocm_time_indexed_role' && $remoteIdCollection[$item->id()] === 'ocm_public_person'){
+                                $item->setAttribute('_id', 'role-'.$item->id());
+                            }else {
+                                $errorMessage = "Identificativo duplicato: " . $item->id();
+                                $duplicate[$item->id()] = $errorMessage;
+                                throw new InvalidArgumentException($errorMessage);
+                            }
                         }
-                        $remoteIdCollection[$item->id()] = $item->name();
+                        $remoteIdCollection[$item->id()] = $className;
 
                         $item->checkRequiredColumns();
 
