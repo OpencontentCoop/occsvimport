@@ -1049,6 +1049,17 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
+    private function getFirstNotEmpty(...$values)
+    {
+        foreach ($values as $value){
+            if (!empty($value)){
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
     public function generatePayload()
     {
         $locale = 'ita-IT';
@@ -1059,6 +1070,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setLanguages([$locale]);
 
         $data_protocollazione = $this->formatDate($this->attribute('data_protocollazione'));
+        $start_time = $this->formatDate($this->attribute('start_time'));
+        $publication_start_time = $this->formatDate($this->attribute('publication_start_time'));
+        $now = date('c');
+
         $payload->setData($locale, 'name', trim($this->attribute('name')));
         $payload->setData($locale, 'has_code', trim($this->attribute('has_code')));
         $payload->setData($locale, 'protocollo', trim($this->attribute('protocollo')));
@@ -1077,13 +1092,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'full_description', trim($this->attribute('full_description')));
         $payload->setData($locale, 'link', trim($this->attribute('link')));
         $payload->setData($locale, 'attachments', $this->formatBinary($this->attribute('attachments')));
-        $payload->setData($locale, 'start_time', $this->formatDate($this->attribute('start_time')) ?? $data_protocollazione);
+        $payload->setData($locale, 'start_time', $this->getFirstNotEmpty($start_time, $publication_start_time, $data_protocollazione, $now));
         $payload->setData($locale, 'end_time', $this->formatDate($this->attribute('end_time')));
-        $payload->setData(
-            $locale,
-            'publication_start_time',
-            $this->formatDate($this->attribute('publication_start_time')) ?? $data_protocollazione
-        );
+        $payload->setData($locale, 'publication_start_time', $this->getFirstNotEmpty($publication_start_time, $start_time, $data_protocollazione, $now));
         $payload->setData($locale, 'publication_end_time', $this->formatDate($this->attribute('publication_end_time')));
 
         $payload->setData($locale, 'expiration_time', $this->formatDate($this->attribute('expiration_time')));
