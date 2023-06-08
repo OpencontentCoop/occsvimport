@@ -1366,7 +1366,7 @@ class OCMigrationSpreadsheet
             }
         }
         OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
-
+        eZDB::setErrorHandling(eZDB::ERROR_HANDLING_EXCEPTIONS);
         foreach ($payloads as $index => $payload) {
             $countProcessed++;
             $className = $payload->type();
