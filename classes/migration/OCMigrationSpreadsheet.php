@@ -1081,6 +1081,9 @@ class OCMigrationSpreadsheet
             foreach ($values as $value) {
                 /** @var OCMPersistentObject $item */
                 $item = $className::fromSpreadsheet($value);
+                if (mb_strlen($item->id()) > 100){
+                    $item->setAttribute('_id', substr($item->id(), 100));
+                }
                 $ignora = isset($value['IGNORA']) && !empty($value['IGNORA']);
 
                 if ($item instanceof eZPersistentObject && $ignora){
