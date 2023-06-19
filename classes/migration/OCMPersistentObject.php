@@ -542,7 +542,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             }
 
             $values[] = [
-                'url' => str_replace('http://', 'https://', $item),
+                'url' => OCMigration::getSecureUrl($item),
                 'filename' => $filename,
                 'displayName' => $displayName,
                 'group' => $group,

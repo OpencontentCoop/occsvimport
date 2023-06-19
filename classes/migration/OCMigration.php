@@ -995,4 +995,22 @@ class OCMigration extends eZPersistentObject
         "Volontariato" => 'topic_2_volontariato',
     ];
 
+    public static function getSecureUrl($item)
+    {
+        $forceSSL = true;
+        $avoidForceSSLDomains = OpenPAINI::variable('AssistenteMigrazione', 'DisableForceSSLDomains', []);
+        foreach ($avoidForceSSLDomains as $avoidForceSSLDomain){
+            if (strpos($item, $avoidForceSSLDomain) !== false){
+                $forceSSL = false;
+                break;
+            }
+        }
+        if ($forceSSL){
+            $url = str_replace('http://', 'https://', $item);
+        }else{
+            $url = $item;
+        }
+
+        return $url;
+    }
 }
