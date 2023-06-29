@@ -56,6 +56,20 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'has_temporal_coverage',
         'average_processing_time',
         'has_processing_time',
+        'de_name',
+        'de_status_note',
+        'de_alternative_name',
+        'de_abstract',
+        'de_audience',
+        'de_applicants',
+        'de_description',
+        'de_how_to',
+        'de_has_input',
+        'de_output_notes',
+        'de_is_physically_available_at_how_to',
+        'de_conditions',
+        'de_exceptions',
+        'de_service_keyword',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -97,6 +111,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Immagine" => $this->attribute('image'),
             "Descrizione breve*" => $this->attribute('abstract'),
             "A chi è rivolto" => $this->attribute('audience'),
+            "A chi è rivolto*" => $this->attribute('audience'),
             "Chi può fare domanda" => $this->attribute('applicants'),
             "Descrizione estesa" => $this->attribute('description'),
             "Copertura geografica*" => $this->attribute('has_spatial_coverage'),
@@ -141,6 +156,22 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Quando" => $this->attribute('has_temporal_coverage'),
             "Giorni medi di attesa dalla richiesta" => $this->attribute('average_processing_time'),
             "Giorni massimi di attesa dalla richiesta*" => $this->attribute('has_processing_time'),
+
+            "Titel des Dienstes* [de]" => $this->attribute('de_name'),
+            "Grund für den Status [de]" => $this->attribute('de_status_note'),
+            "Alternativer Titel/Untertitel [de]" => $this->attribute('de_alternative_name'),
+            "Kurze Beschreibung* [de]" => $this->attribute('de_abstract'),
+            "Beschreibung der Personengruppen, die diese Leistung in Anspruch nehmen [de]" => $this->attribute('de_audience'),
+            "Wer kann das Ansuchen stellen [de]" => $this->attribute('de_applicants'),
+            "Ausführliche Beschreibung [de]" => $this->attribute('de_description'),
+            "So geht's* [de]" => $this->attribute('de_how_to'),
+            "Dokumente, die bei der Antragsstellung vorzulegen sind* [de]" => $this->attribute('de_has_input'),
+            "Verfahren und damit verbundenes Ergebnis [de]" => $this->attribute('de_output_notes'),
+            "Anweisungen für den Zugriff auf den Dienst (physischer Kanal) [de]" => $this->attribute('de_is_physically_available_at_how_to'),
+            "Bedingungen [de]" => $this->attribute('de_conditions'),
+            "Sonderfälle [de]" => $this->attribute('de_exceptions'),
+            "Schlüsselwort [de]" => $this->attribute('de_service_keyword'),
+
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
         ];
@@ -191,6 +222,21 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_temporal_coverage', $row["Quando"]);
         $item->setAttribute('average_processing_time', $row["Giorni medi di attesa dalla richiesta"]);
         $item->setAttribute('has_processing_time', $row["Giorni massimi di attesa dalla richiesta*"]);
+
+        $item->setAttribute('de_name', $row["Titel des Dienstes* [de]"]);
+        $item->setAttribute('de_status_note', $row["Grund für den Status [de]"]);
+        $item->setAttribute('de_alternative_name', $row["Alternativer Titel/Untertitel [de]"]);
+        $item->setAttribute('de_abstract', $row["Kurze Beschreibung* [de]"]);
+        $item->setAttribute('de_audience', $row["Beschreibung der Personengruppen, die diese Leistung in Anspruch nehmen [de]"]);
+        $item->setAttribute('de_applicants', $row["Wer kann das Ansuchen stellen [de]"]);
+        $item->setAttribute('de_description', $row["Ausführliche Beschreibung [de]"]);
+        $item->setAttribute('de_how_to', $row["So geht's* [de]"]);
+        $item->setAttribute('de_has_input', $row["Dokumente, die bei der Antragsstellung vorzulegen sind* [de]"]);
+        $item->setAttribute('de_output_notes', $row["Verfahren und damit verbundenes Ergebnis [de]"]);
+        $item->setAttribute('de_is_physically_available_at_how_to', $row["Anweisungen für den Zugriff auf den Dienst (physischer Kanal) [de]"]);
+        $item->setAttribute('de_conditions', $row["Bedingungen [de]"]);
+        $item->setAttribute('de_exceptions', $row["Sonderfälle [de]"]);
+        $item->setAttribute('de_service_keyword', $row["Schlüsselwort [de]"]);
 
         $costs = [
             'ita-IT' => [],
