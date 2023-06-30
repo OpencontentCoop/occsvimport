@@ -175,6 +175,25 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return -1;
     }
 
+    public static function importSingleImage($url)
+    {
+        $image = new ocm_image();
+        $name = OpenPABootstrapItaliaOperators::cleanFileName(basename($url));
+        $image->setAttribute('_id', 'ocm_autoimage_' . md5($url));
+        $image->setAttribute('name', $name);
+        $image->setAttribute('image___name', basename($url));
+        $image->setAttribute('image___url', $url);
+        $image->setAttribute('author', $name);
+        $image->setAttribute('de_author', $name);
+        OCMPayload::create(
+            $image->attribute('_id'),
+            'ocm_image',
+            ocm_image::getImportPriority(),
+            $image->generatePayload()->getArrayCopy()
+        );
+        return $image->id();
+    }
+
     public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
     {
         $data = [];

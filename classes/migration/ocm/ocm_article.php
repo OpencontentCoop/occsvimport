@@ -226,9 +226,12 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'dead_line', $this->formatDate($this->attribute('dead_line')));
         $payload->setData($locale, 'id_comunicato', trim($this->attribute('id_comunicato')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
-        $payload->setData($locale, 'image', ocm_image::getIdListByName($this->attribute('image')));
-//todo
-//        $payload->setData($locale, 'image_file', trim($this->attribute('image_file')));
+        $images = ocm_image::getIdListByName($this->attribute('image'));
+        $imageFile = trim($this->attribute('image_file'));
+        if (!empty($imageFile)){
+            $images[] = ocm_image::importSingleImage($imageFile);
+        }
+        $payload->setData($locale, 'image', $images);
         $payload->setData($locale, 'body', trim($this->attribute('body')));
         $payload->setData($locale, 'people', ocm_public_person::getTypedPersonIdListByName($this->attribute('people')));
         $payload->setData($locale, 'location', ocm_place::getIdListByName($this->attribute('location')));
