@@ -331,18 +331,18 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'has_language', $this->formatTags($this->attribute('has_language')));
         $payload->setData($locale, 'how_to', $this->attribute('how_to'));
         $payload->setData($locale, 'has_input', $this->attribute('has_input'));
-        $payload->setData($locale, 'has_module_input', ocm_document::getIdByName($this->attribute('has_module_input')));
-        $payload->setData($locale, 'produces_output', ocm_output::getIdByName($this->attribute('produces_output')));
+        $payload->setData($locale, 'has_module_input', ocm_document::getIdListByName($this->attribute('has_module_input')));
+        $payload->setData($locale, 'produces_output', ocm_output::getIdListByName($this->attribute('produces_output')));
         $payload->setData($locale, 'output_notes', $this->attribute('output_notes'));
-        $payload->setData($locale, 'has_channel', ocm_channel::getIdByName($this->attribute('has_channel'), 'object'));
+        $payload->setData($locale, 'has_channel', ocm_channel::getIdListByName($this->attribute('has_channel'), 'object'));
         $payload->setData($locale, 'is_physically_available_at_how_to', strip_tags($this->attribute('is_physically_available_at_how_to')));
-        $payload->setData($locale, 'is_physically_available_at', ocm_place::getIdByName($this->attribute('is_physically_available_at')));
+        $payload->setData($locale, 'is_physically_available_at', ocm_place::getIdListByName($this->attribute('is_physically_available_at')));
         $payload->setData($locale, 'conditions', $this->attribute('conditions'));
         $payload->setData($locale, 'exceptions', $this->attribute('exceptions'));
         $payload->setData($locale, 'terms_of_service', $this->formatBinary($this->attribute('terms_of_service')));
-        $payload->setData($locale, 'has_online_contact_point', ocm_online_contact_point::getIdByName($this->attribute('has_online_contact_point')));
-        $payload->setData($locale, 'holds_role_in_time', ocm_organization::getIdByName($this->attribute('holds_role_in_time'), 'legal_name'));
-        $payload->setData($locale, 'has_document', ocm_document::getIdByName($this->attribute('has_document')));
+        $payload->setData($locale, 'has_online_contact_point', ocm_online_contact_point::getIdListByName($this->attribute('has_online_contact_point')));
+        $payload->setData($locale, 'holds_role_in_time', ocm_organization::getIdListByName($this->attribute('holds_role_in_time'), 'legal_name'));
+        $payload->setData($locale, 'has_document', ocm_document::getIdListByName($this->attribute('has_document')));
         $payload->setData($locale, 'process', $this->formatTags($this->attribute('process')));
         $payload->setData($locale, 'topics', OCMigration::getTopicsIdListFromString($this->attribute('topics')));
         $payload->setData($locale, 'ife_event', $this->formatTags($this->attribute('ife_event')));
@@ -351,7 +351,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'service_keyword', explode(PHP_EOL, $this->attribute('service_keyword')));
         $payload->setData($locale, 'has_authentication_method', $this->formatTags($this->attribute('has_authentication_method')));
         $payload->setData($locale, 'has_interactivity_level', $this->formatTags($this->attribute('has_interactivity_level')));
-        $payload->setData($locale, 'has_temporal_coverage', ocm_opening_hours_specification::getIdByName($this->attribute('has_temporal_coverage')));
+        $payload->setData($locale, 'has_temporal_coverage', ocm_opening_hours_specification::getIdListByName($this->attribute('has_temporal_coverage')));
         $payload->setData($locale, 'average_processing_time', (int)$this->attribute('average_processing_time'));
         $payload->setData($locale, 'has_processing_time', (int)$this->attribute('has_processing_time'));
 
