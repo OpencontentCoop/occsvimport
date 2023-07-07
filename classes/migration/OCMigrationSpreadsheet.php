@@ -191,7 +191,12 @@ class OCMigrationSpreadsheet
 
         $validate = '';
         if (isset($options['validate'])) {
-            $update = $options['validate'] !== '' ? '--validate' : '';
+            $validate = $options['validate'] !== '' ? '--validate' : '';
+        }
+
+        $urlAlias = '';
+        if (isset($options['import_url_alias'])) {
+            $urlAlias = $options['import_url_alias'] !== '' ? '--import_url_alias' : '';
         }
 
         if ($action === 'reset') {
@@ -206,6 +211,7 @@ class OCMigrationSpreadsheet
                     'only' => isset($options['class_filter']) ? implode(',', $options['class_filter']) : '',
                     'update' => $options['update'],
                     'validate' => $options['validate'],
+                    'import_url_alias' => $options['import_url_alias'],
                 ];
                 $pendingImport = new SQLIImportItem([
                     'handler' => 'ocmimporthandler',
@@ -226,7 +232,8 @@ class OCMigrationSpreadsheet
                     . $action . ' '
                     . $only . ' '
                     . $update . ' '
-                    . $validate;
+                    . $validate . ' '
+                    . $urlAlias;
 
                 eZDebug::writeError($command);
                 exec($command);
@@ -1324,6 +1331,9 @@ class OCMigrationSpreadsheet
 
         if ($cli) {
             $cli->output("Import $payloadCount payloads " . implode(', ', $options['class_filter']));
+            if ($options['import_url_alias']){
+                $cli->output('Import url alias is enabled');
+            }
         }
 
         $countProcessed = 0;
@@ -1396,6 +1406,9 @@ class OCMigrationSpreadsheet
                         if ($cli) {
                             $cli->output(' updated');
                         }
+                    }
+                    if ($options['import_url_alias'] && $payload->getSourceItem() instanceof OCMPersistentObject){
+                        $payload->getSourceItem()->createUrlAlias();
                     }
                 } catch (Throwable $e) {
                     $stat[$className]['f']++;

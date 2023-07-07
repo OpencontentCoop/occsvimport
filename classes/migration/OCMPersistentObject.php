@@ -739,4 +739,64 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             }
         }
     }
+
+    public function createUrlAlias()
+    {
+        $languageCode = 'ita-IT';
+        $originalUrl = $this->attribute('_original_url');
+        $aliasText = parse_url($originalUrl, PHP_URL_PATH);
+        if (!empty($aliasText)) {
+            $object = eZContentObject::fetchByRemoteID($this->id());
+            $parentIsRoot = true;
+            $aliasRedirects = true;
+            if ($object instanceof eZContentObject) {
+                $node = $object->mainNode();
+                if ($node instanceof eZContentObjectTreeNode) {
+                    $language = eZContentLanguage::fetchByLocale($languageCode);
+
+                    $parentID = 0;
+                    $linkID = 0;
+                    $filter = new eZURLAliasQuery();
+                    $filter->actions = ['eznode:' . $node->attribute('node_id')];
+                    $filter->type = 'name';
+                    $filter->limit = false;
+                    $existingElements = $filter->fetchAll();
+                    // TODO: add error handling when $existingElements is empty
+                    if (count($existingElements) > 0) {
+                        $parentID = (int)$existingElements[0]->attribute('parent');
+                        $linkID = (int)$existingElements[0]->attribute('id');
+                    }
+                    if ($parentIsRoot) {
+                        $parentID = 0; // Start from the top
+                    }
+                    $mask = $language->attribute('id');
+                    $obj = $node->object();
+                    $alwaysMask = ($obj->attribute('language_mask') & 1);
+                    $mask |= $alwaysMask;
+
+                    $origAliasText = $aliasText;
+                    $result = eZURLAliasML::storePath(
+                        $aliasText,
+                        'eznode:' . $node->attribute('node_id'),
+                        $language,
+                        $linkID,
+                        $alwaysMask,
+                        $parentID,
+                        true,
+                        false,
+                        false,
+                        $aliasRedirects
+                    );
+                    if ($result['status'] === eZURLAliasML::LINK_ALREADY_TAKEN) {
+                        return 'already-exists';
+                    }
+                    if ($result['status'] === true) {
+                        ezpEvent::getInstance()->notify('content/cache', [$node->attribute('node_id')]);
+                        return 'created';
+                    }
+                }
+            }
+        }
+        return 'empty-text';
+    }
 }

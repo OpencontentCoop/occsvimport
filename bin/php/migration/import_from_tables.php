@@ -12,13 +12,17 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-"[only:][reset]",
+"[only:][reset][import_url_alias]",
 "", [
     'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 $only = $options['only'] ? ['class_filter' => explode(',', $options['only'])] : [];
+
+if ($options['import_url_alias']){
+    $only['import_url_alias'] = true;
+}
 
 if ($options['reset']){
     OCMigrationSpreadsheet::resetCurrentStatus();
