@@ -384,7 +384,8 @@
               options: {
                 class_filter: classes,
                 update: isUpdate.is(':checked') ? isUpdate.val() : '',
-                validate: doValidation.is(':checked') ? doValidation.val() : ''
+                validate: doValidation.is(':checked') ? doValidation.val() : '',
+                import_url_alias: true
               }
             }, function (data) {
               console.log('start', action);

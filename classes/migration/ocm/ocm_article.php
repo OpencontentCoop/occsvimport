@@ -221,7 +221,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $payload->setLanguages([$locale]);
         $payload->setData($locale, 'title', trim($this->attribute('title')));
         $payload->setData($locale, 'content_type', $this->formatTags($this->attribute('content_type')));
-        $payload->setData($locale, 'abstract', trim($this->attribute('abstract')));
+        $payload->setData($locale, 'abstract', trim(strip_tags($this->attribute('abstract'))));
         $payload->setData($locale, 'published', $this->formatDate($this->attribute('published')));
         $payload->setData($locale, 'dead_line', $this->formatDate($this->attribute('dead_line')));
         $payload->setData($locale, 'id_comunicato', trim($this->attribute('id_comunicato')));
@@ -243,10 +243,10 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 //        $payload->setData($locale, 'dataset', trim($this->attribute('dataset')));
         $payload->setData($locale, 'reading_time', intval($this->attribute('reading_time')));
 
-
 //@todo da impostare in seconda battuta quando impostati i servizi
 //        $payload->setData($locale, 'related_service', ocm_public_service::getIdListByName($this->attribute('related_service')));
 
+        $this->setAttribute('de_abstract', trim(strip_tags($this->attribute('de_abstract'))));
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 

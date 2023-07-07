@@ -9,7 +9,8 @@ class OCMImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
         $this->opt = [
             'class_filter' => $this->options['only'] ? explode(',', $this->options['only']) : [],
             'update' => !!$this->options['update'],
-            'validate' => !!$this->options['validate']
+            'validate' => !!$this->options['validate'],
+            'import_url_alias' => !!$this->options['import_url_alias'],
         ];
         $action = $this->options['action'];
     }
