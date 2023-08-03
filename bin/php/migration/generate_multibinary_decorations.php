@@ -74,7 +74,6 @@ try {
     if ($options['file']){
         file_put_contents( OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_md.json', json_encode($idList));
     }
-    eZSiteData::create('ocm_trasparenza', json_encode($idList))->store();
 
     $script->shutdown();
 } catch (Exception $e) {
