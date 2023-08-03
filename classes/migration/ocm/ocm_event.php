@@ -460,5 +460,9 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
     {
         return 180;
     }
-
+    
+    public function avoidNameDuplication()
+    {
+        return false;
+    }
 }
