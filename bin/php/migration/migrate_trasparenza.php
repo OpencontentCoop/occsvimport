@@ -14,7 +14,7 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[root:][file:][base_url:][u:][p:][dry-run][skip-all]",
+    "[root:][file:][base_url:][u:][p:][dry-run][skip-all][update;]",
     "",
     []
 );
@@ -45,6 +45,11 @@ $settings = [];
 if ($options['skip-all']){
     $settings = [
         'skip-classes' => ['*']
+    ];
+}
+if ($options['update']){
+    $settings = [
+        'update-content' => is_string($options['update']) ? 'interactive' : true
     ];
 }
 try {
