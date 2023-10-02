@@ -45,6 +45,8 @@ class OCMImporter
         'error' => 0,
     ];
 
+    private $imported = [];
+
     private static $relationsNodeId;
 
     private $recursion = 0;
@@ -62,13 +64,12 @@ class OCMImporter
         $this->readClient = $readClient;
         $this->settings = array_merge(
             [
-                'update-content' => false,
+                'update-content' => false, //true|false|'interactive'
                 'skip-classes' => [
                     'valuation',
                     'user_group',
                     'global_layout',
                     'shared_link',
-                    'tipo_bando',
                 ],
                 'remap-classes' => [
                     'file_pdf' => 'file',
@@ -139,6 +140,9 @@ class OCMImporter
                     if ($child instanceof eZContentObject) {
                         $this->recursion++;
                         try {
+                            if ($this->settings['update-content']){
+                                $this->import($childRemoteId, $parentObject->mainNodeID());
+                            }
                             $this->addLocation($child, $parentObject);
                         } catch (Throwable $e) {
                             $this->error($e);
@@ -189,7 +193,7 @@ class OCMImporter
             foreach ($assignedNodes as $assignedNode) {
                 if ($assignedNode['parent_node_id'] == $targetNodeId) {
                     $this->debug(
-                        "Already exists " . $object->attribute('remote_id') . " location in "
+                        "Location already exists " . $object->attribute('remote_id') . " in "
                         . $parentObject->attribute('remote_id')
                     );
                     return false;
@@ -232,6 +236,10 @@ class OCMImporter
 
     private function import($remoteObjectIdentifier, $parentNodeId, $withRelations = true): int
     {
+        $updateContent = $this->settings['update-content'];
+        if (!$withRelations){
+            $updateContent = false;
+        }
         $parentNodeId = (int)$parentNodeId;
         if ($parentNodeId === 0) {
             throw new Exception("Parent node non trovato importando l'oggetto $remoteObjectIdentifier");
@@ -245,14 +253,41 @@ class OCMImporter
         $remoteId = $content['metadata']['remoteId'];
 
         $localObject = $this->fetchByRemoteID($remoteId);
-        if ($localObject instanceof eZContentObject && !$this->settings['update-content']) {
-            $this->debug(
-                'Already exists '
-                . $classIdentifier . ' - '
-                . $content['metadata']['name']['ita-IT'] . '  - '
-                . $content['metadata']['remoteId']
-            );
-            return (int)$localObject->attribute('id');
+        if ($localObject instanceof eZContentObject) {
+
+            if (isset($this->imported[$remoteObjectIdentifier])){
+                return $this->imported[$remoteObjectIdentifier];
+            }
+
+            if (!$updateContent) {
+                $this->debug(
+                    'Already exists '
+                    . $classIdentifier . ' - '
+                    . $content['metadata']['name']['ita-IT'] . '  - '
+                    . $content['metadata']['remoteId'] . '  - '
+                    . $localObject->attribute('id')
+                );
+                return (int)$localObject->attribute('id');
+            }
+
+            $continue =
+                (
+                    $updateContent === true
+                    && $this->isCustomTrasparenza($localObject)
+                ) || (
+                    $updateContent === 'interactive' &&
+                    ezcConsoleDialogViewer::displayDialog(ezcConsoleQuestionDialog::YesNoQuestion(
+                        new ezcConsoleOutput(),
+                        'Update '
+                        . $classIdentifier . ' - '
+                        . $content['metadata']['name']['ita-IT'] . '  - '
+                        . $content['metadata']['remoteId'] . ' y/n ?',
+                        "n"
+                    )) == "y"
+                );
+            if (!$continue){
+                return (int)$localObject->attribute('id');
+            }
         }
 
         if (in_array($classIdentifier, $this->settings['skip-classes']) || in_array('*', $this->settings['skip-classes'])) {
@@ -276,7 +311,7 @@ class OCMImporter
         }
 
         $this->log(
-            'Import '
+            ($localObject instanceof eZContentObject ? 'Update ' : 'Import ')
             . $classIdentifier . ($isRemapped ? " (remapped from $originalClassIdentifier)" : '') . ' - '
             . $content['metadata']['name']['ita-IT'] . '  - '
             . $content['metadata']['remoteId'] . ' ' . ($withRelations ? '(with relations)' : '')
@@ -295,7 +330,7 @@ class OCMImporter
         $payload->setClassIdentifier($classIdentifier);
         $payload->setParentNodes([$parentNodeId]);
         $payload->setLanguages($content['metadata']['languages']);
-        $payload->setPublished($content['metadata']['published']);
+        $payload->setPublished(strtotime($content['metadata']['published']));
         $payload->setStateIdentifier('moderation.accepted');
 
         /** @var eZContentClassAttribute[] $dataMap */
@@ -331,9 +366,9 @@ class OCMImporter
                         }
                         break;
 
-                    case eZURLType::DATA_TYPE_STRING:
-                        $payload->setData($language, $identifier, $field['data_text']);
-                        break;
+//                    case eZURLType::DATA_TYPE_STRING:
+//                        $payload->setData($language, $identifier, $field['data_text']);
+//                        break;
 
                     case eZUserType::DATA_TYPE_STRING:
                         //skip
@@ -382,26 +417,39 @@ class OCMImporter
             }
         }
 
-        try {
-            $createStruct = $this->environmentSettings->instanceCreateStruct($payload->getArrayCopy());
-            $createStruct->validate();
-        } catch (Exception $e) {
-            print_r([
-                $e->getMessage(),
-                array_combine(
-                    array_column($content['data']['ita-IT'], 'identifier'),
-                    array_column($content['data']['ita-IT'], 'content')
-                ),
-                $payload->getArrayCopy(),
-            ]);
-            die();
+        if (!$localObject instanceof eZContentObject) {
+            try {
+                $createStruct = $this->environmentSettings->instanceCreateStruct($payload->getArrayCopy());
+                $createStruct->validate();
+            } catch (Exception $e) {
+                $this->error('Validation error ' . $e->getMessage());
+            }
         }
-
         $result = $this->repository->createUpdate($payload->getArrayCopy());
 
         $this->stats['import']++;
+        $this->imported[$remoteObjectIdentifier] = (int)$result['content']['metadata']['id'];
 
         return (int)$result['content']['metadata']['id'];
+    }
+
+    private function isCustomTrasparenza(eZContentObject $object): bool
+    {
+        $contentClass = $object->contentClass();
+        if ($contentClass instanceof eZContentClass) {
+
+            if ($contentClass->attribute('identifier') === 'folder'){
+                return true;
+            }
+
+            $groupList = $contentClass->fetchGroupList();
+            foreach ($groupList as $group){
+                if ($group->attribute('group_name') === 'Amministrazione trasparente'){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private function importClassIfNeeded($classIdentifier)
@@ -466,6 +514,8 @@ class OCMImporter
             return $text;
         }
 
+        $linkUrlIDArray = $outputHandler->getAttributeValueArray('link', 'url_id');
+
         $linkRelatedObjectIDArray = $outputHandler->getAttributeValueArray('link', 'object_id');
         $linkNodeIDArray = $outputHandler->getAttributeValueArray('link', 'node_id');
         $objectRelatedObjectIDArray = $outputHandler->getAttributeValueArray('object', 'id');
@@ -508,7 +558,7 @@ class OCMImporter
                     $localObjectID = $this->import($node['remoteId'], $this->getRelationsNodeId(), false);
                     $localObject = eZContentObject::fetch($localObjectID);
                     if ($localObject instanceof eZContentObject) {
-                        $mapNodes[$nodeID] = $localObject->mainNodeID();
+                        $mapNodes[$nodeID] = $localObject->attribute('id');
                     }
                 } catch (Throwable $e) {
                     $this->error($e);
@@ -516,22 +566,60 @@ class OCMImporter
             }
 
             foreach ($mapObjects as $id => $newId) {
+                $replace = 'id="eZObject_' . $newId . '" object_id="' . $newId . '"';
+                if (in_array($id, $linkRelatedObjectIDArray)){
+                    $replace = 'id="eZObject_' . $newId . '" href="ezobject://' . $newId . '"';
+                }
                 $text = str_replace(
                     'object_id="' . $id . '"',
-                    'object_id="' . $newId . '"',
+                    $replace,
                     $text
                 );
             }
             foreach ($mapNodes as $id => $newId) {
+                $replace = 'id="eZObject_' . $newId . '" object_id="' . $newId . '"';
+                if (in_array($id, $linkNodeIDArray)){
+                    $replace = 'id="eZObject_' . $newId . '" href="ezobject://' . $newId . '"';
+                }
                 $text = str_replace(
                     'node_id="' . $id . '"',
-                    'node_id="' . $newId . '"',
+                    $replace,
                     $text
                 );
             }
         }
 
-        return str_replace('<?xml version="1.0" encoding="utf-8"?>', '', $text);
+        foreach ($linkUrlIDArray as $linkUrlId) {
+            try {
+                $urlInfo = $this->readClient->request('GET', $this->baseUrl . '/api/opendata/v2/url/' . $linkUrlId);
+                $newUrl = $urlInfo['url'];
+                if (strpos($newUrl, '/content/download') === 0){
+                    $parts = explode('/', $newUrl);
+                    $id = (int)$parts[3];
+                    $remoteFile = $this->readClient->read($id);
+                    $fileId = $this->import($remoteFile['metadata']['remoteId'], $this->getRelationsNodeId(), false);
+                    $text = str_replace(
+                        'url_id="' . $linkUrlId . '"',
+                        'class="download" href="ezobject://' . $fileId . '"',
+                        $text
+                    );
+                }else {
+                    $text = str_replace(
+                        'url_id="' . $linkUrlId . '"',
+                        'href="' . $urlInfo['url'] . '"',
+                        $text
+                    );
+                }
+            }catch (Exception $e){
+                $this->error($e->getMessage());
+            }
+        }
+        $replace = [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            'xmlns:'
+        ];
+
+        return str_replace($replace, '', $text);
     }
 
     private function getRelationsNodeId(): int
