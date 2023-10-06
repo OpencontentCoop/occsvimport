@@ -635,6 +635,7 @@ class OCMImporter
                 $params = [
                     'remote_id' => $remoteId,
                     'parent_node_id' => 43,
+                    'section_id' => 1,
                     'class_identifier' => 'folder',
                     'attributes' => [
                         'name' => 'Contenuti correlati trasparenza',
@@ -681,5 +682,13 @@ class OCMImporter
     {
         $prefix = $this->recursion > 0 ? str_pad(' ', $this->recursion * 2, "    ", STR_PAD_LEFT) . '|- ' : '';
         return $prefix . $message;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getStats(): array
+    {
+        return $this->stats;
     }
 }

@@ -58,6 +58,7 @@ try {
         $importer->setAsDryRun();
     }
     $importer->walkTree($tree);
+    print_r($importer->getStats());
 } catch (Throwable $e) {
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
