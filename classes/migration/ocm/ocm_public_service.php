@@ -189,7 +189,12 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('alternative_name', $row["Sottotitolo"]);
         $item->setAttribute('image', $row["Immagine"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
-        $item->setAttribute('audience', $row["A chi è rivolto"]);
+        if (!empty($row["A chi è rivolto"])){
+            $item->setAttribute('audience', $row["A chi è rivolto"]);
+        }elseif (!empty($row["A chi è rivolto*"])){
+            $item->setAttribute('audience', $row["A chi è rivolto*"]);
+        }
+
         $item->setAttribute('applicants', $row["Chi può fare domanda"]);
         $item->setAttribute('description', $row["Descrizione estesa"]);
         $item->setAttribute('has_spatial_coverage', $row["Copertura geografica*"]);
