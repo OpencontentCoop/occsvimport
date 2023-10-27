@@ -427,11 +427,12 @@ try {
 }
 
 $credentials = OCMGoogleSheetClient::getGoogleCredentials();
-$user = 'phpsheet@norse-fiber-323812.iam.gserviceaccount.com';
+$user = false;
 if ($credentials){
     $user = $credentials['client_email'];
 }
 $tpl->setVariable('google_user', $user);
+$tpl->setVariable('google_credentials', $credentials);
 
 $Result = [];
 if ($requestAction === 'credentials'){

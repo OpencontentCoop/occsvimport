@@ -27,22 +27,41 @@
     <div class="row">
         <div class="col-12">
             <h1><a href="{'/migration/dashboard'|ezurl(no)}">Assistente migrazione</a></h1>
-            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br />{$google_user}</code></p>
+            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}</code></p>
 
-            <div class="alert alert-danger{if $error_spreadsheet|not} d-none{/if}">
-                {if $error_spreadsheet}{$error_spreadsheet|wash()}{/if}
-            </div>
-
-            <form action="{'/migration/dashboard/credentials'|ezurl(no)}" method="post">
-                <div class="form-group">
-                    <h3>Impostazioni del service account</h3>
-                    <p class="lead">
-                        Accedi alla <a href="https://console.cloud.google.com/iam-admin/serviceaccounts">console di Google</a> per creare un service account dedicato
-                    </p>
-                    <label for="store_google_credentials" class="d-none">Inserisci il json</label>
-                    <textarea id="store_google_credentials" class="form-control" name="store_google_credentials"></textarea>
+            <h3>Impostazioni del account di servizio Google</h3>
+            {if $google_user}
+                <div class="border rounded p-4 mb-5">
+                    <dl class="dl-horizontal mt-0">
+                        <dt>Account di servizio attivo</dt>
+                        <dd><code>{$google_user}</code></dd>
+                        <dt>Project ID</dt>
+                        <dd><code>{$google_credentials.project_id}</code></dd>
+                    </dl>
+                    <form action="{'/migration/dashboard/credentials'|ezurl(no)}" method="post">
+                        <input type="hidden" name="store_google_credentials" />
+                        <input type="submit" class="btn btn-danger btn-lg" value="Rimuovi account di servizio"/>
+                        <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
+                    </form>
                 </div>
-                <input type="submit" class="btn btn-success btn-lg" value="Salva"/>
+            {else}
+                <p class="lead mb-4">
+                    Nessun account di servizio configurato
+                </p>
+            {/if}
+            <h5>Per {if $google_user}modificare il{else}creare un nuovo{/if} account di servizio Google</h5>
+            <ol class="lead">
+                <li>Accedi alla <a href="https://console.cloud.google.com">console Google cloud</a></li>
+                <li>Crea un nuovo progetto in Api e servizi</li>
+                <li>Abilita le Google Sheets API per i progetto creato</li>
+                <li>In Credenziali crea account di servizio</li>
+                <li>Aggiungi una chiave in JSON per l'account di servizio</li>
+                <li>Incolla qui il contenuto JSON e salva</li>
+            </ol>
+            <form action="{'/migration/dashboard/credentials'|ezurl(no)}" method="post">
+                <label for="store_google_credentials" class="d-none">Inserisci il json</label>
+                <textarea id="store_google_credentials" class="form-control mb-2" required name="store_google_credentials"></textarea>
+                <input type="submit" class="btn btn-success btn-lg" value="Salva account di servizio"/>
                 <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
             </form>
 

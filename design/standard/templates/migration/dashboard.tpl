@@ -28,22 +28,26 @@
     <div class="row">
         <div class="col-12">
             <h1>Assistente migrazione <span class="badge badge-{if $context|not}success{else}primary{/if}">{if $context} esportazione {else} importazione {/if} dati</span></h1>
-            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br />{$google_user}</code></p>
-            {if $migration_spreadsheet}
+            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br /></code><a href="/migration/dashboard/credentials"><code>{$google_user}</code></a></p>
+            {if and($migration_spreadsheet, $google_user)}
                 <h4 class="my-4">Impostazioni dello spreadsheet {if $context} di destinazione {else} sorgente {/if}</h4>
-            {else}
+            {elseif $google_user}
                 {if $context}
                     <h2>Imposta il google spreadsheet per esportare i dati</h2>
                 {else}
                     <h2>Imposta il google spreadsheet per importare i dati</h2>
                 {/if}
+            {else}
+                <h2>Configura un account di servizio Google</h2>
             {/if}
 
+            {if $google_user}
             <div class="alert alert-danger{if $error_spreadsheet|not} d-none{/if}">
                 {if $error_spreadsheet}{$error_spreadsheet|wash()}{/if}
             </div>
+            {/if}
 
-            {if $migration_spreadsheet}
+            {if and($migration_spreadsheet, $google_user)}
             <div class="row">
                 <div class="col">
                     <p>
@@ -123,14 +127,13 @@
                     </div>
                 </div>
             {else}
+                {if $google_user}
                 <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
                     <div class="form-group">
                         <ol class="lead">
-                            {if $context}
-                                <li>Crea un nuovo google spreadsheet copiandolo dal <a href="https://link.opencontent.it/new-kit-{$context|wash()}" target="_blank">modello</a></li>
-                                <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
-                            {/if}
-                            <li>Incolla l'url del tuo google spreadsheet{if $context|not()} condiviso con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor{/if}</li>
+                            <li>Se non hai ancora un documento spreadsheet, creane uno nuovo copiandolo dal modello in <a href="https://link.opencontent.it/new-kit-{if $context}{$context|wash()}{else}opencity{/if}" target="_blank">questa pagina</a></li>
+                            <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
+                            <li>Incolla l'url del tuo google spreadsheet</li>
                         </ol>
                         <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
                         <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" placeholder="Inserisci qui l'url del tuo google spreadsheet"/>
@@ -138,6 +141,11 @@
                     <input type="submit" class="btn btn-success btn-lg" value="Salva"/>
                     <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
                 </form>
+                {else}
+                    <p class="lead">
+                        Accedi alla <a href="/migration/dashboard/credentials">pagina di gestione credenziali dell'assistente migrazione</a>
+                    </p>
+                {/if}
             {/if}
         </div>
     </div>
@@ -145,7 +153,7 @@
 
 <div class="container-fluid my-5 bg-white">
     <div class="row">
-        {if $migration_spreadsheet}
+        {if and($migration_spreadsheet, $google_user)}
             <div class="col-12">
                 <h2 class="my-4">{if $context}Anteprima dati da esportare{/if}</h2>
                 {if $context|not()}
