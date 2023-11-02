@@ -426,7 +426,8 @@ try {
     $tpl->setVariable('migration_spreadsheet_title', '');
 }
 
-$credentials = OCMGoogleSheetClient::getGoogleCredentials();
+$sheetClient = new OCMGoogleSheetClient();
+$credentials = $sheetClient->getCredentials();
 $user = false;
 if ($credentials){
     $user = $credentials['client_email'];
