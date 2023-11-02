@@ -72,4 +72,9 @@ class OCMGoogleSheetClient extends GoogleSheetClient
         $client->setAuthConfig($this->credentialData);
         return $client;
     }
+
+    public function getCredentials()
+    {
+        return $this->credentialData;
+    }
 }
