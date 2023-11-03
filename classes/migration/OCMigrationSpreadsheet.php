@@ -891,7 +891,7 @@ class OCMigrationSpreadsheet
             if (!$override) {
                 $ignoreRows = array_column($this->getDataHash($sheetTitle), $className::getIdColumnLabel());
                 if (!empty($ignoreRows)) {
-                    $customCond = ' WHERE _id NOT IN (\'' . implode('\',\'', $ignoreRows) . '\')';
+                    $customCond = ' WHERE _id NOT IN (\'' . implode('\',\'', array_map( 'eZPostgreSQLDB::escapeString', $ignoreRows )) . '\')';
                 }
             }
 
