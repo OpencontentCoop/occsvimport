@@ -408,14 +408,67 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 }
             }
 
-            $list = static::fetchObjectList(
-                static::definition(), ['_id'],
-                ['trim(' . $field . ')' => [$names]]
-            );
-            $data = array_column($list, '_id');
+            foreach ($names as $index => $name){
+                if (strpos($name, 'shared_link#') !== false){
+                    unset($names[$index]);
+                    $linkId = self::importSharedLink(str_replace('shared_link#', '', $name));
+                    if ($linkId){
+                        $data[] = $linkId;
+                    }
+                }
+            }
+            if (!empty($names)) {
+                $list = static::fetchObjectList(
+                    static::definition(), ['_id'],
+                    ['trim(' . $field . ')' => [$names]]
+                );
+                $data = array_merge($data, array_column($list, '_id'));
+            }
         }
 
         return $data;
+    }
+
+    private static function importSharedLink($url)
+    {
+        if (!eZContentClass::fetchByIdentifier('shared_link')){
+            throw new Exception('Missing class shared_link');
+        }
+        $name = '';
+        try {
+            $html = file_get_contents($url);
+            $doc = new DOMDocument();
+            $doc->loadHTML($html);
+            $titleList = $doc->getElementsByTagName("title");
+            if($titleList->length > 0){
+                $title = $titleList->item(0)->nodeValue;
+                $titleParts = explode(' / ', $title);
+                $name = trim(array_shift($titleParts));
+            }
+        }catch (Throwable $e){
+        }
+        $parts = explode('/', $url);
+        $self = new static();
+        $remoteId = array_pop($parts);
+        $remoteId = 'link-to-' . $remoteId;
+
+        if (eZContentObject::fetchByRemoteID($remoteId)){
+            return $remoteId;
+        }
+
+        $object = eZContentFunctions::createAndPublishObject([
+            'parent_node_id' => $self->getNodeIdFromRemoteId('shared_links'),
+            'class_identifier' => 'shared_link',
+            'remote_id' => $remoteId,
+            'attributes' => [
+                'name' => $name,
+                'location' => $url
+            ]
+        ]);
+        if ($object instanceof eZContentObject){
+            return $object->attribute('remote_id');
+        }
+        return false;
     }
 
     public static function getIdByName($name, $field = 'name', string $tryWithPrefix = null): ?array
