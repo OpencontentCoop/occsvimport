@@ -397,8 +397,19 @@ class OCMigration extends eZPersistentObject
                                 if ($field === 'topics') {
                                     $data[] = $metadata['id'] ?? $metadata['metadata']['id'];
                                 } else {
-                                    $data[] = isset($metadata['name']) ? $metadata['name'][$firstLocalizedContentLocale]
-                                        : $metadata['metadata']['name'][$firstLocalizedContentLocale];
+                                    if ($metadata['classIdentifier'] === 'shared_link'){
+                                        $sharedLink = eZContentObject::fetchByRemoteID($metadata['remoteId']);
+                                        if ($sharedLink instanceof eZContentObject){
+                                            $sharedLinkDataMap = $sharedLink->dataMap();
+                                            if (isset($sharedLinkDataMap['location']) && $sharedLinkDataMap['location']->hasContent()){
+                                                $data[] = 'shared_link#' . $sharedLinkDataMap['location']->content();
+                                            }
+
+                                        }
+                                    }else {
+                                        $data[] = isset($metadata['name']) ? $metadata['name'][$firstLocalizedContentLocale]
+                                            : $metadata['metadata']['name'][$firstLocalizedContentLocale];
+                                    }
                                 }
                             }
 
