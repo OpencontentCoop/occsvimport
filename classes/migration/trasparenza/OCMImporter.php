@@ -51,14 +51,28 @@ class OCMImporter
 
     private $recursion = 0;
 
+    private static function instanceClient(
+        $server,
+        $login = null,
+        $password = null,
+        $apiEnvironmentPreset = 'content',
+        $apiEndPointBase = '/api/opendata/v2'
+    )
+    {
+        if (getenv('MIGRATE_USE_LOCALHOST')) {
+            return new OCLocalHttpClient($server, $login, $password, $apiEnvironmentPreset, $apiEndPointBase);
+        }
+        return new HttpClient($server, $login, $password, $apiEnvironmentPreset, $apiEndPointBase);
+    }
+
     public function __construct($baseUrl, $user = null, $password = null, array $settings = [])
     {
         $this->baseUrl = $baseUrl;
         $client = new OCMNullClient();
         $readClient = new OCMNullClient();
         if ($user && $password){
-            $client = new HttpClient($baseUrl, $user, $password, 'full');
-            $readClient = new HttpClient($baseUrl);
+            $client = self::instanceClient($baseUrl, $user, $password, 'full');
+            $readClient = self::instanceClient($baseUrl);
         }
         $this->client = $client;
         $this->readClient = $readClient;
