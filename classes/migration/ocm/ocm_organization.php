@@ -27,6 +27,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         'de_main_function',
         'de_alt_name',
         'de_more_information',
+        'de_description',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -311,6 +312,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_main_function' => false,
             'de_alt_name' => false,
             'de_more_information' => false,
+            'de_description' => false,
         ];
     }
 
@@ -339,6 +341,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_main_function' => false,
             'de_alt_name' => false,
             'de_more_information' => false,
+            'de_description' => false,
         ];
     }
 
@@ -401,6 +404,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'Kompetenzen* [de]' => $this->attribute('de_main_function'),
             'Alternativer Name [de]' => $this->attribute('de_alt_name'),
             'Weitere Informationen [de]' => $this->attribute('de_more_information'),
+            'Beschreibung [de]' => $this->attribute('de_description'),
         ];
     }
 
