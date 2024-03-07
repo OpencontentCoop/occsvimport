@@ -93,6 +93,36 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             $contentValue = $fieldInfo['content'];
             return implode(PHP_EOL, $contentValue);
         };
+        $mapper['holds_role_in_time'] = function ($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+            $data = [];
+            $idList = ['holds_role_in_time_area', 'holds_role_in_time_ufficio'];
+            foreach ($idList as $id) {
+                if (isset($firstLocalizedContentData[$id])) {
+                    foreach ($firstLocalizedContentData[$id]['content'] as $item) {
+                        if ($item instanceof \Opencontent\Opendata\Api\Values\Content) {
+                            $item = $item->metadata;
+                        }
+                        if ($item instanceof \Opencontent\Opendata\Api\Values\Metadata) {
+                            if ($item->classIdentifier === 'shared_link') {
+                                $sharedLink = eZContentObject::fetchByRemoteID($item->remoteId);
+                                if ($sharedLink instanceof eZContentObject) {
+                                    $sharedLinkDataMap = $sharedLink->dataMap();
+                                    if (isset($sharedLinkDataMap['location']) && $sharedLinkDataMap['location']->hasContent()) {
+                                        $data[] = 'shared_link#' . $sharedLinkDataMap['location']->content();
+                                    }
+                                }
+                            }else{
+                                $data[] = $item->name[$firstLocalizedContentLocale];
+                            }
+                        } elseif (is_array($item)) {
+                            $data[] = $item['name'][$firstLocalizedContentLocale];
+                        }
+                    }
+                }
+            }
+
+            return implode(PHP_EOL, array_unique($data));
+        };
         return $mapper;
     }
 
