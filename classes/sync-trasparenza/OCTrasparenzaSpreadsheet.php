@@ -246,6 +246,15 @@ EOT;
         }
     }
 
+    public static function syncAll($fieldList = [])
+    {
+        /** @var OCTrasparenzaSpreadsheet[] $items */
+        $items = OCTrasparenzaSpreadsheet::fetchObjectsWithCheck();
+        foreach ($items as $item) {
+            $item->syncContentObject($fieldList);
+        }
+    }
+
     public static function fetchObjectsWithCheck(): array
     {
         $cond = [
