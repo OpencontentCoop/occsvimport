@@ -132,7 +132,7 @@ function hashToRows($vocabularies): array
     $rows = [];
     for ($i = 0; $i < $length; $i++) {
         $row = [];
-        foreach ($vocabularies as $vocabulary){
+        foreach ($vocabularies as $vocabulary) {
             $row[] = $vocabulary[$i] ?? '';
         }
         $rows[] = $row;
@@ -164,25 +164,15 @@ try {
     $sheetVoc = getSheet($spreadsheetId, 'Vocabolari');
 
 
-    $vocabularies = [];
+    $vocabularies = OCTrasparenzaSpreadsheet::getVocabularies();
     $headers = [
         'tree',
         'remote_id',
         'parent_remote_id',
     ];
-    foreach ($class->dataMap() as $identifier => $classAttribute) {
-        if ($classAttribute->attribute('data_type_string') === eZPageType::DATA_TYPE_STRING) {
-            continue;
-        }
+    foreach (OCTrasparenzaSpreadsheet::getDataFields() as $identifier => $name) {
         $headers[] = $identifier;
-        if ($classAttribute->attribute('data_type_string') === eZSelectionType::DATA_TYPE_STRING) {
-            $vocabulary = array_column($classAttribute->content()['options'], 'name');
-            array_unshift($vocabulary, $identifier);
-            $vocabularies[] = $vocabulary;
-        }
     }
-
-    $dataMapIdentifier = OCTrasparenzaSpreadsheet::getDataConverters();
 
     cleanSheet($spreadsheetId, $sheetVoc);
     writeSheet($spreadsheetId, $sheetVoc, hashToRows($vocabularies));
@@ -190,29 +180,19 @@ try {
     $countHeaders = count($headers);
     $data[] = $headers;
     (new WalkerTrasparenza(
-        function (eZContentObjectTreeNode $node, eZContentObjectTreeNode $parent, $level) use (
-            $data,
-            $dataMapIdentifier
-        ) {
-            $item = [
-                WalkerTrasparenza::pad($level) . $node->attribute('name'),
-                $node->object()->remoteID(),
-                $node->fetchParent()->object()->remoteID(),
-            ];
-            $dataMap = $node->dataMap();
-            foreach ($dataMapIdentifier as $identifier => $callbacks) {
-                $callback = $callbacks['fromAttribute'];
-                $item[] = isset($dataMap[$identifier]) ? $callback($dataMap[$identifier]) : '';
-            }
-            $data[] = $item;
+        function (eZContentObjectTreeNode $node, eZContentObjectTreeNode $parent, $level) use ($data) {
+            $item = OCTrasparenzaSpreadsheet::serializeObject(
+                $node->object(),
+                $parent->object(),
+                WalkerTrasparenza::pad($level)
+            );
+            $data[] = array_values($item);
         }
     ))->walk($object->mainNode());
 
     $values = $data->getArrayCopy();
     cleanSheet($spreadsheetId, $sheet);
     writeSheet($spreadsheetId, $sheet, $values);
-
-
 } catch (Throwable $e) {
     $cli->error($e->getMessage());
 }

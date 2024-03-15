@@ -25,7 +25,7 @@
 
 <div id="loader" style="display:none; position: fixed;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
 <form action="{'/sync-trasparenza/dashboard'|ezurl(no)}" method="post">
-<div class="container-fluid my-5 bg-white rounded p-5 position-relative">
+<div class="container-fluid m-0 bg-white rounded p-5 position-relative">
     <div class="row">
         <div class="col-12">
             <h1>Sync trasparenza</h1>
@@ -50,13 +50,15 @@
                         <p>
                             <a href="https://docs.google.com/spreadsheets/d/{$trasparenza_spreadsheet}/edit"
                                target="_blank">
-                                {$trasparenza_spreadsheet_title|wash()}<br/>{$trasparenza_spinstancereadsheet}
+                                {$trasparenza_spreadsheet_title|wash()}<br/>{$trasparenza_spreadsheet|wash()}
                             </a>
                         </p>
                     </div>
                     <div class="col-7 text-right">
-                        {if $with_check|gt(0)}
-                            <span>{$with_check} pagina/e non sincronizzata/e</span>
+                        {if $need_fix|gt(0)}
+                            <a id="OnlyFailed" href="#" class="btn btn-outline-danger btn-link text-danger">{$need_fix} pagina/e non sincronizzata/e</a>
+                        {else}
+                            Tutto ok!
                         {/if}
                         <input type="hidden" name="ezxform_token" value="{$ezxform_token}"/>
                         <input type="submit" class="btn btn-danger ml-3" name="remove_trasparenza_spreadsheet" value="Rimuovi sheet"/>
@@ -96,22 +98,29 @@
             <tr>
                 <th><a href="#" class="btn btn-sm btn-link" id="CheckAll" title="Inverti selezione"><span class="glyphicon glyphicon-check"></span></a></th>
                 {foreach $fields as $identifier => $field}
-                    <th {if $identifier|eq('titolo')}colspan="2"{/if} style="white-space:nowrap">{$field||shorten(10)}</th>
+                    <th {if $identifier|eq('titolo')}colspan="3"{/if} style="white-space:nowrap">{$field||shorten(10)}</th>
                 {/foreach}
                 <th></th>
             </tr>
         </thead>
         <tbody>
         {foreach $data as $item}
-            <tr data-remote="{$item.remote_id}">
+            <tr data-remote="{$item.remote_id}" class="{if and(is_set($item.check.error)|not(), count($item.check)|eq(0))}beer{/if}">
                 <td>
                     <input id="Select-{$item.remote_id}" type="checkbox" {if count($item.check)}checked="checked"{/if} value="{$item.remote_id}" name="Select[]" />
                 </td>
                 {foreach $fields as $identifier => $field}
                     {if $identifier|eq('titolo')}
-                        <td>
+                        <td class="text-center">
                             {if is_set($item.check.error)|not()}
-                                <a href="{concat('openpa/object/',$item.remote_id)|ezurl(no)}"><span class="glyphicon glyphicon-link ml-2 text-success" aria-hidden="true"></span></a>
+                                <a href="{concat('openpa/object/',$item.remote_id)|ezurl(no)}"><span class="glyphicon glyphicon-link text-success" aria-hidden="true"></span></a>
+                            {/if}
+                        </td>
+                        <td class="text-center">
+                            {if is_set($item.check.error)|not()}
+                                {if count($item.check)|gt(0)}
+                                    <a class="btn btn-danger btn-sm" href="{concat('sync-trasparenza/dashboard/diff/',$item.remote_id)|ezurl(no)}"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span></a>
+                                {/if}
                             {/if}
                         </td>
                         <td>
@@ -191,6 +200,10 @@
       });
       e.preventDefault();
     });
+    $('#OnlyFailed').on('click', function (e) {
+      $('tr.beer').toggle();
+      e.preventDefault();
+    })
   });
   {/literal}
 </script>
