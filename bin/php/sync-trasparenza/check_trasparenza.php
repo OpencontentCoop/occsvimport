@@ -14,26 +14,26 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[sync][fields:][sheet:]",
+    "[sync][fields:][sheet:][remotes:]",
     "",
     []
 );
 $script->initialize();
 $script->setUseDebugAccumulators(true);
 
-$user = eZUser::fetchByName( 'admin' );
-eZUser::setCurrentlyLoggedInUser( $user , $user->attribute( 'contentobject_id' ) );
+$user = eZUser::fetchByName('admin');
+eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
 
 $spreadsheetId = $options['sheet'];
 OCTrasparenzaSpreadsheet::setConnectedSpreadSheet($spreadsheetId);
 
 if ($options['sync']) {
     $fields = $options['fields'] ? explode(',', $options['fields']) : [];
-    /** @var OCTrasparenzaSpreadsheet[] $items */
-    $items = OCTrasparenzaSpreadsheet::fetchObjectsWithCheck();
-    foreach ($items as $item){
-        $cli->output('Sync ' . $item->attribute('tree'));
-        $item->syncContentObject($fields);
+    $remotes = $options['remotes'] ? explode(',', $options['remotes']) : [];
+    if (count($remotes)) {
+        OCTrasparenzaSpreadsheet::syncItems($remotes, $fields);
+    } else {
+        OCTrasparenzaSpreadsheet::syncAll($fields);
     }
 }
 
