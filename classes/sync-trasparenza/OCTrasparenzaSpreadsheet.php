@@ -10,6 +10,8 @@ class OCTrasparenzaSpreadsheet extends eZPersistentObject
 
     private static $dataConverters;
 
+    private static $vocabularies;
+
     public static function definition()
     {
         return [
@@ -160,12 +162,15 @@ EOT;
             if (!$object instanceof eZContentObject) {
                 throw new Exception("Object $remoteId not found");
             }
-
-            $dataMap = $object->dataMap();
-            foreach (self::getDataConverters() as $identifier => $callbacks) {
-                $fromAttribute = $callbacks['fromAttribute'];
-                $locale = isset($dataMap[$identifier]) ? $fromAttribute($dataMap[$identifier]) : '';
-                if ($locale !== $remoteDataItem[$identifier]) {
+            $item = self::serializeObject($object);
+            foreach (self::getDataFields() as $identifier => $callbacks) {
+                $diff = (new eZDiffTextEngine())->createDifferenceObject(
+                    $remoteDataItem[$identifier],
+                    $item[$identifier]
+                );
+                $changeset = $diff->getChanges();
+                $status = array_sum(array_column($changeset, 'status'));
+                if ($status > 0) {
                     $check[$identifier] = 'danger';
                 }
             }
@@ -174,6 +179,59 @@ EOT;
         }
 
         return json_encode($check);
+    }
+
+    public static function diff(string $remoteId)
+    {
+        $item = self::fetchByRemoteId($remoteId);
+        return $item ? $item->getDiff() : [
+            'locale' => [],
+            'remote' => [],
+            'check' => ['error' => 'Item not found'],
+        ];
+    }
+
+    public function getDiff()
+    {
+        $item = self::serializeObject($this->getObject());
+        return [
+            'locale' => $this->unserializeItem($item, true),
+            'remote' => $this->unserializeItem($this->toArray(), true),
+            'check' => $this->getCheck(),
+        ];
+    }
+
+    public static function serializeObject(
+        eZContentObject $object,
+        eZContentObject $parentObject = null,
+        $treePrefix = ''
+    ) {
+        if (!$parentObject) {
+            $parent = eZContentObjectTreeNode::fetch((int)$object->mainParentNodeID());
+            $parentObjectRemoteId = $parent ? $parent->object()->remoteID() : '?';
+        } else {
+            $parentObjectRemoteId = $parentObject->remoteID();
+        }
+        $item = [
+            'tree' => $treePrefix . $object->attribute('name'),
+            'remote_id' => $object->remoteID(),
+            'parent_remote_id' => $parentObjectRemoteId,
+        ];
+        $dataMap = $object->dataMap();
+        foreach (self::getDataConverters() as $identifier => $callbacks) {
+            $callback = $callbacks['fromAttribute'];
+            $item[$identifier] = isset($dataMap[$identifier]) ? $callback($dataMap[$identifier]) : '';
+        }
+        return $item;
+    }
+
+    public static function fetchByRemoteId(string $remoteId)
+    {
+        return OCTrasparenzaSpreadsheet::fetchObject(
+            OCTrasparenzaSpreadsheet::definition(),
+            null,
+            ['remote_id' => $remoteId]
+        );
     }
 
     public static function syncItems($itemIdList = [], $fieldList = [])
@@ -205,38 +263,86 @@ EOT;
     public function toArray()
     {
         $data = [];
-        foreach ($this->attributes() as $identifier){
+        foreach ($this->attributes() as $identifier) {
             $data[$identifier] = $this->attribute($identifier);
         }
 
         return $data;
     }
 
+    public function getParentObject()
+    {
+        return eZContentObject::fetchByRemoteID($this->attribute('parent_remote_id'));
+    }
+
+    public function getObject()
+    {
+        return eZContentObject::fetchByRemoteID($this->attribute('remote_id'));
+    }
+
     public function createContentObject()
     {
-        $parentObject = eZContentObject::fetchByRemoteID($this->attribute('parent_remote_id'));
+        $parentObject = $this->getParentObject();
         if (!$parentObject instanceof eZContentObject || isset($check['error'])) {
             throw new Exception('Parent object ' . $this->attribute('parent_remote_id') . ' not found');
         }
+        $mainNode = $parentObject->mainNode();
+        $subtreeByNodeId = $mainNode->subTree([
+            'ClassFilterType' => 'include',
+            'ClassFilterArray' => ['pagina_trasparenza'],
+            'ObjectNameFilter' => $this->attribute('titolo'),
+        ]);
+        if (!empty($subtreeByNodeId)) {
+            echo '<pre>';
+            print_r($subtreeByNodeId);
+            die();
+        } else {
+            $converters = self::getDataConverters();
+            $attributes = [];
+            foreach ($converters as $identifier => $converter) {
+                $callback = $converter['toAttribute'];
+                $attributes[$identifier] = $callback($this->attribute($identifier));
+            }
+            eZContentFunctions::createAndPublishObject([
+                'parent_node_id' => $mainNode->attribute('node_id'),
+                'remote_id' => $this->attribute('remote_id'),
+                'class_identifier' => 'pagina_trasparenza',
+                'attributes' => $attributes,
+            ]);
+            $this->setAttribute('check_data', self::check($this->attribute('remote_id'), $this->toArray()));
+        }
+    }
+
+    public function unserializeItem(array $data, $asHtml = false): array
+    {
+        $converters = self::getDataConverters();
+        $attributes = [];
+        foreach ($data as $identifier => $value) {
+            if (isset($converters[$identifier])) {
+                $callback = $converters[$identifier]['toAttribute'];
+                $attributes[$identifier] = $callback($value, $asHtml);
+            }
+        }
+        return $attributes;
     }
 
     public function syncContentObject($fields = [])
     {
         try {
-            $object = eZContentObject::fetchByRemoteID($this->attribute('remote_id'));
+            $object = $this->getObject();
             $check = $this->getCheck();
             if (!$object instanceof eZContentObject || isset($check['error'])) {
                 $this->createContentObject();
             } else {
                 $converters = self::getDataConverters();
                 $attributes = [];
-                foreach ($check as $identifier => $level) {
-                    if ($level === 'danger' && empty($fields) || (!empty($fields) && in_array($identifier, $fields))) {
+                foreach ($check as $identifier => $diff) {
+                    if (empty($fields) || (!empty($fields) && in_array($identifier, $fields))) {
                         $callback = $converters[$identifier]['toAttribute'];
                         $attributes[$identifier] = $callback($this->attribute($identifier));
                     }
                 }
-                if (!empty($attributes)){
+                if (!empty($attributes)) {
                     eZContentFunctions::updateAndPublishObject($object, ['attributes' => $attributes]);
                     eZContentObject::clearCache($object->attribute('id'));
                     $this->setAttribute('check_data', self::check($this->attribute('remote_id'), $this->toArray()));
@@ -286,6 +392,79 @@ EOT;
         return self::$dataFields;
     }
 
+    public static function getVocabularies()
+    {
+        if (self::$vocabularies === null) {
+            self::$vocabularies = [];
+            $class = eZContentClass::fetchByIdentifier('pagina_trasparenza');
+            if (!$class instanceof eZContentClass) {
+                throw new Exception("Class pagina_trasparenza not found");
+            }
+            foreach ($class->dataMap() as $identifier => $classAttribute) {
+                if ($classAttribute->attribute('data_type_string') === eZPageType::DATA_TYPE_STRING) {
+                    continue;
+                }
+                if ($classAttribute->attribute('data_type_string') === eZSelectionType::DATA_TYPE_STRING) {
+                    $vocabulary = array_column($classAttribute->content()['options'], 'name');
+                    array_unshift($vocabulary, $identifier);
+                    self::$vocabularies[] = $vocabulary;
+                }
+            }
+        }
+
+        return self::$vocabularies;
+    }
+
+    private static function getClassAttribute(string $id): ?eZContentClassAttribute
+    {
+        $class = eZContentClass::fetchByIdentifier('pagina_trasparenza');
+        foreach ($class->dataMap() as $identifier => $classAttribute) {
+            if ($identifier === $id) {
+                return $classAttribute;
+            }
+        }
+
+        return null;
+    }
+
+    private static $appendToVoc = [];
+
+    private static function appendOptionToVocabulary(eZContentClassAttribute $classAttribute, $optionValue)
+    {
+        if (isset(self::$appendToVoc[$classAttribute->attribute('id') . '-' . $optionValue])) {
+            return;
+        }
+        /** @var array $attributeContent */
+        $attributeContent = $classAttribute->content();
+        $currentOptions = $attributeContent['options'];
+
+        $currentCount = 0;
+        foreach ($currentOptions as $option) {
+            $currentCount = max($currentCount, $option['id']);
+        }
+        $currentCount += 1;
+        $currentOptions[] = [
+            'id' => $currentCount,
+            'name' => $optionValue,
+        ];
+        $doc = new DOMDocument('1.0', 'utf-8');
+        $root = $doc->createElement("ezselection");
+        $doc->appendChild($root);
+        $options = $doc->createElement("options");
+        $root->appendChild($options);
+        foreach ($currentOptions as $optionArray) {
+            unset($optionNode);
+            $optionNode = $doc->createElement("option");
+            $optionNode->setAttribute('id', $optionArray['id']);
+            $optionNode->setAttribute('name', $optionArray['name']);
+            $options->appendChild($optionNode);
+        }
+        $xml = $doc->saveXML();
+        $classAttribute->setAttribute("data_text5", $xml);
+        $classAttribute->store();
+        self::$appendToVoc[$classAttribute->attribute('id') . '-' . $optionValue] = true;
+    }
+
     public static function getDataConverters(): array
     {
         if (self::$dataConverters === null) {
@@ -299,10 +478,21 @@ EOT;
                     continue;
                 }
                 if ($classAttribute->attribute('data_type_string') === eZSelectionType::DATA_TYPE_STRING) {
-                    self::$dataConverters[$identifier]['fromAttribute'] = function (eZContentObjectAttribute $attribute
-                    ) {
-                        return implode(PHP_EOL, eZStringUtils::explodeStr($attribute->toString(), '|'));
-                    };
+                    self::$dataConverters[$identifier] = [
+                        'fromAttribute' => function (eZContentObjectAttribute $attribute) {
+                            return implode(PHP_EOL, eZStringUtils::explodeStr($attribute->toString(), '|'));
+                        },
+                        'toAttribute' => function ($string) use ($identifier) {
+                            $classAttribute = self::getClassAttribute($identifier);
+                            if ($classAttribute) {
+                                $vocabulary = array_column($classAttribute->content()['options'], 'name');
+                                if (!in_array($string, $vocabulary)) {
+                                    self::appendOptionToVocabulary($classAttribute, trim($string));
+                                }
+                            }
+                            return trim($string);
+                        },
+                    ];
                 } elseif ($classAttribute->attribute('data_type_string') === eZXMLTextType::DATA_TYPE_STRING) {
                     self::$dataConverters[$identifier] = [
                         'fromAttribute' => function (eZContentObjectAttribute $attribute) use ($identifier) {
@@ -312,8 +502,11 @@ EOT;
                             );
                             return self::convertToMarkdown($converter->get($attribute)['content']);
                         },
-                        'toAttribute' => function ($string) {
+                        'toAttribute' => function ($string, $asHtml = false) {
                             $prsDwn = new Parsedown();
+                            if ($asHtml) {
+                                return $prsDwn->text($string);
+                            }
                             return SQLIContentUtils::getRichContent($prsDwn->text($string));
                         },
                     ];

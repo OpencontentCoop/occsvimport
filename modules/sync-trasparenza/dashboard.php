@@ -54,7 +54,7 @@ if ($requestAction === 'credentials' && $http->hasPostVariable('store_google_cre
     try {
         $data = $http->postVariable('store_google_credentials');
         OCMGoogleSheetClient::setGoogleCredentials(trim($data));
-        $module->redirectTo('/trasparenza_spreadsheet/dashboard');
+        $module->redirectTo('/sync-trasparenza/dashboard');
         return;
     } catch (Exception $e) {
         $tpl->setVariable('error_spreadsheet', $e->getMessage());
@@ -62,7 +62,18 @@ if ($requestAction === 'credentials' && $http->hasPostVariable('store_google_cre
 }
 
 if ($requestAction === 'diff' && $requestId) {
-//    $diff = OCTrasparenzaSpreadsheet::diff($requestId);
+    if ($http->hasPostVariable('Sync')){
+        $field = $http->postVariable('Field');
+        if ($field) {
+            OCTrasparenzaSpreadsheet::syncItems([$requestId], [$field]);
+            $module->redirectTo('/sync-trasparenza/dashboard/diff/' . $requestId);
+            return;
+        }
+    }
+    $diff = OCTrasparenzaSpreadsheet::diff($requestId);
+    $tpl->setVariable('diff', $diff);
+    $tpl->setVariable('raw', isset($_GET['raw']));
+    $tpl->setVariable('item', OCTrasparenzaSpreadsheet::fetchByRemoteId($requestId));
 }
 
 
@@ -84,24 +95,28 @@ if ($credentials) {
 $tpl->setVariable('google_user', $user);
 $tpl->setVariable('google_credentials', $credentials);
 
-try {
-    if (OCTrasparenzaSpreadsheet::count(OCTrasparenzaSpreadsheet::definition())) {
-        $tpl->setVariable('fields', OCTrasparenzaSpreadsheet::getDataFields());
-        $tpl->setVariable('with_check', count(OCTrasparenzaSpreadsheet::fetchObjectsWithCheck()));
-        $tpl->setVariable(
-            'data',
-            OCTrasparenzaSpreadsheet::fetchObjectList(
-                OCTrasparenzaSpreadsheet::definition(), null, null, ['index' => 'asc']
-            )
-        );
+if (!$requestAction) {
+    try {
+        if (OCTrasparenzaSpreadsheet::count(OCTrasparenzaSpreadsheet::definition())) {
+            $tpl->setVariable('fields', OCTrasparenzaSpreadsheet::getDataFields());
+            $tpl->setVariable('need_fix', count(OCTrasparenzaSpreadsheet::fetchObjectsWithCheck()));
+            $tpl->setVariable(
+                'data',
+                OCTrasparenzaSpreadsheet::fetchObjectList(
+                    OCTrasparenzaSpreadsheet::definition(), null, null, ['index' => 'asc']
+                )
+            );
+        }
+    } catch (Exception $e) {
+        $tpl->setVariable('error_spreadsheet', $e->getMessage());
     }
-} catch (Exception $e) {
-    $tpl->setVariable('error_spreadsheet', $e->getMessage());
 }
 
 $Result = [];
 if ($requestAction === 'credentials') {
     $Result['content'] = $tpl->fetch('design:sync-trasparenza/credentials.tpl');
+} elseif ($requestAction === 'diff') {
+    $Result['content'] = $tpl->fetch('design:sync-trasparenza/diff.tpl');
 } else {
     $Result['content'] = $tpl->fetch('design:sync-trasparenza/dashboard.tpl');
 }
