@@ -408,11 +408,11 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 }
             }
 
-            foreach ($names as $index => $name){
-                if (strpos($name, 'shared_link#') !== false){
+            foreach ($names as $index => $name) {
+                if (strpos($name, 'shared_link#') !== false) {
                     unset($names[$index]);
                     $linkId = self::importSharedLink(str_replace('shared_link#', '', $name));
-                    if ($linkId){
+                    if ($linkId) {
                         $data[] = $linkId;
                     }
                 }
@@ -431,7 +431,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     private static function importSharedLink($url)
     {
-        if (!eZContentClass::fetchByIdentifier('shared_link')){
+        if (!eZContentClass::fetchByIdentifier('shared_link')) {
             throw new Exception('Missing class shared_link');
         }
         $name = '';
@@ -440,19 +440,19 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             $doc = new DOMDocument();
             $doc->loadHTML($html);
             $titleList = $doc->getElementsByTagName("title");
-            if($titleList->length > 0){
+            if ($titleList->length > 0) {
                 $title = $titleList->item(0)->nodeValue;
                 $titleParts = explode(' / ', $title);
                 $name = trim(array_shift($titleParts));
             }
-        }catch (Throwable $e){
+        } catch (Throwable $e) {
         }
         $parts = explode('/', $url);
         $self = new static();
         $remoteId = array_pop($parts);
         $remoteId = 'link-to-' . $remoteId;
 
-        if (eZContentObject::fetchByRemoteID($remoteId)){
+        if (eZContentObject::fetchByRemoteID($remoteId)) {
             return $remoteId;
         }
 
@@ -462,10 +462,10 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             'remote_id' => $remoteId,
             'attributes' => [
                 'name' => $name,
-                'location' => $url
-            ]
+                'location' => $url,
+            ],
         ]);
-        if ($object instanceof eZContentObject){
+        if ($object instanceof eZContentObject) {
             return $object->attribute('remote_id');
         }
         return false;
@@ -536,14 +536,14 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
         $names = explode(PHP_EOL, $name);
 
-        if (count($names) === 1 && strpos($names[0], ',') !== false){
+        if (count($names) === 1 && strpos($names[0], ',') !== false) {
             $filteredList = OCMigrationVocs::filterVocs($names);
             if (empty($filteredList)) {
                 $withCommaTag = $names[0];
                 $withCommaTag = str_replace(', ', '$', $withCommaTag);
                 $names = explode(',', $withCommaTag);
-                $names = array_map(function ($item){
-                   return str_replace('$',', ', $item);
+                $names = array_map(function ($item) {
+                    return str_replace('$', ', ', $item);
                 }, $names);
             }
         }
@@ -564,10 +564,12 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $parts = explode(' ', $name);
         $email = array_pop($parts);
 
-        return [[
-            'name' => trim(implode(' ', $parts)),
-            'email' => $email,
-        ]];
+        return [
+            [
+                'name' => trim(implode(' ', $parts)),
+                'email' => $email,
+            ],
+        ];
     }
 
     protected static function getBinaryPayload(string $data, bool $isMultiple = true)
@@ -579,7 +581,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $items = explode(PHP_EOL, $data);
         foreach ($items as $item) {
             $displayName = $group = $text = '';
-            if (stripos($item, '#') !== false){
+            if (stripos($item, '#') !== false) {
                 $parts = explode('#', $item);
                 $subParts = explode('|', $parts[1]);
                 $displayName = $subParts[0];
@@ -614,7 +616,11 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $filename = basename($url);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HEADER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, (int)eZINI::instance('sqliimport.ini')->variable('ImportSettings', 'StreamTimeout'));
+        curl_setopt(
+            $ch,
+            CURLOPT_TIMEOUT,
+            (int)eZINI::instance('sqliimport.ini')->variable('ImportSettings', 'StreamTimeout')
+        );
         curl_setopt($ch, CURLOPT_FAILONERROR, true);
         curl_setopt($ch, CURLOPT_FILETIME, true);
         curl_setopt($ch, CURLOPT_NOBODY, true);
@@ -680,16 +686,16 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         return $index;
     }
 
-    protected function appendTranslationsToPayloadIfNeeded(PayloadBuilder $payload, $serializers = array())
+    protected function appendTranslationsToPayloadIfNeeded(PayloadBuilder $payload, $serializers = [])
     {
         $fields = static::$fields;
         $translationsLocalized = [];
         foreach ($fields as $field) {
             if (strpos($field, 'de_') === 0 && !empty($this->attribute($field))) {
                 $attributeIdentifier = substr($field, 3);
-                if (isset($serializers[$field])){
+                if (isset($serializers[$field])) {
                     $translationsLocalized['ger-DE'][$attributeIdentifier] = $serializers[$field];
-                }else {
+                } else {
                     $translationsLocalized['ger-DE'][$attributeIdentifier] = $this->attribute($field);
                 }
             }
@@ -699,19 +705,22 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         $payloadData = $payload->getData();
 
         if (!empty($translationsLocalized)) {
-
             $appendLocales = array_keys($translationsLocalized);
             $payload->setLanguages(
                 array_unique(
                     array_merge($payload->getMetadaData('languages'), $appendLocales)
                 )
             );
-            foreach ($payloadData[$defaultLocale] as $identifier => $value){
-                foreach ($appendLocales as $appendLocale){
-                    if (isset($translationsLocalized[$appendLocale][$identifier])){
-                        $payload->setData($appendLocale, $identifier, $translationsLocalized[$appendLocale][$identifier]);
+            foreach ($payloadData[$defaultLocale] as $identifier => $value) {
+                foreach ($appendLocales as $appendLocale) {
+                    if (isset($translationsLocalized[$appendLocale][$identifier])) {
+                        $payload->setData(
+                            $appendLocale,
+                            $identifier,
+                            $translationsLocalized[$appendLocale][$identifier]
+                        );
                         unset($translationsLocalized[$appendLocale][$identifier]);
-                    }else{
+                    } else {
                         $payload->setData($appendLocale, $identifier, $value);
                     }
                 }
@@ -777,11 +786,17 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
 
     public function fillOverflowData()
     {
-        foreach ($this->attributes() as $attributeKey){
+        foreach ($this->attributes() as $attributeKey) {
             $data = $this->attribute($attributeKey);
-            $isAnOverflowField = strpos($data, 'Il valore di questo campo supera il limite di caratteri ammessi') !== false;
+            $isAnOverflowField = strpos(
+                    $data,
+                    'Il valore di questo campo supera il limite di caratteri ammessi'
+                ) !== false;
             $isAnOverrideField = $data == $this->id() && $attributeKey !== '_id';
-            if ($isAnOverflowField || $isAnOverrideField){
+            if ($attributeKey === 'identifier' && get_class($this) === 'ocm_public_service'){
+                $isAnOverrideField = false;
+            }
+            if ($isAnOverflowField || $isAnOverrideField) {
                 $baseUrl = parse_url($this->attribute('_original_url'), PHP_URL_HOST);
                 $className = str_replace('ocm_', '', get_class($this));
                 $remoteUrl = 'https://' . $baseUrl . '/api/ocm/v1/' . $className . '/' . $this->id();
@@ -841,6 +856,25 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                         $aliasRedirects
                     );
                     if ($result['status'] === eZURLAliasML::LINK_ALREADY_TAKEN) {
+//                        $urlAliasList = eZURLAliasML::fetchByPath($result['path']);
+//                        foreach ($urlAliasList as $urlAlias) {
+//                            if ($urlAlias->attribute('action') !== 'eznode:' . $node->attribute('node_id')) {
+//                                $textMd5 = $urlAlias->attribute('text_md5')
+//                                    ?? md5(eZURLAliasML::strtolower($urlAlias->attribute('text')));
+//                                try {
+//                                    eZURLAliasML::removeSingleEntry(
+//                                        (int)$urlAlias->attribute('parent'),
+//                                        $textMd5,
+//                                        'ita-IT'
+//                                    );
+//                                    return 'remove-wrong-url';
+//                                } catch (Throwable $e) {
+//                                    echo $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine();
+//                                    print_r(explode(PHP_EOL, $e->getTraceAsString()));
+//                                    die();
+//                                }
+//                            }
+//                        }
                         return 'already-exists';
                     }
                     if ($result['status'] === true) {
