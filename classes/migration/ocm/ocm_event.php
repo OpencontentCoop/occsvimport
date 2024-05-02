@@ -224,6 +224,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             "Date ed orari dell'evento*" => $this->attribute('time_interval_events'),
             "Ripetizioni evento (formato ical)" => $this->attribute('time_interval_ical'),
             "Luogo dell'evento" => $this->attribute('takes_place_in'),
+            "Luogo dell'evento*" => $this->attribute('takes_place_in'),
             "Partecipano" => $this->attribute('attendee'),
             "È gratuito" => $this->attribute('is_accessible_for_free'),
             "Informazioni sui costi" => $this->attribute('cost_notes'),
@@ -270,7 +271,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('topics', $row["Argomenti*"]);
         $item->setAttribute('time_interval_events', $row["Date ed orari dell'evento*"]);
         $item->setAttribute('time_interval_ical', $row["Ripetizioni evento (formato ical)"]);
-        $item->setAttribute('takes_place_in', $row["Luogo dell'evento"]);
+        $item->setAttribute('takes_place_in', $row["Luogo dell'evento"] ?? $row["Luogo dell'evento*"]);
         $item->setAttribute('attendee', $row["Partecipano"]);
         $item->setAttribute('is_accessible_for_free', $row["È gratuito"]);
         $item->setAttribute('cost_notes', $row["Informazioni sui costi"]);
@@ -426,6 +427,10 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
                 'ref' => ocm_online_contact_point::getRangeRef()
             ],
             "Luogo dell'evento" => [
+                'strict' => false,
+                'ref' => ocm_place::getRangeRef()
+            ],
+            "Luogo dell'evento*" => [
                 'strict' => false,
                 'ref' => ocm_place::getRangeRef()
             ],
