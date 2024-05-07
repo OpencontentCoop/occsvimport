@@ -28,6 +28,8 @@ $classHash = array_flip($classHash);
 
 $tpl->setVariable('error_spreadsheet', false);
 
+$tpl->setVariable('master_spreadsheet_url', OCMigrationSpreadsheet::getMasterSpreadsheetShortUrl());
+
 function jsonEncodeError(Throwable $e)
 {
     return json_encode([

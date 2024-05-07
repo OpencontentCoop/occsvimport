@@ -141,7 +141,7 @@
                         <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
                             <div class="form-group">
                                 <ol class="lead">
-                                    <li>Se non hai ancora un documento spreadsheet, creane uno nuovo copiandolo dal modello in <a href="https://link.opencontent.it/new-kit-{if $context}{$context|wash()}{else}opencity{/if}" target="_blank">questa pagina</a></li>
+                                    <li>Se non hai ancora un documento spreadsheet, creane uno nuovo copiandolo dal modello in <a href="{$master_spreadsheet_url}" target="_blank">questa pagina</a></li>
                                     <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
                                     <li>Incolla l'url del tuo google spreadsheet</li>
                                 </ol>

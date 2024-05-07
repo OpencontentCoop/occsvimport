@@ -291,13 +291,28 @@ class OCMigrationSpreadsheet
         return self::$googleSheetClient;
     }
 
+    public static function getMasterSpreadsheetShortUrl(): string
+    {
+        $shortUrl = OpenPAINI::variable('AssistenteMigrazione', 'MasterSpreadsheetShortUrl', false);
+        if ($shortUrl){
+            return $shortUrl;
+        }
+
+        $context = OCMigration::discoverContext();
+        if (empty($context)){
+            $context = 'opencontent';
+        }
+
+        return 'https://link.opencontent.it/new-kit-' . $context;
+    }
+
     public static function getMasterSpreadsheet($spreadsheetUrl = null): ?GoogleSheet
     {
         if (self::$masterSpreadsheet === null) {
             $context = OCMigration::discoverContext();
             if ($context) {
                 if (!$spreadsheetUrl) {
-                    $shortUrl = 'https://link.opencontent.it/new-kit-' . $context;
+                    $shortUrl = self::getMasterSpreadsheetShortUrl();
                     $ch = curl_init();
                     $timeout = 0;
                     curl_setopt($ch, CURLOPT_URL, $shortUrl);
