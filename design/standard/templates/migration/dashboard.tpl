@@ -120,7 +120,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col mt-4">
+                            <div class="col">
                                 <div class="text-center">
                                     {if $context}
                                         <a href="#" class="btn btn-primary btn-lg mr-3" data-action="export"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-download"></span> Esporta dati</a>
@@ -130,10 +130,9 @@
                                         <a href="#" class="btn btn-primary btn-lg" data-action="import"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Importa dati</a>
                                     {/if}
                                 </div>
+                                <p id="current-selection" style="text-align: center;margin-top: 8px;font-size: .7em;"><span></span></p>
                             </div>
                         </div>
-
-
 
                     </div>
 
@@ -203,16 +202,35 @@
     <script type="text/javascript">
       $(document).ready(function () {
 
-        $('.container__wrapper').enhsplitter({minSize: 50, vertical: false, position: '75%'});
+        $('.container__wrapper').enhsplitter({minSize: 50, vertical: false, position: '85%'});
 
         $.fn.dataTable.ext.errMode = 'throw';
 
         $('#CheckAll').on('click', function (e) {
-          $('[name="Only"]').each(function (){
+          $('[name="Only"]').each(function () {
             $(this).trigger('click');
           });
           e.preventDefault();
         });
+
+        var updateCurrentSelection = function (){
+          var selection = [];
+          $('[name="Only"]').each(function (){
+            if ($(this).is(':checked')){
+              selection.push($.trim($(this).next().text()))
+            }
+          })
+          if (selection.length === 0){
+            selection = 'Tutti i fogli'
+          } else {
+            selection = selection.join(', ')
+          }
+          $('#current-selection span').text(selection)
+        }
+
+        $('[name="Only"]').on('click', function () {
+          updateCurrentSelection();
+        })
 
         var buildTable = function () {
           var data = $('#data');
@@ -222,46 +240,46 @@
           var type = $('.nav-link.active').data('identifier');
           data.html('');
 
-          var renderField = function ( data, type, row, meta ) {
+          var renderField = function (data, type, row, meta) {
             if (typeof data === 'object') {
               return '<small style="font-size:.7em; white-space:nowrap">Ultima modifica: ' + data.modified_at + '</small><br />' +
                 '<small style="font-size:.7em; white-space:nowrap">Ultima esecuzione: ' + data.executed_at + '</small>';
             }
-            if (typeof data === 'string' && data.startsWith('http')){
+            if (typeof data === 'string' && data.startsWith('http')) {
               var splitted = data.split('#');
               var name = splitted[1] ?? data;
               var extra = '';
-              if (name !== data){
+              if (name !== data) {
                 var className = splitted[2] ?? '';
                 var extraLink = '#';
-                if (className.length > 0){
-                  extraLink = '/migration/dashboard/'+className+'/'+name;
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Data</a>';
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/openpa/object/'+row['__id']+'">Local content</a>';
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/opendata/api/content/read/'+row['__id']+'">Local api content</a>';
-                }else{
-                  extraLink = '/migration/dashboard/payload/'+name;
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Payload</a>';
-                  extraLink = '/migration/dashboard/import/'+name;
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Re-import</a>';
-                  extraLink = '/migration/dashboard/store_payload/'+name+'?type='+row['__type'];
-                  extra += ' <a target="_blank" class="badge badge-info m-1" href="'+extraLink+'">Re-generate payload</a>';
+                if (className.length > 0) {
+                  extraLink = '/migration/dashboard/' + className + '/' + name;
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="' + extraLink + '">Data</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/openpa/object/' + row['__id'] + '">Local content</a>';
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="/opendata/api/content/read/' + row['__id'] + '">Local api content</a>';
+                } else {
+                  extraLink = '/migration/dashboard/payload/' + name;
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="' + extraLink + '">Payload</a>';
+                  extraLink = '/migration/dashboard/import/' + name;
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="' + extraLink + '">Re-import</a>';
+                  extraLink = '/migration/dashboard/store_payload/' + name + '?type=' + row['__type'];
+                  extra += ' <a target="_blank" class="badge badge-info m-1" href="' + extraLink + '">Re-generate payload</a>';
                 }
               }
-              return '<a target="_blank" href="'+splitted[0]+'" title="'+splitted[0]+'"><code>'+name+'</code></a><span class="d-block text-nowrap">'+extra+'</span>';
+              return '<a target="_blank" href="' + splitted[0] + '" title="' + splitted[0] + '"><code>' + name + '</code></a><span class="d-block text-nowrap">' + extra + '</span>';
             }
             return data;
           }
 
           var useContextSelect = $('#useContext');
           var useContext = useContextSelect.length > 0 ? useContextSelect.val() : 1;
-          if (useContextSelect){
-            useContextSelect.on('change', function(){
+          if (useContextSelect) {
+            useContextSelect.on('change', function () {
               $('.nav-link.active').trigger('click');
             })
           }
-          $.getJSON(BaseUrl+'/fields/'+type+'?useContext='+useContext, function (columns) {
-            $.each(columns, function (){
+          $.getJSON(BaseUrl + '/fields/' + type + '?useContext=' + useContext, function (columns) {
+            $.each(columns, function () {
               this.render = renderField;
             })
             data.DataTable({
@@ -271,7 +289,7 @@
                 "<'row'<'col-sm-12'tr>>",
               columns: columns,
               ajax: {
-                url: BaseUrl+'/datatable/'+type+'?useContext='+useContext,
+                url: BaseUrl + '/datatable/' + type + '?useContext=' + useContext,
                 type: 'POST',
                 data: {
                   ezxform_token: $('[name="ezxform_token"]').attr('value')
@@ -292,9 +310,9 @@
 
         var parseStatus = function (data, cb, context) {
           if (data.status === 'error') {
-            if (data.message.startsWith('<!DOCTYPE')){
-                $('body').replaceWith(data.message);
-            }else {
+            if (data.message.startsWith('<!DOCTYPE')) {
+              $('body').replaceWith(data.message);
+            } else {
               $('.alert-danger')
                 .removeClass('d-none')
                 .html(data.message);
@@ -333,34 +351,34 @@
             })
           }
 
-          if (typeof data.message === 'object' && data.message){
-            $.each(data.message, function (i, v){
+          if (typeof data.message === 'object' && data.message) {
+            $.each(data.message, function (i, v) {
               var updateStyle = 'warning';
               if (v.status === 'success') updateStyle = 'success';
               if (v.status === 'pending') updateStyle = 'info';
               if (v.status === 'warning') updateStyle = 'danger';
 
               var updateMessage = v.update ?? '';
-              if (updateMessage.length > 0){
-                updateMessage = '<div class="alert alert-'+updateStyle+' p-1 my-1">' + updateMessage + '</div>';
+              if (updateMessage.length > 0) {
+                updateMessage = '<div class="alert alert-' + updateStyle + ' p-1 my-1">' + updateMessage + '</div>';
               }
               var errorMessage = '';
-              if (typeof v.message === 'string'){
-                errorMessage = '<div class="alert alert-danger p-1 my-1">'+v.message+'</div>';
+              if (typeof v.message === 'string') {
+                errorMessage = '<div class="alert alert-danger p-1 my-1">' + v.message + '</div>';
               }
               var statusIcon = '';
-              if (v.status === 'warning'){
-                statusIcon = '<span class="glyphicon glyphicon-warning-sign text-'+updateStyle+'"></span> ';
+              if (v.status === 'warning') {
+                statusIcon = '<span class="glyphicon glyphicon-warning-sign text-' + updateStyle + '"></span> ';
               }
-              var statusMessage = statusIcon + '<span class="badge badge-'+updateStyle+'">' + v.status + '</span> ';
+              var statusMessage = statusIcon + '<span class="badge badge-' + updateStyle + '">' + v.status + '</span> ';
               var action = v.action || data.action;
               var actionMessage = '<span class="badge badge-primary">' + action + '</span> ';
-              var dateMessage = '<code>'+moment(data.timestamp).format('DD/MM/YYYY HH:mm') + '</code> ';
-              $('#result_'+i).html(statusMessage + actionMessage + dateMessage + updateMessage +  errorMessage)
+              var dateMessage = '<code>' + moment(data.timestamp).format('DD/MM/YYYY HH:mm') + '</code> ';
+              $('#result_' + i).html(statusMessage + actionMessage + dateMessage + updateMessage + errorMessage)
             })
-          }else{
-            $.each(data.options.class_filter, function (){
-              $('#result_'+this).html('<span class="badge badge-primary">' + data.action + '</span> '+moment(data.timestamp).format('DD/MM/YYYY HH:mm'))
+          } else {
+            $.each(data.options.class_filter, function () {
+              $('#result_' + this).html('<span class="badge badge-primary">' + data.action + '</span> ' + moment(data.timestamp).format('DD/MM/YYYY HH:mm'))
             })
           }
         }
@@ -368,7 +386,7 @@
         var loader = $('#loader');
         var checkStatus = function (cb, context) {
           loader.show();
-          $.getJSON(BaseUrl+'/status', function (data) {
+          $.getJSON(BaseUrl + '/status', function (data) {
             console.log(data.action, data.status, data);
             parseStatus(data);
             if ($.isFunction(cb)) {
@@ -407,7 +425,7 @@
             })
             var isUpdate = $('#isUpdate');
             var doValidation = $('#doValidation');
-            $.getJSON(BaseUrl+'/run', {
+            $.getJSON(BaseUrl + '/run', {
               action: action,
               options: {
                 class_filter: classes,
@@ -428,7 +446,7 @@
           var self = $(this);
           var className = self.data('configure');
           var configuration = self.data('configuration');
-          $.getJSON(BaseUrl+'/configure/'+className, {
+          $.getJSON(BaseUrl + '/configure/' + className, {
             configuration: configuration
           }, function (data) {
             console.log(data);
@@ -438,6 +456,7 @@
 
         checkStatus(function () {
           $('.actions').removeClass('d-none');
+          updateCurrentSelection();
         });
       });
     </script>
