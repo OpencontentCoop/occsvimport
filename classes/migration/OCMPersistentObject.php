@@ -886,4 +886,9 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
         return 'empty-text';
     }
+
+    public function validatePayload(OCMPayload $payload): void
+    {
+
+    }
 }

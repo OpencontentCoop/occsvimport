@@ -46,4 +46,6 @@ interface ocm_interface
     public function setAttribute($attr, $val);
 
     public static function checkPayloadGeneration(): bool;
+
+    public function validatePayload(OCMPayload $payload): void;
 }

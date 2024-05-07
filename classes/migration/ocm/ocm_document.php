@@ -929,6 +929,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Argomento*" => $this->attribute('topics'),
             "Descrizione breve*" => $this->attribute('abstract'),
             "URL documento*" => $this->attribute('file'),
+            "URL documento" => $this->attribute('file'),
             "Licenza di distribuzione*" => $this->attribute('license'),
             "Formati disponibili*" => $this->attribute('format'),
             "Ufficio responsabile del documento*" => $this->attribute('has_organization'),
@@ -1004,7 +1005,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('document_type', $row["Tipo di documento*"]);
         $item->setAttribute('topics', $row["Argomento*"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
-        $item->setAttribute('file', $row["URL documento*"]);
+        $item->setAttribute('file', $row["URL documento*"] ?? $row["URL documento"]);
         $item->setAttribute('license', $row["Licenza di distribuzione*"]);
         $item->setAttribute('format', $row["Formati disponibili*"]);
         $item->setAttribute('has_organization', $row["Ufficio responsabile del documento*"]);
@@ -1324,5 +1325,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
     public static function getImportPriority(): int
     {
         return 100;
+    }
+
+    public function validatePayload(OCMPayload $payload): void
+    {
+        $payload = json_decode($payload->attribute('payload'), true);
+        foreach ($payload['data'] as $locale => $data){
+            if (empty($data['file']) && empty($data['link']) && empty($data['attachments'])){
+                throw new Exception('file, link and attachments are empty');
+            }
+        }
     }
 }

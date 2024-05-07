@@ -162,6 +162,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Costi - Valuta [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'currency')) : '',
             "Procedure collegate all'esito" => $this->attribute('output_notes'),
             "Accedi al servizio (canale digitale)*" => $this->attribute('has_channel'),
+            "Accedi al servizio (canale digitale)" => $this->attribute('has_channel'),
             "Istruzioni per accedere al servizio (canale fisico)" => $this->attribute('is_physically_available_at_how_to'),
             "Accedi al servizio (Canale fisico)*" => $this->attribute('is_physically_available_at'),
             "Vincoli" => $this->attribute('conditions'),
@@ -236,7 +237,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('relation_service', $row["Servizi correlati/Altri servizi"]);
         $item->setAttribute('requires_service', $row["Servizi richiesti"]);
         $item->setAttribute('output_notes', $row["Procedure collegate all'esito"]);
-        $item->setAttribute('has_channel', $row["Accedi al servizio (canale digitale)*"]);
+        $item->setAttribute('has_channel', $row["Accedi al servizio (canale digitale)*"] ?? $row["Accedi al servizio (canale digitale)"]);
         $item->setAttribute('is_physically_available_at_how_to', $row["Istruzioni per accedere al servizio (canale fisico)"]);
         $item->setAttribute('is_physically_available_at', $row["Accedi al servizio (Canale fisico)*"]);
         $item->setAttribute('conditions', $row["Vincoli"]);
@@ -494,6 +495,10 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
                 'ref' => ocm_public_service::getRangeRef()
             ],
             "Accedi al servizio (canale digitale)*" => [
+                'strict' => false,
+                'ref' => ocm_channel::getRangeRef()
+            ],
+            "Accedi al servizio (canale digitale)" => [
                 'strict' => false,
                 'ref' => ocm_channel::getRangeRef()
             ],

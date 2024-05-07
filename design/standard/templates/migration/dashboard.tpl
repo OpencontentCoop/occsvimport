@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" style="height:100%">
 <head>
     <title>Assistente migrazione</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,170 +12,184 @@
         'alpaca.min.js',
         'jq.dt.min.js',
         'dt.b4.min.js',
-        'dataTables.responsive.min.js'
+        'dataTables.responsive.min.js',
+        'jquery.enhsplitter.js'
     ))}
     {ezcss_load(array(
         'bootstrap.min.css',
         'glyphicon.css',
         'dt.b4.min.css',
-        'responsive.dataTables.min.css'
+        'responsive.dataTables.min.css',
+        'jquery.enhsplitter.css'
     ))}
 </head>
-<body class="bg-{if $context|not}success{else}primary{/if}">
+<body class="bg-{if $context|not}success{else}primary{/if}" style="height:100%">
 
 <div id="loader" style="display:none; position: fixed;top: 0;right: 0;margin: 10px"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></div>
-<div class="container my-5 bg-white rounded p-5 position-relative">
-    <div class="row">
-        <div class="col-12">
-            <h1>Assistente migrazione <span class="badge badge-{if $context|not}success{else}primary{/if}">{if $context} esportazione {else} importazione {/if} dati</span></h1>
-            <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br /></code><a href="/migration/dashboard/credentials"><code>{$google_user}</code></a></p>
-            {if and($migration_spreadsheet, $google_user)}
-                <h4 class="my-4">Impostazioni dello spreadsheet {if $context} di destinazione {else} sorgente {/if}</h4>
-            {elseif $google_user}
-                {if $context}
-                    <h2>Imposta il google spreadsheet per esportare i dati</h2>
-                {else}
-                    <h2>Imposta il google spreadsheet per importare i dati</h2>
-                {/if}
-            {else}
-                <h2>Configura un account di servizio Google</h2>
-            {/if}
-
-            {if $google_user}
-            <div class="alert alert-danger{if $error_spreadsheet|not} d-none{/if}">
-                {if $error_spreadsheet}{$error_spreadsheet|wash()}{/if}
-            </div>
-            {/if}
-
-            {if and($migration_spreadsheet, $google_user)}
+<div class="{if and($migration_spreadsheet, $google_user)}container__wrapper{/if}" style="height:100%">
+    <div class="container__top">
+        <div class="container my-5 bg-white rounded p-5 position-relative">
             <div class="row">
-                <div class="col">
-                    <p>
-                        <a href="https://docs.google.com/spreadsheets/d/{$migration_spreadsheet}/edit" target="_blank">
-                            {$migration_spreadsheet_title|wash()}<br />{$migration_spreadsheet}
-                        </a>
-                    </p>
-                </div>
-                <div class="col text-right">
-                    <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
-                        <input type="hidden" name="remove_migration_spreadsheet" value="1" />
-                        <input type="submit" class="btn btn-success" value="Rimuovi"/>
-                        <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
-                    </form>
-                </div>
-            </div>
+                <div class="col-12">
+                    <h1>Assistente migrazione <span class="badge badge-{if $context|not}success{else}primary{/if}">{if $context} esportazione {else} importazione {/if} dati</span></h1>
+                    <p class="mb-5"><code>{if $context}{$context|wash()}@{/if}{$version|wash} - instance@{$instance|wash()} - db@{$db_name|wash()}<br /></code><a href="/migration/dashboard/credentials"><code>{$google_user}</code></a></p>
+                    {if and($migration_spreadsheet, $google_user)}
+                        <h4 class="my-4">Impostazioni dello spreadsheet {if $context} di destinazione {else} sorgente {/if}</h4>
+                    {elseif $google_user}
+                        {if $context}
+                            <h2>Imposta il google spreadsheet per esportare i dati</h2>
+                        {else}
+                            <h2>Imposta il google spreadsheet per importare i dati</h2>
+                        {/if}
+                    {else}
+                        <h2>Configura un account di servizio Google</h2>
+                    {/if}
 
-            <div class="my-4 actions">
-
-                    <div class="container options mb-4">
-                        <table class="table">
-                            <tr>
-                                <th colspan="2"><a href="#" class="btn btn-sm btn-link" id="CheckAll" title="Inverti selezione"><span class="glyphicon glyphicon-check"></span> Inverti selezione</a></th>
-                            </tr>
-                        {foreach $class_hash as $class => $name}
-                            <tr>
-                                <td width="1" style="white-space:nowrap">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" checked="checked" value="{$class}" name="Only" id="{$class}">
-                                        <label class="form-check-label text-nowrap h5" style="cursor:pointer" for="{$class}">
-                                            {$name|wash()}
-                                        </label>
-                                    </div>
-
-                                    <p class="mt-5">
-                                        <a href="#" title="Ripristina formattazioni condizionali" class="btn btn-outline-primary btn-sm" data-configuration="format" data-configure="{$class}"><span class="glyphicon glyphicon-adjust"></span></a>
-                                        <a href="#" title="Ripristina validazione date" class="btn btn-outline-primary btn-sm" data-configuration="date-validation" data-configure="{$class}"><span class="glyphicon glyphicon-calendar"></span></a>
-                                        <a href="#" title="Ripristina validazione vocabolari e relazioni" class="btn btn-outline-primary btn-sm" data-configuration="range-validation" data-configure="{$class}"><span class="glyphicon glyphicon-link"></span></a>
-                                    </p>
-                                </td>
-                                <td>
-                                    <div class="col result" id="result_{$class}"></div>
-                                </td>
-                            </tr>
-                        {/foreach}
-                        </table>
+                    {if $google_user}
+                    <div class="alert alert-danger{if $error_spreadsheet|not} d-none{/if}">
+                        {if $error_spreadsheet}{$error_spreadsheet|wash()}{/if}
                     </div>
+                    {/if}
 
-                    <div class="options mb-4">
-                        <div class="bg-light p-2 rounded border mx-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" {if $context}checked="checked"{/if} value="update" name="isUpdate" id="isUpdate">
-                                <label class="form-check-label h5" for="isUpdate" style="cursor:pointer">
-                                    <b>{if $context}Non sovrascrivere i dati già elaborati{else}Aggiorna i contenuti già importati{/if}</b>
-                                </label>
-                            </div>
-                            {if $context|not()}
-                                <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" value="update" name="doValidation" id="doValidation">
-                                    <label class="form-check-label h5" for="doValidation" style="cursor:pointer">
-                                        <b>Valida i dati quando leggi lo spreadsheet</b>
-                                    </label>
-                                </div>
-                            {/if}
+                    {if and($migration_spreadsheet, $google_user)}
+                    <div class="row">
+                        <div class="col">
+                            <p>
+                                <a href="https://docs.google.com/spreadsheets/d/{$migration_spreadsheet}/edit" target="_blank">
+                                    {$migration_spreadsheet_title|wash()}<br />{$migration_spreadsheet}
+                                </a>
+                            </p>
+                        </div>
+                        <div class="col text-right">
+                            <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
+                                <input type="hidden" name="remove_migration_spreadsheet" value="1" />
+                                <input type="submit" class="btn btn-success" value="Rimuovi"/>
+                                <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
+                            </form>
                         </div>
                     </div>
 
+                    <div class="mt-4 actions">
+                        <div class="container options mb-4">
+                            <table class="table">
+                                <tr>
+                                    <th colspan="2"><a href="#" class="btn btn-sm btn-link" id="CheckAll" title="Inverti selezione"><span class="glyphicon glyphicon-check"></span> Inverti selezione</a></th>
+                                </tr>
+                            {foreach $class_hash as $class => $name}
+                                <tr>
+                                    <td width="1" style="white-space:nowrap">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked="checked" value="{$class}" name="Only" id="{$class}">
+                                            <label class="form-check-label text-nowrap h5" style="cursor:pointer" for="{$class}">
+                                                {$name|wash()}
+                                            </label>
+                                        </div>
 
-                    <div class="text-center">
-                    {if $context}
-                        <a href="#" class="btn btn-primary btn-lg" data-action="export"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-download"></span> Esporta dati</a>
-                        <a href="#" class="btn btn-primary btn-lg" data-action="push"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-upload"></span> Scrivi spreadsheet</a>
+                                        <p class="mt-5">
+                                            <a href="#" title="Ripristina formattazioni condizionali" class="btn btn-outline-primary btn-sm" data-configuration="format" data-configure="{$class}"><span class="glyphicon glyphicon-adjust"></span></a>
+                                            <a href="#" title="Ripristina validazione date" class="btn btn-outline-primary btn-sm" data-configuration="date-validation" data-configure="{$class}"><span class="glyphicon glyphicon-calendar"></span></a>
+                                            <a href="#" title="Ripristina validazione vocabolari e relazioni" class="btn btn-outline-primary btn-sm" data-configuration="range-validation" data-configure="{$class}"><span class="glyphicon glyphicon-link"></span></a>
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <div class="col result" id="result_{$class}"></div>
+                                    </td>
+                                </tr>
+                            {/foreach}
+                            </table>
+                        </div>
+
+                        <div class="row">
+                            <div class="col">
+                                <div class="options">
+                                    <div class="bg-light p-2 rounded border mx-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" {if $context}checked="checked"{/if} value="update" name="isUpdate" id="isUpdate">
+                                            <label class="form-check-label h5" for="isUpdate" style="cursor:pointer">
+                                                <b>{if $context}Non sovrascrivere i dati già elaborati{else}Aggiorna i contenuti già importati{/if}</b>
+                                            </label>
+                                        </div>
+                                        {if $context|not()}
+                                            <div class="form-check mt-4">
+                                                <input class="form-check-input" type="checkbox" value="update" name="doValidation" id="doValidation">
+                                                <label class="form-check-label h5" for="doValidation" style="cursor:pointer">
+                                                    <b>Valida i dati quando leggi lo spreadsheet</b>
+                                                </label>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col mt-4">
+                                <div class="text-center">
+                                    {if $context}
+                                        <a href="#" class="btn btn-primary btn-lg mr-3" data-action="export"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-download"></span> Esporta dati</a>
+                                        <a href="#" class="btn btn-primary btn-lg" data-action="push"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> <span class="glyphicon glyphicon-upload"></span> Scrivi spreadsheet</a>
+                                    {else}
+                                        <a href="#" class="btn btn-primary btn-lg mr-3" data-action="pull"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Leggi spreadsheet</a>
+                                        <a href="#" class="btn btn-primary btn-lg" data-action="import"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Importa dati</a>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
                     {else}
-                        <a href="#" class="btn btn-primary btn-lg" data-action="pull"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Leggi spreadsheet</a>
-                        <a href="#" class="btn btn-primary btn-lg" data-action="import"><span class="loading d-none"><span class="glyphicon glyphicon-refresh gly-spin" aria-hidden="true"></span></span> Importa dati</a>
+                        {if $google_user}
+                        <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
+                            <div class="form-group">
+                                <ol class="lead">
+                                    <li>Se non hai ancora un documento spreadsheet, creane uno nuovo copiandolo dal modello in <a href="https://link.opencontent.it/new-kit-{if $context}{$context|wash()}{else}opencity{/if}" target="_blank">questa pagina</a></li>
+                                    <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
+                                    <li>Incolla l'url del tuo google spreadsheet</li>
+                                </ol>
+                                <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
+                                <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" placeholder="Inserisci qui l'url del tuo google spreadsheet"/>
+                            </div>
+                            <input type="submit" class="btn btn-success btn-lg" value="Salva"/>
+                            <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
+                        </form>
+                        {else}
+                            <p class="lead">
+                                Accedi alla <a href="/migration/dashboard/credentials">pagina di gestione credenziali dell'assistente migrazione</a>
+                            </p>
+                        {/if}
                     {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container__bottom bg-white">
+        <div class="container-fluid">
+        <div class="row">
+            {if and($migration_spreadsheet, $google_user)}
+                <div class="col-12">
+                    <h2 class="my-4">{if $context}Anteprima dati da esportare{/if}</h2>
+                    {if $context|not()}
+                        <select id="useContext" name="useContext" class="form-control form-control-lg" style="width: 300px;font-weight: bold">
+                            <option value="0" selected="selected">Errori di importazione</option>
+                            <option value="1">Dati letti dallo spreadsheet</option>
+                        </select>
+                    {/if}
+                </div>
+                <div class="col-12">
+                    <ul class="nav nav-tabs">
+                        {foreach $class_hash as $class => $name}
+                            <li class="nav-item"><a href="#" class="nav-link" data-identifier="{$class}">{$name|wash()}</a></li>
+                        {/foreach}
+                    </ul>
+                </div>
+                <div class="col-12">
+                    <div class="my-3">
+                        <table id="data" class="table table-striped table-bordered table-sm display responsive no-wrap w-100" cellpadding="0" cellspacing="0"></table>
                     </div>
                 </div>
-            {else}
-                {if $google_user}
-                <form action="{'/migration/dashboard'|ezurl(no)}" method="post">
-                    <div class="form-group">
-                        <ol class="lead">
-                            <li>Se non hai ancora un documento spreadsheet, creane uno nuovo copiandolo dal modello in <a href="https://link.opencontent.it/new-kit-{if $context}{$context|wash()}{else}opencity{/if}" target="_blank">questa pagina</a></li>
-                            <li>Condividilo con l'utente <code style="color:#000">{$google_user}</code> in modalità Editor</li>
-                            <li>Incolla l'url del tuo google spreadsheet</li>
-                        </ol>
-                        <label for="migration_spreadsheet" class="d-none">Inserisci qui l'url</label>
-                        <input type="text" id="migration_spreadsheet" class="form-control" name="migration_spreadsheet" placeholder="Inserisci qui l'url del tuo google spreadsheet"/>
-                    </div>
-                    <input type="submit" class="btn btn-success btn-lg" value="Salva"/>
-                    <input type="hidden" name="ezxform_token" value="{$ezxform_token}" />
-                </form>
-                {else}
-                    <p class="lead">
-                        Accedi alla <a href="/migration/dashboard/credentials">pagina di gestione credenziali dell'assistente migrazione</a>
-                    </p>
-                {/if}
             {/if}
         </div>
     </div>
-</div>
-
-<div class="container-fluid my-5 bg-white">
-    <div class="row">
-        {if and($migration_spreadsheet, $google_user)}
-            <div class="col-12">
-                <h2 class="my-4">{if $context}Anteprima dati da esportare{/if}</h2>
-                {if $context|not()}
-                    <select id="useContext" name="useContext" class="form-control form-control-lg" style="width: 300px;font-weight: bold">
-                        <option value="0" selected="selected">Errori di importazione</option>
-                        <option value="1">Dati letti dallo spreadsheet</option>
-                    </select>
-                {/if}
-            </div>
-            <div class="col-12">
-                <ul class="nav nav-tabs">
-                    {foreach $class_hash as $class => $name}
-                        <li class="nav-item"><a href="#" class="nav-link" data-identifier="{$class}">{$name|wash()}</a></li>
-                    {/foreach}
-                </ul>
-            </div>
-            <div class="col-12">
-                <div class="my-3">
-                    <table id="data" class="table table-striped table-bordered table-sm display responsive no-wrap w-100" cellpadding="0" cellspacing="0"></table>
-                </div>
-            </div>
-        {/if}
     </div>
 </div>
 
@@ -188,6 +202,8 @@
 {literal}
     <script type="text/javascript">
       $(document).ready(function () {
+
+        $('.container__wrapper').enhsplitter({minSize: 50, vertical: false, position: '75%'});
 
         $.fn.dataTable.ext.errMode = 'throw';
 

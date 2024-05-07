@@ -1130,9 +1130,7 @@ class OCMigrationSpreadsheet
                             }
                             $nameCollection[] = $item->name();
                         }
-
                         $item->fillOverflowData();
-
                         $item->storeThis(false);
                         if ($cli) {
                             $cli->output( ' - ' . $item->id() . ' ' . $item->name());
@@ -1224,10 +1222,10 @@ class OCMigrationSpreadsheet
                         try {
                             $p = OCMPayload::fetch($item->id());
                         } catch (Exception $e) {
-                            $cli->output(' fail validation', false);
+                            if ($cli) $cli->output(' fail validation', false);
                         }
                         if ($p instanceof OCMPayload) {
-                            $cli->output(' validation', false);
+                            if ($cli) $cli->output(' validation', false);
                             $p->validate();
                         }
                     }
@@ -1408,7 +1406,10 @@ class OCMigrationSpreadsheet
                         }
                     }
                     if ($options['import_url_alias'] && $payload->getSourceItem() instanceof OCMPersistentObject){
-                        $payload->getSourceItem()->createUrlAlias();
+                        $importUrlAlias = $payload->getSourceItem()->createUrlAlias();
+                        if ($cli) {
+                            $cli->output(' url_alias: ' . $importUrlAlias);
+                        }
                     }
                 } catch (Throwable $e) {
                     $stat[$className]['f']++;

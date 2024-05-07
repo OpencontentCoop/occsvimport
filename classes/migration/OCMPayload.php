@@ -110,6 +110,10 @@ class OCMPayload extends eZPersistentObject
         $this->setAttribute('executed_at', time());
 
         try {
+            if ($this->getSourceItem() instanceof ocm_interface) {
+                $this->getSourceItem()->validatePayload($this);
+            }
+
             if (strpos($this->id(), '---')) {
                 $result = $repository->update($payload, true);
             } elseif ($onlyCreation) {
@@ -149,6 +153,11 @@ class OCMPayload extends eZPersistentObject
                 $updateStruct = $environment->instanceUpdateStruct($payload);
                 $updateStruct->validate(true);
             }
+
+            if ($this->getSourceItem() instanceof ocm_interface) {
+                $this->getSourceItem()->validatePayload($this);
+            }
+
             $this->setAttribute('error', '');
             $this->store();
         } catch (Throwable $e) {
