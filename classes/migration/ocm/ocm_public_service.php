@@ -363,7 +363,12 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'audience', $this->attribute('audience'));
         $payload->setData($locale, 'applicants', $this->attribute('applicants'));
         $payload->setData($locale, 'description', $this->attribute('description'));
-        $payload->setData($locale, 'has_spatial_coverage', $this->attribute('has_spatial_coverage'));
+        $spatialCoverage = $this->attribute('has_spatial_coverage');
+        if (!is_numeric($spatialCoverage)) {
+            $spatialCoverage = OpenPAComuniItaliani::getCodesFromNames((array)$spatialCoverage);
+            $spatialCoverage = $spatialCoverage[0] ?? '';
+        }
+        $payload->setData($locale, 'has_spatial_coverage', $spatialCoverage);
         $payload->setData($locale, 'has_language', $this->formatTags($this->attribute('has_language')));
         $payload->setData($locale, 'how_to', $this->attribute('how_to'));
         $payload->setData($locale, 'has_input', $this->attribute('has_input'));

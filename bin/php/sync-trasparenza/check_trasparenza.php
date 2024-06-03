@@ -38,3 +38,4 @@ if ($options['sync']) {
 }
 
 $script->shutdown();
+

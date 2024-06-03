@@ -84,6 +84,7 @@ class OCMImporter
                     'user_group',
                     'global_layout',
                     'shared_link',
+//                    'office',
                 ],
                 'remap-classes' => [
                     'file_pdf' => 'file',
@@ -174,7 +175,7 @@ class OCMImporter
                         try {
                             $this->import($childRemoteId, $parentObject->mainNodeID());
                         } catch (Throwable $e) {
-                            $this->error("Error importing {$childRemoteId}: " . $e->getMessage());
+                            $this->error("Error importing {$childRemoteId}: " . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
                         }
                         $this->recursion--;
                     }
@@ -259,9 +260,9 @@ class OCMImporter
             throw new Exception("Parent node non trovato importando l'oggetto $remoteObjectIdentifier");
         }
 
-        $this->readClient->read($remoteObjectIdentifier);
+        $this->readClient->read(urldecode($remoteObjectIdentifier));
 
-        $content = $this->client->read($remoteObjectIdentifier);
+        $content = $this->client->read(urlencode($remoteObjectIdentifier));
 
         $classIdentifier = $originalClassIdentifier = $content['metadata']['classIdentifier'];
         $remoteId = $content['metadata']['remoteId'];
@@ -426,7 +427,9 @@ class OCMImporter
                         break;
 
                     default:
-                        $payload->setData(null, $identifier, '[...]');
+                        if ($identifier !== 'titolo' && $classIdentifier !== 'sovvenzione_contributo') {
+                            $payload->setData(null, $identifier, '[...]');
+                        }
                 }
             }
         }
@@ -443,7 +446,6 @@ class OCMImporter
 
         $this->stats['import']++;
         $this->imported[$remoteObjectIdentifier] = (int)$result['content']['metadata']['id'];
-
         return (int)$result['content']['metadata']['id'];
     }
 
@@ -686,7 +688,7 @@ class OCMImporter
     private function error($message)
     {
         if ($message instanceof Throwable) {
-            $message = $message->getMessage();
+            $message = $message->getMessage() . ' on ' . $message->getFile() . ' line ' . $message->getLine();
         }
         eZCLI::instance()->error($this->padMessage($message));
         $this->stats['error']++;

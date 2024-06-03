@@ -11,11 +11,11 @@ $script = eZScript::instance([
 ]);
 
 $optionsConfigList = [
-//    [
-//        'identifier' => 'languages',
-//        'config' => '[languages:]',
-//        'help' => 'Comma separates language code list, first is primary (default is: ita-IT,eng-GB)',
-//    ],
+    [
+        'identifier' => 'dry-run',
+        'config' => '[dry-run]',
+        'help' => 'Print actions not execute',
+    ],
 ];
 $configs = array_column($optionsConfigList, 'config');
 sort($configs);
@@ -30,6 +30,10 @@ $options = $script->getOptions(implode('', $configs), '', $optionsHelp);
 $script->initialize();
 $cli = eZCLI::instance();
 
+if (!eZSiteData::fetchByName('ocinstaller_opencity_trasparenza_cct_version') instanceof eZSiteData) {
+    throw new Exception('Not needed here...');
+}
+
 $policies = [
     [
         'ModuleName' => 'content',
@@ -37,21 +41,25 @@ $policies = [
         'Limitation' => [
             'Class' => eZContentClass::classIDByIdentifier('trasparenza'),
         ],
+        'LimitationReadable' => 'Class: trasparenza',
     ],
     [
         'ModuleName' => 'exportas',
         'FunctionName' => 'avpc',
         'Limitation' => [],
+        'LimitationReadable' => '',
     ],
     [
         'ModuleName' => 'exportas',
         'FunctionName' => 'xml',
         'Limitation' => [],
+        'LimitationReadable' => '',
     ],
     [
         'ModuleName' => 'exportas',
         'FunctionName' => 'csv',
         'Limitation' => [],
+        'LimitationReadable' => '',
     ],
 ];
 $datasetLotto = (int)eZContentClass::classIDByIdentifier('dataset_lotto');
@@ -64,6 +72,7 @@ if ($datasetLotto > 0 && $lotto > 0) {
             'Class' => $lotto,
             'ParentClass' => $datasetLotto,
         ],
+        'LimitationReadable' => 'Class: lotto, ParentClass: dataset_lotto',
     ];
     foreach (['edit', 'remove'] as $function) {
         $policies[] = [
@@ -72,6 +81,7 @@ if ($datasetLotto > 0 && $lotto > 0) {
             'Limitation' => [
                 'Class' => $lotto,
             ],
+            'LimitationReadable' => 'Class: lotto',
         ];
     }
 }
@@ -167,6 +177,9 @@ foreach ($classList as $class) {
     $activeClassIdentifiers[$class->attribute('identifier')] = $class->attribute('id');
 }
 
+$trasparenzaRoot = false;
+$trasparenzaClasses = [];
+$orphansClassIdentifiers = $activeClassIdentifiers;
 foreach ($tree as $parentId => $classIdentifiers) {
     $missingClasses = array_diff($classIdentifiers, array_keys($activeClassIdentifiers));
     if (!empty($missingClasses)) {
@@ -190,10 +203,18 @@ foreach ($tree as $parentId => $classIdentifiers) {
         if (isset($activeClassIdentifiers[$identifier])) {
             $classId = (int)$activeClassIdentifiers[$identifier];
             if ($classId > 0) {
-                $classLimitations[] = $classId;
+                $classLimitations[$identifier] = $classId;
+                unset($orphansClassIdentifiers[$identifier]);
             }
         }
     }
+
+    if ($subtreeNode->attribute('class_identifier') === 'trasparenza') {
+        $trasparenzaRoot = $subtreeNode;
+        $trasparenzaClasses = $classLimitations;
+        continue;
+    }
+
     if (empty($classLimitations)) {
         continue;
     }
@@ -206,27 +227,124 @@ foreach ($tree as $parentId => $classIdentifiers) {
                 'Subtree' => [
                     $subtreeNode->attribute('path_string'),
                 ],
-                'Class' => $classLimitations,
+                'Class' => array_values($classLimitations),
             ],
+            'LimitationReadable' => 'Class: '
+                . implode(', ', array_keys($classLimitations))
+                . PHP_EOL . 'Subtree: ' . $subtreeNode->attribute('name'),
         ];
     }
 }
 
+if ($trasparenzaRoot instanceof eZContentObjectTreeNode) {
+    $trasparenzaClasses = array_merge($trasparenzaClasses, $orphansClassIdentifiers);
+    if (!empty($trasparenzaClasses)) {
+        $policies[] = [
+            'ModuleName' => 'content',
+            'FunctionName' => 'create',
+            'Limitation' => [
+                'Subtree' => [
+                    $trasparenzaRoot->attribute('path_string'),
+                ],
+                'Class' => array_values($trasparenzaClasses),
+            ],
+            'LimitationReadable' => 'Class: '
+                . implode(', ', array_keys($trasparenzaClasses))
+                . PHP_EOL . 'Subtree: ' . $trasparenzaRoot->attribute('name'),
+        ];
+    }
+    $policies[] = [
+        'ModuleName' => 'content',
+        'FunctionName' => 'edit',
+        'Limitation' => [
+            'Subtree' => [
+                $trasparenzaRoot->attribute('path_string'),
+            ],
+            'Class' => array_values($activeClassIdentifiers),
+        ],
+        'LimitationReadable' => 'Class: '
+            . implode(', ', array_keys($activeClassIdentifiers))
+            . PHP_EOL . 'Subtree: ' . $trasparenzaRoot->attribute('name'),
+    ];
+    $policies[] = [
+        'ModuleName' => 'content',
+        'FunctionName' => 'remove',
+        'Limitation' => [
+            'Subtree' => [
+                $trasparenzaRoot->attribute('path_string'),
+            ],
+            'Class' => array_values($activeClassIdentifiers),
+        ],
+        'LimitationReadable' => 'Class: '
+            . implode(', ', array_keys($activeClassIdentifiers))
+            . PHP_EOL . 'Subtree: ' . $trasparenzaRoot->attribute('name'),
+    ];
+}
+
 $roleName = 'Editor Trasparenza';
 $role = eZRole::fetchByName($roleName);
-if ($role instanceof eZRole) {
-    $role->removePolicies();
+if ($options['dry-run']) {
+    if (!$role instanceof eZRole) {
+        $cli->warning('Create role ' . $roleName);
+    }
+
+    $module = array_column($policies, 'ModuleName');
+    $function = array_column($policies, 'FunctionName');
+    array_multisort($module, SORT_ASC, $function, SORT_ASC, $policies);
+
+    $output = new ezcConsoleOutput();
+    $table = new ezcConsoleTable($output, 300);
+    foreach ($policies as $index => $policy) {
+        $table[$index][]->content = $policy['ModuleName'];
+        $table[$index][]->content = $policy['FunctionName'];
+        $table[$index][]->content = wordwrap($policy['LimitationReadable']);
+    }
+    $table->outputTable();
+    $output->outputLine();
 } else {
-    $role = eZRole::create($roleName);
-    $role->store();
+    $cli->output('Upsert role ' . $roleName);
+    if ($role instanceof eZRole) {
+        $role->removePolicies();
+    } else {
+        $role = eZRole::create($roleName);
+        $role->store();
+    }
+    foreach ($policies as $policy) {
+        $role->appendPolicy(
+            $policy['ModuleName'],
+            $policy['FunctionName'],
+            $policy['Limitation']
+        );
+    }
 }
-foreach ($policies as $policy) {
-    $role->appendPolicy(
-        $policy['ModuleName'],
-        $policy['FunctionName'],
-        $policy['Limitation']
-    );
+
+$group = eZContentObject::fetchByRemoteID('editors_trasparenza');
+if ($options['dry-run']) {
+    if (!$group instanceof eZContentObject) {
+        $cli->warning('Create group Editors Amministrazione Trasparente');
+    }
+} else {
+    $cli->output('Assign role to group Editors Amministrazione Trasparente');
+    if (!$group instanceof eZContentObject) {
+        $base = eZContentObject::fetchByRemoteID('editors_base');
+        if ($base instanceof eZContentObject) {
+            $group = eZContentFunctions::createAndPublishObject([
+                'parent_node_id' => $base->mainNodeID(),
+                'remote_id' => 'editors_trasparenza',
+                'class_identifier' => 'user_group',
+                'attributes' => [
+                    'name' => 'Editors Amministrazione Trasparente',
+                ],
+            ]);
+        }
+    }
+    if ($group instanceof eZContentObject) {
+        $role->assignToUser($group->attribute('id'));
+    } else {
+        $cli->error('Group editors_trasparenza not found');
+    }
+    eZCache::clearByID(['user_info_cache']);
+    eZDB::instance()->query('DELETE FROM ezdfsfile_cache WHERE name LIKE \'%user-info%\'');
 }
-eZCache::clearByID(['user_info_cache']);
 
 $script->shutdown();
