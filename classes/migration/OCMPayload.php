@@ -107,6 +107,7 @@ class OCMPayload extends eZPersistentObject
         $repository->setCurrentEnvironmentSettings($environment);
 
         $payload = json_decode($this->attribute('payload'), true);
+        $payload['options']['ssl_verify'] = false;
         $this->setAttribute('executed_at', time());
 
         try {
