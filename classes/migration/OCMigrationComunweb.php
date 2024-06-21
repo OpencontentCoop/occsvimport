@@ -20,10 +20,10 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
         ];
         $escludeRemoteIdPrefix = [
             'at_',
-            'riva_',
+//            'riva_',
             'ledro_',
             'levico_',
-            'mori_',
+//            'mori_',
         ];
         $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image'], $escludePathList);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_file', ['file', 'file_pdf'], $escludePathList);
