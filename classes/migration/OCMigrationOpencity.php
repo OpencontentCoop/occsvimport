@@ -19,7 +19,7 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
         $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_opening_hours_specification', ['opening_hours_specification']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_online_contact_point', ['online_contact_point']);
-        $this->fillByType($namesFilter, $isUpdate, 'ocm_document', ['document'], [], ['at_'], ['standard']);
+        $this->fillByType($namesFilter, $isUpdate, 'ocm_document', ['document'], [], [/*'at_'*/], ['standard']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_place', ['place']);
         $this->fillByType($namesFilter, $isUpdate, 'ocm_organization', [
             'administrative_area',

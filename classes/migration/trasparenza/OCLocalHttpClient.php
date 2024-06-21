@@ -23,7 +23,7 @@ class OCLocalHttpClient extends HttpClient
         $headers = [
             'Host: ' . $this->host
         ];
-
+        $url = str_replace(' ', '+', $url);
         if ($this->login && $this->password) {
             $credentials = "{$this->login}:{$this->password}";
             $headers[] = "Authorization: Basic " . base64_encode($credentials);
