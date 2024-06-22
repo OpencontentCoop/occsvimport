@@ -72,6 +72,13 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
 
                 /** @var eZContentObject[] $embedList */
                 $embedList = $object->relatedContentObjectList();
+                if (empty($embedList)) { // workaround per bug?? (non trova i file dell'attributo allegati)
+                    $objectId = (int)$object->attribute('id');
+                    $objectVersion = (int)$object->attribute('current_version');
+                    $rows = eZDB::instance()->arrayQuery("SELECT to_contentobject_id FROM ezcontentobject_link WHERE from_contentobject_id = $objectId AND from_contentobject_version = $objectVersion");
+                    $relatedIdList = array_column($rows, 'to_contentobject_id');
+                    $embedList = OpenPABase::fetchObjects($relatedIdList);
+                }
                 foreach ($embedList as $embed) {
                     if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
                         ocm_file::removeById($embed->attribute('remote_id'));
