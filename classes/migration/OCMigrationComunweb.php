@@ -16,13 +16,13 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
     {
         $escludePathList = [
             'classificazioni',
-            'amministrazione_trasparente'
+//            'amministrazione_trasparente'
         ];
         $escludeRemoteIdPrefix = [
-            'at_',
+//            'at_',
 //            'riva_',
-            'ledro_',
-            'levico_',
+//            'ledro_',
+//            'levico_',
 //            'mori_',
         ];
         $this->fillByType($namesFilter, $isUpdate, 'ocm_image', ['image'], $escludePathList);
