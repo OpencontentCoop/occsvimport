@@ -220,25 +220,27 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
             $payload->setData($locale, 'opening_hours', $contacts);
         }
 
-        $closureDay = explode(PHP_EOL, $this->attribute('closure___day'));
-        $closureReason = explode(PHP_EOL, $this->attribute('closure___reason'));
-        $rowCount = max(
-            count($closureDay),
-            count($closureReason)
-        );
+        if (!empty($this->attribute('closure___day'))) {
+            $closureDay = explode(PHP_EOL, $this->attribute('closure___day'));
+            $closureReason = explode(PHP_EOL, $this->attribute('closure___reason'));
+            $rowCount = max(
+                count($closureDay),
+                count($closureReason)
+            );
 
-        $closures = [];
-        for ($x = 0; $x <= $rowCount; $x++) {
-            $closure = [
-                'day' => $closureDay[$x] ?? '',
-                'reason' => $closureReason[$x] ?? '',
-            ];
-            if (!self::isEmptyArray($contact)) {
-                $closures[$x] = $closure;
+            $closures = [];
+            for ($x = 0; $x <= $rowCount; $x++) {
+                $closure = [
+                    'day' => $closureDay[$x] ?? '',
+                    'reason' => $closureReason[$x] ?? '',
+                ];
+                if (!self::isEmptyArray($contact)) {
+                    $closures[$x] = $closure;
+                }
             }
-        }
-        if (!empty($closures)) {
-            $payload->setData($locale, 'closure', $closures);
+            if (!empty($closures)) {
+                $payload->setData($locale, 'closure', $closures);
+            }
         }
 
         $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
