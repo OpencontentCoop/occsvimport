@@ -68,6 +68,12 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 $firstLocalizedContentData = $contentData[$firstLocalizedContentLocale] ?? [];
                 $attributeIdentifier = substr($identifier, 3);
             }
+            // se è un campo en_ usa ger
+            if (strpos($identifier, 'en_') === 0) {
+                $firstLocalizedContentLocale = 'eng-GB';
+                $firstLocalizedContentData = $contentData[$firstLocalizedContentLocale] ?? [];
+                $attributeIdentifier = substr($identifier, 3);
+            }
 
             if ($callFunction === false) {
                 $callFunction = OCMigration::getMapperHelper($attributeIdentifier);
@@ -702,6 +708,14 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                     $translationsLocalized['ger-DE'][$attributeIdentifier] = $serializers[$field];
                 } else {
                     $translationsLocalized['ger-DE'][$attributeIdentifier] = $this->attribute($field);
+                }
+            }
+            if (strpos($field, 'en_') === 0 && !empty($this->attribute($field))) {
+                $attributeIdentifier = substr($field, 3);
+                if (isset($serializers[$field])) {
+                    $translationsLocalized['eng-GB'][$attributeIdentifier] = $serializers[$field];
+                } else {
+                    $translationsLocalized['eng-GB'][$attributeIdentifier] = $this->attribute($field);
                 }
             }
         }

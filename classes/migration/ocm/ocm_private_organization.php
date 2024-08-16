@@ -32,6 +32,12 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         'de_description',
         'de_business_objective',
         'de_more_information',
+        'en_legal_name',
+        'en_alt_name',
+        'en_acronym',
+        'en_description',
+        'en_business_objective',
+        'en_more_information',
     ];
 
     protected function getComunwebFieldMapper(): array
@@ -169,6 +175,12 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
             'Beschreibung* [de]' => $this->attribute('de_description'),
             'Unternehmenszweck [de]' => $this->attribute('de_business_objective'),
             'Weitere Informationen [de]' => $this->attribute('de_more_information'),
+            'Name* [en]' => $this->attribute('en_legal_name'),
+            'Alternative Name [en]' => $this->attribute('en_alt_name'),
+            'Acronym [en]' => $this->attribute('en_acronym'),
+            'Description* [en]' => $this->attribute('en_description'),
+            'Business objective [en]' => $this->attribute('en_business_objective'),
+            'More Informations [en]' => $this->attribute('en_more_information'),
         ];
     }
 
@@ -203,6 +215,12 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         $item->setAttribute('de_description', $row['Beschreibung* [de]']);
         $item->setAttribute('de_business_objective', $row['Unternehmenszweck [de]']);
         $item->setAttribute('de_more_information', $row['Weitere Informationen [de]']);
+        $item->setAttribute('en_legal_name', $row['Name* [en]']);
+        $item->setAttribute('en_alt_name', $row['Alternative Name [en]']);
+        $item->setAttribute('en_acronym', $row['Acronym [en]']);
+        $item->setAttribute('en_description', $row['Description* [en]']);
+        $item->setAttribute('en_business_objective', $row['Business objective [en]']);
+        $item->setAttribute('en_more_information', $row['More informations [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

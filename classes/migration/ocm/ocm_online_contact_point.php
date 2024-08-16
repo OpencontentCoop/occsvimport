@@ -17,10 +17,12 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
     public static $fields = [
         'name',
         'de_name',
+        'en_name',
         'contact',
         'phone_availability_time',
         'note',
         'de_note',
+        'en_note',
     ];
 
     protected function getOpencityFieldMapper(): array
@@ -32,11 +34,17 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             'de_name' => function(Content $content){
                 return $content->data['ger-DE']['name']['content'] ?? '';
             },
+            'en_name' => function(Content $content){
+                return $content->data['eng-GB']['name']['content'] ?? '';
+            },
             'contact' => OCMigration::getMapperHelper('contact'),
             'phone_availability_time' => OCMigration::getMapperHelper('phone_availability_time'),
             'note' => false,
             'de_note' => function(Content $content){
                 return $content->data['ger-DE']['note']['content'] ?? '';
+            },
+            'en_note' => function(Content $content){
+                return $content->data['eng-GB']['note']['content'] ?? '';
             },
         ];
     }
@@ -63,6 +71,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             'Identificatore punto di contatto*' => $this->attribute('_id'),
             'Titolo punto di contatto*' => $this->attribute('name'),
             'Kontakttitel* [de]' => $this->attribute('de_name'),
+            'Contact title* [en]' => $this->attribute('en_name'),
             'Orari disponibilità telefonica' => $this->attribute('phone_availability_time'),
         ];
 
@@ -74,10 +83,12 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $data['Contatto ' . $indexLabelRequired] = isset($contacts['ita-IT'][$x]['value']) ? $this->formatContentValue($contacts['ita-IT'][$x]['value']) : '';
             $data['Tipo di contatto ' . $indexLabel] = $contacts['ita-IT'][$x]['contact'] ?? '';
             $data['Kontakt ' . $indexLabelRequired . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
+            $data['Contact ' . $indexLabelRequired . ' [en]'] = $contacts['eng_GB'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
         }
 
         $data['Note'] = $this->attribute('note');
         $data['Hinweise (de)'] = $this->attribute('de_note');
+        $data['Notes (en)'] = $this->attribute('en_note');
 
         $data['Pagina contenitore'] = $this->attribute('_parent_name');
         $data['Url originale'] = $this->attribute('_original_url');
@@ -91,6 +102,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
         $item->setAttribute('name', $row['Titolo punto di contatto*']);
         $item->setAttribute('de_name', $row['Kontakttitel* [de]']);
+        $item->setAttribute('en_name', $row['Contact title* [en]']);
         $item->setAttribute('phone_availability_time', $row['Orari disponibilità telefonica']);
 
         $contacts = [];
@@ -118,12 +130,16 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
                 if (isset($row['Kontakt ' . $indexLabelRequired . ' [de]'])) {
                     $contacts['ger-DE'][$x]['value'] = $row['Kontakt ' . $indexLabelRequired . ' [de]'];
                 }
+                if (isset($row['Contact ' . $indexLabelRequired . ' [en]'])) {
+                    $contacts['eng-GB'][$x]['value'] = $row['Contact ' . $indexLabelRequired . ' [en]'];
+                }
             }
         }
         $item->setAttribute('contact', json_encode($contacts));
 
         $item->setAttribute('note', $row['Note'] ?? '');
         $item->setAttribute('de_note', $row['Hinweise (de)'] ?? '');
+        $item->setAttribute('en_note', $row['Notes (de)'] ?? '');
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -201,6 +217,9 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $payload->setData($locale, 'contact', $contacts['ita-IT']);
             if (isset($contacts['ger-DE']) && in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload->setData('ger-DE', 'contact', $contacts['ger-DE']);
+            }
+            if (isset($contacts['eng-GB']) && in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload->setData('eng-GB', 'contact', $contacts['eng-GB']);
             }
         } elseif (!empty($contacts)){
             $payload->setData($locale, 'contact', $contacts);

@@ -12,6 +12,12 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         'has_cost',
         'image',
         'files',
+        'de_object',
+        'de_abstract',
+        'de_description',
+        'en_object',
+        'en_abstract',
+        'en_description',
     ];
 
     public static function canPush(): bool
@@ -67,8 +73,18 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
             "Costi - Descrizione [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'description')) : '',
             "Costi - Importo [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'value')) : '',
             "Costi - Valuta [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'currency')) : '',
+            "Costi - Tipo di spesa [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'characteristic')) : '',
+            "Costi - Descrizione [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'description')) : '',
+            "Costi - Importo [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'value')) : '',
+            "Costi - Valuta [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'currency')) : '',
             "Immagini" => $this->attribute('image'),
             "Files" => $this->attribute('files'),
+            "Funktion des Support-Kanals über welchen die Dienstleistung erfolgt* [de]" => $this->attribute('de_object'),
+            "Kurze Beschreibung* [de]" => $this->attribute('de_abstract'),
+            "Beschreibung [de]" => $this->attribute('de_description'),
+            "Function* [en]" => $this->attribute('en_object'),
+            "Abstract* [en]" => $this->attribute('en_abstract'),
+            "Description [en]" => $this->attribute('en_description'),
         ];
     }
 
@@ -88,7 +104,8 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
 
         $costs = [
             'ita-IT' => [],
-            'get-DE' => [],
+            'ger-DE' => [],
+            'eng-GB' => [],
         ];
         $characteristic = explode(PHP_EOL, $row["Costi - Tipo di spesa"]);
         $description = explode(PHP_EOL, $row["Costi - Descrizione"]);
@@ -110,7 +127,21 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         $currency = explode(PHP_EOL, $row["Costi - Valuta [de]"]);
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
-                $costs['get-DE'][] = [
+                $costs['ger-DE'][] = [
+                    'characteristic' => $characteristic['characteristic'] ?? '',
+                    'description' => $description['description'] ?? '',
+                    'value' => $value['value'] ?? '',
+                    'currency' => $c,
+                ];
+            }
+        }
+        $characteristic = explode(PHP_EOL, $row["Costi - Tipo di spesa [en]"]);
+        $description = explode(PHP_EOL, $row["Costi - Descrizione [en]"]);
+        $value = explode(PHP_EOL, $row["Costi - Importo [en]"]);
+        $currency = explode(PHP_EOL, $row["Costi - Valuta [en]"]);
+        if (!OCMigration::isEmptyArray($currency)){
+            foreach ($currency as $index => $c){
+                $costs['eng-GB'][] = [
                     'characteristic' => $characteristic['characteristic'] ?? '',
                     'description' => $description['description'] ?? '',
                     'value' => $value['value'] ?? '',
@@ -148,7 +179,11 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         if (!empty($hasCost['ger-DE'])) {
             $payload->setData($locale, 'has_cost', $hasCost['ger-DE']);
         }
+        if (!empty($hasCost['eng-GB'])) {
+            $payload->setData($locale, 'has_cost', $hasCost['eng-GB']);
+        }
 
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         return $payload;
     }
 

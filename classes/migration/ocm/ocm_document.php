@@ -7,6 +7,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
     public static $fields = [
         'name',
         'de_name',
+        'en_name',
         'has_code',
         'protocollo',
         'data_protocollazione',
@@ -14,8 +15,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'document_type',
         'abstract',
         'de_abstract',
+        'en_abstract',
         'full_description',
         'de_full_description',
+        'en_full_description',
         'file',
         'link',
         'attachments',
@@ -35,10 +38,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'data_di_firma',
         'other_information',
         'de_other_information',
+        'en_other_information',
         'legal_notes',
         'reference_doc',
         'keyword',
         'de_keyword',
+        'en_keyword',
         'has_service',
         'anno_protocollazione',
         'help',
@@ -896,6 +901,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['abstract'] = OCMigration::getMapperHelper('description');
         $mapper['de_abstract'] = OCMigration::getMapperHelper('description');
+        $mapper['en_abstract'] = OCMigration::getMapperHelper('description');
 
         return $mapper;
     }
@@ -989,6 +995,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             'Beschreibung [de]' => $this->attribute('de_full_description'),
             'Weitere Informationen [de]' => $this->attribute('de_other_information'),
             'Stichwort [de]' => $this->attribute('de_keyword'),
+
+            'Title* [en]' => $this->attribute('en_name'),
+            'Abstract* [en]' => $this->attribute('en_abstract'),
+            'Description [en]' => $this->attribute('en_full_description'),
+            'Other information [en]' => $this->attribute('en_other_information'),
+            'Keyword [en]' => $this->attribute('en_keyword'),
         ];
     }
 
@@ -1058,10 +1070,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_full_description', $row['Beschreibung [de]']);
         $item->setAttribute('de_other_information', $row['Weitere Informationen [de]']);
         $item->setAttribute('de_keyword', $row['Stichwort [de]']);
-
         $item->setAttribute('de_file', $row['Link zum aktuellen Dokument [de]']);
         $item->setAttribute('de_link', $row['Externer Link auf das Dokument [de]']);
         $item->setAttribute('de_attachments', $row['Beigefügte Dokumente [de]']);
+
+        $item->setAttribute('en_name', $row['Title* [en]']);
+        $item->setAttribute('en_abstract', $row['Abstract* [en]']);
+        $item->setAttribute('en_full_description', $row['Description [en]']);
+        $item->setAttribute('en_other_information', $row['Other information [en]']);
+        $item->setAttribute('en_keyword', $row['Keyword [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -1168,6 +1185,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             $payload2->setData($locale, 'reference_doc', $docs);
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'reference_doc', $docs);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'reference_doc', $docs);
             }
             $payloads[self::getImportPriority()+1] = $payload2;
         }

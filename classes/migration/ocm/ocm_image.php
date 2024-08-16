@@ -7,8 +7,10 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     public static $fields = [
         'name',
         'de_name',
+        'en_name',
         'caption',
         'de_caption',
+        'en_caption',
         'image___name',
         'image___url',
         'tags',
@@ -17,6 +19,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         'proprietary_license_source',
         'author',
         'de_author',
+        'en_author',
     ];
 
     public function avoidNameDuplication()
@@ -29,8 +32,10 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return [
             'name' => false,
             'de_name' => false,
+            'en_name' => false,
             'caption' => false,
             'de_caption' => false,
+            'en_caption' => false,
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
             'tags' => false,
@@ -39,6 +44,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'proprietary_license_source' => false,
             'author' => false,
             'de_author' => false,
+            'en_author' => false,
         ];
     }
 
@@ -51,11 +57,17 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'de_name' => function(Content $content){
                 return $content->data['ger-DE']['name']['content'] ?? '';
             },
+            'en_name' => function(Content $content){
+                return $content->data['eng-GB']['name']['content'] ?? '';
+            },
             'caption' => function(Content $content){
                 return $content->data['ita-IT']['caption']['content'] ?? '';
             },
             'de_caption' => function(Content $content){
                 return $content->data['ger-DE']['caption']['content'] ?? '';
+            },
+            'en_caption' => function(Content $content){
+                return $content->data['eng-GB']['caption']['content'] ?? '';
             },
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
@@ -84,8 +96,10 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'ID*' => $this->attribute('_id'),
             'Nome*' => $this->attribute('name'),
             'Name* [de]' => $this->attribute('de_name'),
+            'Name* [en]' => $this->attribute('en_name'),
             'Didascalia' => $this->attribute('caption'),
             'Untertitel [de]' => $this->attribute('caption'),
+            'Caption [en]' => $this->attribute('en_caption'),
             'Nome del file' => $this->attribute('image___name'),
             'Url al file*' => $this->attribute('image___url'),
             'Tags' => $this->attribute('tags'),
@@ -94,6 +108,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             'Fonte della licenza proprietaria' => $this->attribute('proprietary_license_source'),
             'Autore*' => $this->attribute('author'),
             'Autor* [de]' => $this->attribute('de_author'),
+            'Author* [en]' => $this->attribute('en_author'),
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
         ];
@@ -105,8 +120,10 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('_id', $row['ID*']);
         $item->setAttribute('name', $row['Nome*']);
         $item->setAttribute('de_name', $row['Name* [de]']);
+        $item->setAttribute('en_name', $row['Name* [en]']);
         $item->setAttribute('caption', $row['Didascalia']);
         $item->setAttribute('de_caption', $row['Untertitel [de]']);
+        $item->setAttribute('en_caption', $row['Caption [en]']);
         $item->setAttribute('image___name', $row['Nome del file']);
         $item->setAttribute('image___url', $row['Url al file*']);
         $item->setAttribute('tags', $row['Tags']);
@@ -115,6 +132,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('proprietary_license_source', $row['Fonte della licenza proprietaria']);
         $item->setAttribute('author', $row['Autore*']);
         $item->setAttribute('de_author', $row['Autor* [de]']);
+        $item->setAttribute('en_author', $row['Author* [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -185,6 +203,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         $image->setAttribute('image___url', $url);
         $image->setAttribute('author', $name);
         $image->setAttribute('de_author', $name);
+        $image->setAttribute('en_author', $name);
         OCMPayload::create(
             $image->attribute('_id'),
             'ocm_image',
@@ -233,6 +252,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
                         $image->setAttribute('image___url', $url);
                         $image->setAttribute('author', $name);
                         $image->setAttribute('de_author', $name);
+                        $image->setAttribute('en_author', $name);
                         OCMPayload::create(
                             $image->attribute('_id'),
                             'ocm_image',
