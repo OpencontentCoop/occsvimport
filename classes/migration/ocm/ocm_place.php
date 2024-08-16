@@ -27,6 +27,11 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         'de_has_address',
         'de_abstract',
         'de_description',
+        'en_name',
+        'en_accessibility',
+        'en_has_address',
+        'en_abstract',
+        'en_description',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -64,6 +69,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             },
             'de_caption' => function (Content $content) {
                 return $content->data['ger-DE']['abstract']['content'] ?? '';
+            },
+            'en_name' => function (Content $content) {
+                return $content->data['eng-GB']['titolo']['content'] ?? '';
+            },
+            'en_caption' => function (Content $content) {
+                return $content->data['eng-GB']['abstract']['content'] ?? '';
             },
             'description' => OCMigration::getMapperHelper('descrizione'),
             'image___name' => OCMigration::getMapperHelper('image/name'),
@@ -211,6 +222,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             'de_caption' => function (Content $content) {
                 return $content->data['ger-DE']['abstract']['content'] ?? '';
             },
+            'en_name' => function (Content $content) {
+                return $content->data['eng-GB']['titolo']['content'] ?? '';
+            },
+            'en_caption' => function (Content $content) {
+                return $content->data['eng-GB']['abstract']['content'] ?? '';
+            },
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
             'has_address' => function (
@@ -279,6 +296,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
     {
         $address = json_decode($this->attribute('has_address'), true);
         $deAddress = json_decode($this->attribute('de_has_address'), true);
+        $enAddress = json_decode($this->attribute('en_has_address'), true);
         return [
             "Identificatore luogo*" => $this->attribute('_id'),
             "Nome del luogo*" => $this->attribute('name'),
@@ -305,6 +323,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             'Adresse* [de]' => empty($deAddress['address']) ? $address['address'] : $deAddress['address'],
             'Kurze Beschreibung* [de]' => $this->attribute('de_abstract'),
             'Erweiterte Beschreibung [de]' => $this->attribute('de_description'),
+
+            'Name* [en]' => $this->attribute('en_name'),
+            'Accessibility* [en]' => $this->attribute('en_accessibility'),
+            'Address* [en]' => empty($enAddress['address']) ? $address['address'] : $enAddress['address'],
+            'Abstarct* [en]' => $this->attribute('en_abstract'),
+            'Description [en]' => $this->attribute('en_description'),
         ];
     }
 
@@ -348,6 +372,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_abstract', $row['Kurze Beschreibung* [de]']);
         $item->setAttribute('de_description', $row['Erweiterte Beschreibung [de]']);
 
+        $item->setAttribute('en_name', $row['Name* [en]']);
+        $item->setAttribute('en_accessibility', $row['Accessibility* [en]']);
+        $item->setAttribute('en_address', $row['Address* [en]']);
+        $item->setAttribute('en_abstract', $row['Abstarct* [en]']);
+        $item->setAttribute('en_description', $row['Description [en]']);
+
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
     }
@@ -385,7 +415,8 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'identifier', $this->attribute('identifier'));
         $deAddress = json_decode($this->attribute('has_address'), true);
         $deAddress['address'] = $this->attribute('de_has_address');
-        $payload = $this->appendTranslationsToPayloadIfNeeded($payload, ['de_has_address' => $deAddress]);
+        $enAddress['address'] = $this->attribute('en_has_address');
+        $payload = $this->appendTranslationsToPayloadIfNeeded($payload, ['de_has_address' => $deAddress, 'en_has_address' => $enAddress]);
         $payloads = [self::getImportPriority() => $payload];
 
         $offices = ocm_organization::getIdListByName($this->attribute('has_office'), 'legal_name');
@@ -395,6 +426,9 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             $payload2->setData($locale, 'has_office', $offices);
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'has_office', $offices);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'has_office', $offices);
             }
             $payloads[ocm_organization::getImportPriority()+1] = $payload2;
         }

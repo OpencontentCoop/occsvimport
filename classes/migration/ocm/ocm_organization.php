@@ -28,6 +28,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         'de_alt_name',
         'de_more_information',
         'de_description',
+        'en_legal_name',
+        'en_abstract',
+        'en_main_function',
+        'en_alt_name',
+        'en_more_information',
+        'en_description',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -284,6 +290,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_main_function' => false,
             'de_alt_name' => false,
             'de_more_information' => false,
+            'en_legal_name' => false,
+            'en_abstract' => false,
+            'en_main_function' => false,
+            'en_alt_name' => false,
+            'en_more_information' => false,
+            'en_description' => false,
         ];
     }
 
@@ -313,6 +325,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_alt_name' => false,
             'de_more_information' => false,
             'de_description' => false,
+            'en_legal_name' => false,
+            'en_abstract' => false,
+            'en_main_function' => false,
+            'en_alt_name' => false,
+            'en_more_information' => false,
+            'en_description' => false,
         ];
     }
 
@@ -342,6 +360,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_alt_name' => false,
             'de_more_information' => false,
             'de_description' => false,
+            'en_legal_name' => false,
+            'en_abstract' => false,
+            'en_main_function' => false,
+            'en_alt_name' => false,
+            'en_more_information' => false,
+            'en_description' => false,
         ];
     }
 
@@ -370,6 +394,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'de_main_function' => false,
             'de_alt_name' => false,
             'de_more_information' => false,
+            'en_legal_name' => false,
+            'en_abstract' => false,
+            'en_main_function' => false,
+            'en_alt_name' => false,
+            'en_more_information' => false,
+            'en_description' => false,
         ];
     }
 
@@ -405,6 +435,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             'Alternativer Name [de]' => $this->attribute('de_alt_name'),
             'Weitere Informationen [de]' => $this->attribute('de_more_information'),
             'Beschreibung [de]' => $this->attribute('de_description'),
+            'Legal name* [en]' => $this->attribute('en_legal_name'),
+            'Abstract* [en]' => $this->attribute('en_abstract'),
+            'Main function* [en]' => $this->attribute('en_main_function'),
+            'Alternative Name [en]' => $this->attribute('en_alt_name'),
+            'More information [en]' => $this->attribute('en_more_information'),
+            'Description [en]' => $this->attribute('en_description'),
         ];
     }
 
@@ -433,6 +469,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_main_function', $row['Kompetenzen* [de]']);
         $item->setAttribute('de_alt_name', $row['Alternativer Name [de]']);
         $item->setAttribute('de_more_information', $row['Weitere Informationen [de]']);
+        $item->setAttribute('en_legal_name', $row['Legal name* [en]']);
+        $item->setAttribute('en_abstract', $row['Abstract* [en]']);
+        $item->setAttribute('en_main_function', $row['Main function* [en]']);
+        $item->setAttribute('en_alt_name', $row['Alternative Name [en]']);
+        $item->setAttribute('en_more_information', $row['More information [en]']);
+        $item->setAttribute('en_description', $row['Description [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -494,6 +536,10 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'attachments', $attachments);
                 $payload2->setData('ger-DE', 'hold_employment', $holdEmployments);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'attachments', $attachments);
+                $payload2->setData('eng-GB', 'hold_employment', $holdEmployments);
             }
             $payloads[ocm_banner::getImportPriority()+1] = $payload2;
         }

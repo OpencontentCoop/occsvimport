@@ -12,6 +12,14 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
         'has_service_input_output_type',
         'topics',
         'files',
+        'de_name',
+        'de_short_name',
+        'de_abstract',
+        'de_description',
+        'en_name',
+        'en_short_name',
+        'en_abstract',
+        'en_description',
     ];
 
     public static function canPush(): bool
@@ -53,6 +61,14 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
             "Tipologia di output/esito*" => $this->attribute('has_service_input_output_type'),
             "Argomento" => $this->attribute('topics'),
             "File di esempio" => $this->attribute('files'),
+            "Name* [de]" => $this->attribute('de_name'),
+            "Kurzer Name [de]" => $this->attribute('de_short_name'),
+            "Abstract (Kurze Beschreibung) [de]" => $this->attribute('de_abstract'),
+            "Beschreibung [de]" => $this->attribute('de_description'),
+            "Name* [en]" => $this->attribute('en_name'),
+            "Short Name [en]" => $this->attribute('en_short_name'),
+            "Abstract [en]" => $this->attribute('en_abstract'),
+            "Description [en]" => $this->attribute('en_description'),
         ];
     }
 
@@ -68,6 +84,14 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_service_input_output_type', $row["Tipologia di output/esito*"]);
         $item->setAttribute('topics', $row["Argomento"]);
         $item->setAttribute('files', $row["File di esempio"]);
+        $item->setAttribute('de_name', $row["Name* [de]"]);
+        $item->setAttribute('de_short_name', $row["Kurzer Name [de]"]);
+        $item->setAttribute('de_abstract', $row["Abstract (Kurze Beschreibung) [de]"]);
+        $item->setAttribute('de_description', $row["Beschreibung [de]"]);
+        $item->setAttribute('en_name', $row["Name* [en]"]);
+        $item->setAttribute('en_short_name', $row["Short Name [en]"]);
+        $item->setAttribute('en_abstract', $row["Abstract [en]"]);
+        $item->setAttribute('en_description', $row["Description [en]"]);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

@@ -17,10 +17,12 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
     public static $fields = [
         'name',
         'de_name',
+        'en_name',
         'valid_from',
         'valid_through',
         'note',
         'de_note',
+        'en_note',
         'stagionalita',
         'closure___reason',
         'closure___day',
@@ -38,10 +40,12 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         return [
             'name' => false,
             'de_name' => false,
+            'en_name' => false,
             'valid_from' => false,
             'valid_through' => false,
             'note' => false,
             'de_note' => false,
+            'en_note' => false,
             'stagionalita' => false,
             'closure___reason' => OCMigration::getMapperHelper('closure/reason'),
             'closure___day' => OCMigration::getMapperHelper('closure/day'),
@@ -86,10 +90,12 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
             'Identificatore*' => $this->attribute('_id'),
             'Nome*' => $this->attribute('name'),
             'Name* [de]' => $this->attribute('de_name'),
+            'Name* [en]' => $this->attribute('en_name'),
             'Valido dal*' => $this->attribute('valid_from'),
             'Valido fino al' => $this->attribute('valid_through'),
             'Note' => $this->convertToMarkdown($this->attribute('note')),
             'Notizen [de]' => $this->convertToMarkdown($this->attribute('de_note')),
+            'Notes [en]' => $this->convertToMarkdown($this->attribute('en_note')),
             'Stagionalità*' => $this->getStagionalita(),
             'Lunedì' => $this->attribute('opening_hours___monday'),
             'Martedì' => $this->attribute('opening_hours___tuesday'),
@@ -111,10 +117,12 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         $item->setAttribute('_id', $row['Identificatore*']);
         $item->setAttribute('name', $row['Nome*']);
         $item->setAttribute('de_name', $row['Name* [de]']);
+        $item->setAttribute('en_name', $row['Name* [en]']);
         $item->setAttribute('valid_from', $row['Valido dal*']);
         $item->setAttribute('valid_through', $row['Valido fino al']);
         $item->setAttribute('note', $row['Note']);
         $item->setAttribute('de_note', $row['Notizen [de]']);
+        $item->setAttribute('en_note', $row['Notes [en]']);
         $item->setAttribute('stagionalita', $row['Stagionalità*']);
         $item->setAttribute('opening_hours___monday', $row['Lunedì']);
         $item->setAttribute('opening_hours___tuesday', $row['Martedì']);

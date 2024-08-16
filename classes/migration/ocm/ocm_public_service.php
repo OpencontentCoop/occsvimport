@@ -72,6 +72,20 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'de_conditions',
         'de_exceptions',
         'de_service_keyword',
+        'en_name',
+        'en_status_note',
+        'en_alternative_name',
+        'en_abstract',
+        'en_audience',
+        'en_applicants',
+        'en_description',
+        'en_how_to',
+        'en_has_input',
+        'en_output_notes',
+        'en_is_physically_available_at_how_to',
+        'en_conditions',
+        'en_exceptions',
+        'en_service_keyword',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -162,6 +176,10 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Costi - Descrizione [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'description')) : '',
             "Costi - Importo [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'value')) : '',
             "Costi - Valuta [de]" => isset($costs['ger-DE']) ? implode(PHP_EOL, array_column($costs['ger-DE'], 'currency')) : '',
+            "Costi - Tipo di spesa [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'characteristic')) : '',
+            "Costi - Descrizione [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'description')) : '',
+            "Costi - Importo [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'value')) : '',
+            "Costi - Valuta [en]" => isset($costs['eng-GB']) ? implode(PHP_EOL, array_column($costs['eng-GB'], 'currency')) : '',
             "Procedure collegate all'esito" => $this->attribute('output_notes'),
             "Accedi al servizio (canale digitale)*" => $this->attribute('has_channel'),
             "Accedi al servizio (canale digitale)" => $this->attribute('has_channel'),
@@ -177,6 +195,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Link a siti esterni" => isset($links['ita-IT']) ? implode(PHP_EOL, array_column($links['ita-IT'], 'link')) : '',
             "Titolo link a siti esterni [de]" => isset($links['ger-DE']) ? implode(PHP_EOL, array_column($links['ger-DE'], 'nome_sito')) : '',
             "Link a siti esterni [de]" => isset($links['ger-DE']) ? implode(PHP_EOL, array_column($links['ger-DE'], 'link')) : '',
+            "Titolo link a siti esterni [en]" => isset($links['eng-GB']) ? implode(PHP_EOL, array_column($links['eng-GB'], 'nome_sito')) : '',
+            "Link a siti esterni [en]" => isset($links['eng-GB']) ? implode(PHP_EOL, array_column($links['eng-GB'], 'link')) : '',
             "Notizie e aggiornamenti" => $this->attribute('news_and_updates'),
             "Tipologia di procedimento*" => $this->attribute('process'),
             "Argomenti*" => $this->attribute('topics'),
@@ -206,6 +226,21 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Bedingungen [de]" => $this->attribute('de_conditions'),
             "Sonderfälle [de]" => $this->attribute('de_exceptions'),
             "Schlüsselwort [de]" => $this->attribute('de_service_keyword'),
+
+            "Title* [en]" => $this->attribute('en_name'),
+            "Status note [en]" => $this->attribute('en_status_note'),
+            "Alternative Title [en]" => $this->attribute('en_alternative_name'),
+            "Abstract* [en]" => $this->attribute('en_abstract'),
+            "Audience [en]" => $this->attribute('en_audience'),
+            "Applicants [en]" => $this->attribute('en_applicants'),
+            "Description [en]" => $this->attribute('en_description'),
+            "How to* [en]" => $this->attribute('en_how_to'),
+            "What you need* [en]" => $this->attribute('en_has_input'),
+            "Outcome-related procedures [en]" => $this->attribute('en_output_notes'),
+            "Instructions for accessing the service [en]" => $this->attribute('en_is_physically_available_at_how_to'),
+            "Conditions [en]" => $this->attribute('en_conditions'),
+            "Exceptions [en]" => $this->attribute('en_exceptions'),
+            "Keyword [en]" => $this->attribute('en_service_keyword'),
 
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
@@ -281,7 +316,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
 
         $costs = [
             'ita-IT' => [],
-            'get-DE' => [],
+            'ger-DE' => [],
+            'eng-GB' => [],
         ];
         $characteristic = explode(PHP_EOL, $row["Costi - Tipo di spesa"]);
         $description = explode(PHP_EOL, $row["Costi - Descrizione"]);
@@ -303,7 +339,21 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $currency = explode(PHP_EOL, $row["Costi - Valuta [de]"]);
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
-                $costs['get-DE'][] = [
+                $costs['ger-DE'][] = [
+                    'characteristic' => $characteristic[$index] ?? '',
+                    'description' => $description[$index] ?? '',
+                    'value' => $value[$index] ?? '',
+                    'currency' => $c,
+                ];
+            }
+        }
+        $characteristic = explode(PHP_EOL, $row["Costi - Tipo di spesa [en]"]);
+        $description = explode(PHP_EOL, $row["Costi - Descrizione [en]"]);
+        $value = explode(PHP_EOL, $row["Costi - Importo [en]"]);
+        $currency = explode(PHP_EOL, $row["Costi - Valuta [en]"]);
+        if (!OCMigration::isEmptyArray($currency)){
+            foreach ($currency as $index => $c){
+                $costs['eng-GB'][] = [
                     'characteristic' => $characteristic[$index] ?? '',
                     'description' => $description[$index] ?? '',
                     'value' => $value[$index] ?? '',
@@ -315,7 +365,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
 
         $links = [
             'ita-IT' => [],
-            'get-DE' => [],
+            'ger-DE' => [],
+            'eng-GB' => [],
         ];
         $link = explode(PHP_EOL, $row["Link a siti esterni"]);
         $name = explode(PHP_EOL, $row["Titolo link a siti esterni"]);
@@ -332,6 +383,16 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($link)) {
             foreach ($link as $i => $l) {
                 $links['ger-DE'][] = [
+                    'nome_sito' => $name[$i] ?? '',
+                    'link' => $l ?? '',
+                ];
+            }
+        }
+        $link = explode(PHP_EOL, $row["Link a siti esterni [en]"]);
+        $name = explode(PHP_EOL, $row["Titolo link a siti esterni [en]"]);
+        if (!OCMigration::isEmptyArray($link)) {
+            foreach ($link as $i => $l) {
+                $links['eng-GB'][] = [
                     'nome_sito' => $name[$i] ?? '',
                     'link' => $l ?? '',
                 ];
@@ -420,6 +481,12 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!empty($links['ger-DE'])) {
             $payload->setData('ger-DE', 'link', $links['ger-DE']);
         }
+        if (!empty($hasCost['eng-GB'])) {
+            $payload->setData('eng-GB', 'has_cost', $hasCost['eng-GB']);
+        }
+        if (!empty($links['eng-GB'])) {
+            $payload->setData('eng-GB', 'link', $links['eng-GB']);
+        }
 
         $payloads = [self::getImportPriority() => $payload];
 
@@ -434,6 +501,10 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'relation_service', $relationServices);
                 $payload2->setData('ger-DE', 'requires_service', $requiresServices);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'relation_service', $relationServices);
+                $payload2->setData('eng-GB', 'requires_service', $requiresServices);
             }
             $payloads[ocm_banner::getImportPriority()+1] = $payload2;
         }

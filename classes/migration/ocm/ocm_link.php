@@ -16,6 +16,10 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         'de_short_name',
         'de_abstract',
         'de_descrizione',
+        'en_name',
+        'en_short_name',
+        'en_abstract',
+        'en_descrizione',
     ];
 
     public static function canPush(): bool
@@ -73,6 +77,10 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
             'Kurze Beschreibung [de]' => $this->attribute('de_abstract'),
             'Beschreibung [de]' => $this->attribute('de_descrizione'),
 
+            'Name* [en]' => $this->attribute('en_name'),
+            'Short name [en]' => $this->attribute('en_short_name'),
+            'Abstract [en]' => $this->attribute('en_abstract'),
+            'Description [en]' => $this->attribute('en_descrizione'),
         ];
     }
 
@@ -95,6 +103,10 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_abstract', $row['Kurze Beschreibung [de]']);
         $item->setAttribute('de_descrizione', $row['Beschreibung [de]']);
 
+        $item->setAttribute('en_name', $row['Name* [en]']);
+        $item->setAttribute('en_short_name', $row['Short name [en]']);
+        $item->setAttribute('en_abstract', $row['Abstract [en]']);
+        $item->setAttribute('en_descrizione', $row['Description [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

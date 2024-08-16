@@ -44,6 +44,11 @@ class ocm_public_organization extends ocm_organization
             'de_main_function' => false,
             'de_alt_name' => false,
             'de_more_information' => false,
+            'en_legal_name' => false,
+            'en_abstract' => false,
+            'en_main_function' => false,
+            'en_alt_name' => false,
+            'en_more_information' => false,
         ];
 
         return $this->fromNode($node, $mapper, $options);

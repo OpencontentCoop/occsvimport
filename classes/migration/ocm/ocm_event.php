@@ -45,7 +45,14 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         'de_description',
         'de_about_target_audience',
         'de_ulteriori_informazioni',
-        'de_event_content_keyword'
+        'de_event_content_keyword',
+        'en_event_title',
+        'en_short_event_title',
+        'en_event_abstract',
+        'en_description',
+        'en_about_target_audience',
+        'en_ulteriori_informazioni',
+        'en_event_content_keyword'
     ];
 
     public static function getSortField(): string
@@ -111,6 +118,13 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             'de_about_target_audience' => false,
             'de_ulteriori_informazioni' => false,
             'de_event_content_keyword' => false,
+            'en_event_title' => false,
+            'en_short_event_title' => false,
+            'en_event_abstract' => false,
+            'en_description' => false,
+            'en_about_target_audience' => false,
+            'en_ulteriori_informazioni' => false,
+            'en_event_content_keyword' => false
         ];
     }
 
@@ -247,6 +261,12 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             'An wen es gerichtet ist [de]' => $this->attribute('de_about_target_audience'),
             'Weitere Informationen [de]' => $this->attribute('de_ulteriori_informazioni'),
             'Stichwort [de]' => $this->attribute('de_event_content_keyword'),
+            'Title* [en]' => $this->attribute('en_event_title'),
+            'Abstract* [en]' => $this->attribute('en_event_abstract'),
+            'Description* [en]' => $this->attribute('en_description'),
+            'About target audience [en]' => $this->attribute('en_about_target_audience'),
+            'Other informations [en]' => $this->attribute('en_ulteriori_informazioni'),
+            'Keyword [en]' => $this->attribute('en_event_content_keyword'),
         ];
     }
 
@@ -295,6 +315,13 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_about_target_audience', $row['An wen es gerichtet ist [de]']);
         $item->setAttribute('de_ulteriori_informazioni', $row['Weitere Informationen [de]']);
         $item->setAttribute('de_event_content_keyword', $row['Stichwort [de]']);
+
+        $item->setAttribute('en_event_title', $row['Title* [en]']);
+        $item->setAttribute('en_event_abstract', $row['Abstract* [en]']);
+        $item->setAttribute('en_description', $row['Description* [en]']);
+        $item->setAttribute('en_about_target_audience', $row['About target audience [en]']);
+        $item->setAttribute('en_ulteriori_informazioni', $row['Other informations [en]']);
+        $item->setAttribute('en_event_content_keyword', $row['Keyword [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -396,6 +423,9 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             $payload2->setData($locale, 'sub_event_of', $subEvents);
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'sub_event_of', $subEvents);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'sub_event_of', $subEvents);
             }
             $payloads[ocm_event::getImportPriority()+1] = $payload2;
         }

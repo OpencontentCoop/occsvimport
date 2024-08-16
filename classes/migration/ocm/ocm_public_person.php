@@ -28,6 +28,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         'de_situazione_patrimoniale',
         'de_spese_elettorali',
         'de_notes',
+        'en_abstract',
+        'en_bio',
+        'en_situazione_patrimoniale',
+        'en_spese_elettorali',
+        'en_notes',
     ];
 
     public function avoidNameDuplication()
@@ -83,6 +88,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'de_situazione_patrimoniale' => false,
             'de_spese_elettorali' => false,
             'de_notes' => false,
+            'en_abstract' => false,
+            'en_bio' => false,
+            'en_situazione_patrimoniale' => false,
+            'en_spese_elettorali' => false,
+            'en_notes' => false,
         ];
     }
 
@@ -167,6 +177,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'de_situazione_patrimoniale' => false,
             'de_spese_elettorali' => false,
             'de_notes' => false,
+            'en_abstract' => false,
+            'en_bio' => false,
+            'en_situazione_patrimoniale' => false,
+            'en_spese_elettorali' => false,
+            'en_notes' => false,
         ];
     }
 
@@ -374,6 +389,11 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
             'Erbliche Situation [de]' => $this->attribute('de_situazione_patrimoniale'),
             'Wahlkosten* [de]' => $this->attribute('de_spese_elettorali'),
             'Weitere Informationen [de]' => $this->attribute('de_notes'),
+            'Abstract [en]' => $this->attribute('en_abstract'),
+            'Bio[en]' => $this->attribute('en_bio'),
+            'Financial situation [en]' => $this->attribute('en_situazione_patrimoniale'),
+            'Election expenses* [en]' => $this->attribute('en_spese_elettorali'),
+            'Notes [en]' => $this->attribute('en_notes'),
         ];
     }
 
@@ -426,6 +446,12 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_situazione_patrimoniale', $row['Erbliche Situation [de]']);
         $item->setAttribute('de_spese_elettorali', $row['Wahlkosten* [de]']);
         $item->setAttribute('de_notes', $row['Weitere Informationen [de]']);
+
+        $item->setAttribute('en_abstract', $row['Abstract [en]']);
+        $item->setAttribute('en_bio', $row['Bio[en]']);
+        $item->setAttribute('en_situazione_patrimoniale', $row['Financial situation [en]']);
+        $item->setAttribute('en_spese_elettorali', $row['Election expenses* [en]']);
+        $item->setAttribute('en_notes', $row['Notes [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

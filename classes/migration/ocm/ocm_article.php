@@ -7,9 +7,11 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
     public static $fields = [
         'title',
         'de_title',
+        'en_title',
         'content_type',
         'abstract',
         'de_abstract',
+        'en_abstract',
         'published',
         'dead_line',
         'id_comunicato',
@@ -18,6 +20,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         'image_file',
         'body',
         'de_body',
+        'en_body',
         'people',
         'location',
         'video',
@@ -157,9 +160,11 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
             'Url originale' => $this->attribute('_original_url'),
             "Titolo della notizia*" => $this->attribute('title'),
             "Nachrichtentitel* [de]" => $this->attribute('de_title'),
+            "Title* [en]" => $this->attribute('en_title'),
             "Tipo di notizia*" => $this->attribute('content_type'),
             "Descrizione breve*" => $this->attribute('abstract'),
             "Kurze Beschreibung* [de]" => $this->attribute('de_abstract'),
+            "Abstract* [en]" => $this->attribute('en_abstract'),
             "Data della notizia*" => $this->attribute('published'),
             "Data di scadenza" => $this->attribute('dead_line'),
             "Numero progressivo comunicato stampa" => $this->attribute('id_comunicato'),
@@ -168,6 +173,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
             "File immagine" => $this->attribute('image_file'),
             "Testo completo della notizia*" => $this->attribute('body'),
             "Haupttext der Nachricht* [de]" => $this->attribute('de_body'),
+            "Body* [en]" => $this->attribute('en_body'),
             "Persone" => $this->attribute('people'),
             "Luoghi" => $this->attribute('location'),
             "Video" => $this->attribute('video'),
@@ -186,9 +192,11 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('_id', $row["Identificativo dell'articolo*"]);
         $item->setAttribute('title', $row["Titolo della notizia*"]);
         $item->setAttribute('de_title', $row["Nachrichtentitel* [de]"]);
+        $item->setAttribute('en_title', $row["Body* [en]"]);
         $item->setAttribute('content_type', $row["Tipo di notizia*"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
         $item->setAttribute('de_abstract', $row["Kurze Beschreibung* [de]"]);
+        $item->setAttribute('en_abstract', $row["Abstract* [en]"]);
         $item->setAttribute('published', $row["Data della notizia*"]);
         $item->setAttribute('dead_line', $row["Data di scadenza"]);
         $item->setAttribute('id_comunicato', $row["Numero progressivo comunicato stampa"]);
@@ -197,6 +205,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('image_file', $row["File immagine"]);
         $item->setAttribute('body', $row["Testo completo della notizia*"]);
         $item->setAttribute('de_body', $row["Haupttext der Nachricht* [de]"]);
+        $item->setAttribute('en_body', $row["Body* [en]"]);
         $item->setAttribute('people', $row["Persone"]);
         $item->setAttribute('location', $row["Luoghi"]);
         $item->setAttribute('video', $row["Video"]);
@@ -247,6 +256,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
 //        $payload->setData($locale, 'related_service', ocm_public_service::getIdListByName($this->attribute('related_service')));
 
         $this->setAttribute('de_abstract', trim(strip_tags($this->attribute('de_abstract'))));
+        $this->setAttribute('en_abstract', trim(strip_tags($this->attribute('en_abstract'))));
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 

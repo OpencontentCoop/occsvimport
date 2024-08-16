@@ -7,6 +7,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
     public static $fields = [
         'name',
         'de_name',
+        'en_name',
         'has_code',
         'protocollo',
         'data_protocollazione',
@@ -14,8 +15,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'document_type',
         'abstract',
         'de_abstract',
+        'en_abstract',
         'full_description',
         'de_full_description',
+        'en_full_description',
         'file',
         'link',
         'attachments',
@@ -35,10 +38,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'data_di_firma',
         'other_information',
         'de_other_information',
+        'en_other_information',
         'legal_notes',
         'reference_doc',
         'keyword',
         'de_keyword',
+        'en_keyword',
         'has_service',
         'anno_protocollazione',
         'help',
@@ -57,6 +62,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'de_file',
         'de_link',
         'de_attachments',
+        'en_file',
+        'en_link',
+        'en_attachments',
     ];
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
@@ -896,6 +904,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['abstract'] = OCMigration::getMapperHelper('description');
         $mapper['de_abstract'] = OCMigration::getMapperHelper('description');
+        $mapper['en_abstract'] = OCMigration::getMapperHelper('description');
 
         return $mapper;
     }
@@ -941,14 +950,17 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "URL documento*" => $this->attribute('file'),
             "URL documento" => $this->attribute('file'),
             "Link zum aktuellen Dokument [de]" => $this->attribute('de_file'),
+            "Document URL [en]" => $this->attribute('en_file'),
             "Licenza di distribuzione*" => $this->attribute('license'),
             "Formati disponibili*" => $this->attribute('format'),
             "Ufficio responsabile del documento*" => $this->attribute('has_organization'),
             "Descrizione" => $this->attribute('full_description'),
             "Link esterno al documento" => $this->attribute('link'),
             "Externer Link auf das Dokument [de]" => $this->attribute('de_link'),
+            "Document external link [en]" => $this->attribute('en_link'),
             "File allegati" => $this->attribute('attachments'),
             "Beigefügte Dokumente [de]" => $this->attribute('de_attachments'),
+            "Attachments [en]" => $this->attribute('en_attachments'),
 //            "URL file allegato 1" => $attachments[0] ?? '',
 //            "URL file allegato 2" => $attachments[1] ?? '',
 //            "URL file allegato 3" => $attachments[2] ?? '',
@@ -989,6 +1001,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             'Beschreibung [de]' => $this->attribute('de_full_description'),
             'Weitere Informationen [de]' => $this->attribute('de_other_information'),
             'Stichwort [de]' => $this->attribute('de_keyword'),
+
+            'Title* [en]' => $this->attribute('en_name'),
+            'Abstract* [en]' => $this->attribute('en_abstract'),
+            'Description [en]' => $this->attribute('en_full_description'),
+            'Other information [en]' => $this->attribute('en_other_information'),
+            'Keyword [en]' => $this->attribute('en_keyword'),
         ];
     }
 
@@ -1058,10 +1076,18 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_full_description', $row['Beschreibung [de]']);
         $item->setAttribute('de_other_information', $row['Weitere Informationen [de]']);
         $item->setAttribute('de_keyword', $row['Stichwort [de]']);
-
         $item->setAttribute('de_file', $row['Link zum aktuellen Dokument [de]']);
         $item->setAttribute('de_link', $row['Externer Link auf das Dokument [de]']);
         $item->setAttribute('de_attachments', $row['Beigefügte Dokumente [de]']);
+
+        $item->setAttribute('en_name', $row['Title* [en]']);
+        $item->setAttribute('en_abstract', $row['Abstract* [en]']);
+        $item->setAttribute('en_full_description', $row['Description [en]']);
+        $item->setAttribute('en_other_information', $row['Other information [en]']);
+        $item->setAttribute('en_keyword', $row['Keyword [en]']);
+        $item->setAttribute('en_file', $row['Document URL [en]']);
+        $item->setAttribute('en_link', $row['Document external link [en]']);
+        $item->setAttribute('en_attachments', $row['Attachments [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
@@ -1160,6 +1186,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setData('ger-DE', 'link', trim($this->attribute('de_link')));
         $payload->setData('ger-DE', 'attachments', $this->formatBinary($this->attribute('de_attachments')));
 
+        $payload->setData('eng-GB', 'file', $this->formatBinary($this->attribute('en_file'), false));
+        $payload->setData('eng-GB', 'link', trim($this->attribute('en_link')));
+        $payload->setData('eng-GB', 'attachments', $this->formatBinary($this->attribute('en_attachments')));
+
         $payloads = [self::getImportPriority() => $payload];
         $docs = ocm_document::getIdListByName($this->attribute('reference_doc'));
         if (count($docs) > 0) {
@@ -1168,6 +1198,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             $payload2->setData($locale, 'reference_doc', $docs);
             if (in_array('ger-DE', $payload->getMetadaData('languages'))){
                 $payload2->setData('ger-DE', 'reference_doc', $docs);
+            }
+            if (in_array('eng-GB', $payload->getMetadaData('languages'))){
+                $payload2->setData('eng-GB', 'reference_doc', $docs);
             }
             $payloads[self::getImportPriority()+1] = $payload2;
         }

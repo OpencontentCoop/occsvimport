@@ -26,6 +26,9 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         'de_compensi',
         'de_importi',
         'de_notes',
+        'en_compensi',
+        'en_importi',
+        'en_notes',
     ];
 
     public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
@@ -238,8 +241,10 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             "Atto di nomina" => $this->attribute('atto_nomina'),
             "Competenze" => implode(PHP_EOL, array_column($competences['ita-IT'], 'competence')),
             'Kompetenzen [de]' => implode(PHP_EOL, array_column($competences['ger-DE'], 'competence')),
+            'Skills [en]' => implode(PHP_EOL, array_column($competences['eng-GB'], 'competence')),
             "Deleghe" => implode(PHP_EOL, array_column($delegations['ita-IT'], 'delega')),
             "Delegationen [de]" => implode(PHP_EOL, array_column($delegations['ger-DE'], 'delega')),
+            "Delegations [en]" => implode(PHP_EOL, array_column($delegations['eng-GB'], 'delega')),
             "Incarichi di posizione organizzativa" => $this->attribute('organizational_position'),
             "Incarico dirigenziale" => $this->attribute('incarico_dirigenziale'),
             "Ruolo principale" => $this->attribute('ruolo_principale'),
@@ -250,6 +255,9 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             'Entschädigung [de]' => $this->attribute('de_compensi'),
             'Reise - und/oder Servicebeträge [de]' => $this->attribute('de_importi'),
             'Weitere Informationen [de]' => $this->attribute('de_notes'),
+            'Compensation [en]' => $this->attribute('en_compensi'),
+            'Travel amounts [en]' => $this->attribute('en_importi'),
+            'Notes [en]' => $this->attribute('en_notes'),
         ];
     }
 
@@ -276,14 +284,19 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('competences', json_encode([
             'ita-IT' => explode(PHP_EOL, $row["Competenze"]),
             'ger-DE' => explode(PHP_EOL, $row["Kompetenzen [de]"]),
+            'eng-GB' => explode(PHP_EOL, $row["Skills [en]"]),
         ]));
         $item->setAttribute('delegations', json_encode([
             'ita-IT' => explode(PHP_EOL, $row["Deleghe"]),
             'ger-DE' => explode(PHP_EOL, $row["Delegationen [de]"]),
+            'eng-GB' => explode(PHP_EOL, $row["Delegations [en]"]),
         ]));
         $item->setAttribute('de_compensi', $row['Entschädigung [de]']);
         $item->setAttribute('de_importi', $row['Reise - und/oder Servicebeträge [de]']);
         $item->setAttribute('de_notes', $row['Weitere Informationen [de]']);
+        $item->setAttribute('en_compensi', $row['Compensation [en]']);
+        $item->setAttribute('en_importi', $row['Travel amounts [en]']);
+        $item->setAttribute('en_notes', $row['Notes [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
