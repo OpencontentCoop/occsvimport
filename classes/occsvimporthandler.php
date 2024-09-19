@@ -447,7 +447,7 @@ class OCCSVImportHandler
 
         $pendingImport = new SQLIImportItem(array(
             'handler' => $handler,
-            'user_id' => eZUser::currentUserID()
+            'user_id' => eZUser::currentUserID(),
         ));
         $pendingImport->setAttribute('options', new SQLIImportHandlerOptions($this->import_options));
         $pendingImport->store();
@@ -493,7 +493,7 @@ class OCCSVImportHandler
                 $contentOptions = new SQLIContentOptions(array(
                     'class_identifier' => $classIdentifier,
                     'remote_id' => $remoteID,
-                    'language' => $parameters['language']
+                    'language' => $parameters['language'],
                 ));
 
                 $object = trim($object);
@@ -519,6 +519,33 @@ class OCCSVImportHandler
                 }
             }
         }
+    }
+
+    public function fetchImportHistory($parentNodeId, $classIdentifier)
+    {
+        $handler = $this->ini->variable('Settings', 'SQLIImportHandler');
+        if ($this->ini->hasVariable('Settings', 'SQLIImportHandler_' . $classIdentifier)) {
+            $handler = $this->ini->variable('Settings', 'SQLIImportHandler_' . $classIdentifier);
+        }
+        $handler = eZDB::instance()->escapeString($handler);
+        $parentNodeIdFilter = 's:14:"parent_node_id";i:' . (int)$parentNodeId;
+        $parentNodeIdFilterAsString = sprintf('s:14:"parent_node_id";s:%s:"%s"', strlen($parentNodeId), $parentNodeId);
+        $query = "SELECT * FROM sqliimport_item WHERE handler = '$handler' AND (options_serialized like '%$parentNodeIdFilter%' OR options_serialized like '%$parentNodeIdFilterAsString%') ORDER BY requested_time DESC";
+
+        $rows = eZDB::instance()->arrayQuery($query);
+        /** @var SQLIImportItem[] $objects */
+        $objects = eZPersistentObject::handleRows($rows, 'SQLIImportItem', true);
+        $data = [];
+        foreach ($objects as $item){
+            $data[] = [
+                'requested_time' => date("Y-m-d H:i:s", $item->attribute('requested_time')),
+                'status' => $item->attribute('status'),
+                'status_string' => $item->getStatusString(),
+                'progression_notes' => $item->attribute('progression_notes'),
+                'duration' => $item->getFormatedProcessTime(),
+            ];
+        }
+        return ['items' => $data];
     }
 
 }
