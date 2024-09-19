@@ -243,7 +243,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                             $files = explode(',', $row->{$header});
                             array_walk($files, 'trim');
 
-                            // @phpstan-ignore empty.variable
                             if (!empty($files) && $files[0] != '') {
                                 $actionArray = explode('_', $rawHeader);
                                 $action = array_shift($actionArray);
@@ -266,7 +265,6 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
             $newNodeID = $content->getRawContentObject()->attribute('main_node_id');
             unset($content);
 
-            // @phpstan-ignore variable.undefined
             if ($doAction !== false) {
                 foreach ((array)$doAction as $action => $values) {
                     $parameters = array(
@@ -324,9 +322,7 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     )
                 );
                 if ($searchResult['SearchCount'] > 0) {
-                    if (isset($searchResult['SearchResult'][0])) {
-                        $relations[] = $searchResult['SearchResult'][0]->attribute('contentobject_id');
-                    }
+                    $relations[] = $searchResult['SearchResult'][0]->attribute('contentobject_id');
                 }
             }
         }
