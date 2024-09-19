@@ -34,6 +34,9 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
             die();
         }
 
+        eZClusterFileHandler::instance($this->options->attribute('csv_path'))
+            ->fetch();
+
         $csvOptions = new SQLICSVOptions(array(
             'csv_path' => $this->options->attribute('csv_path'),
             'delimiter' => $this->options->attribute('delimiter'),

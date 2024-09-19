@@ -33,7 +33,7 @@ class OCCSVImportHandler
         }
 
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . time();
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
@@ -65,6 +65,8 @@ class OCCSVImportHandler
                 eZDir::recursiveDelete($this->file_dir);
                 return false;
             }
+            $fileHandler = eZClusterFileHandler::instance();
+            $fileHandler->fileStore($this->getCSVFile(), 'csvimport', false, 'text/csv');
             return true;
         }
         return false;
@@ -391,7 +393,7 @@ class OCCSVImportHandler
     public function inizializeFromHTTPFile($httpFile)
     {
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . time();
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
@@ -425,6 +427,8 @@ class OCCSVImportHandler
                 eZDir::recursiveDelete($this->file_dir);
                 return false;
             }
+            $fileHandler = eZClusterFileHandler::instance();
+            $fileHandler->fileStore($this->getCSVFile(), 'csvimport', false, 'text/csv');
             return true;
         }
         return false;
