@@ -35,7 +35,7 @@ if ($module->isCurrentAction('UploadFile')) {
                 ));
             } else {
                 $handler->setImportOption('parent_node_id', $NodeID);
-                $handler->setImportOption('name', 'Importazione in ' . $node->attribute('name'));
+                $handler->setImportOption('name', 'Importazione di ' . basename($handler->getCSVFile()) . ' in ' . $node->attribute('name'));
 
                 /* Se è stata flaggata l'impostazione per l'import incrementale aggiungo un'opzione */
                 if ($http->hasPostVariable('Incremental') && $http->postVariable('Incremental') == 1) {
@@ -43,7 +43,11 @@ if ($module->isCurrentAction('UploadFile')) {
                 }
 
                 $handler->addImport();
-                $module->redirectTo('sqliimport/list');
+                if ($http->hasPostVariable('RedirectUrl')) {
+                    $module->redirectTo($http->postVariable('RedirectUrl'));
+                } else {
+                    $module->redirectTo('sqliimport/list');
+                }
             }
         }
     }

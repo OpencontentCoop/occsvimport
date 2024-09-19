@@ -38,6 +38,11 @@ $ViewList['import_tag'] = array(
     ),
     'params' => array('ParentTagID')
 );
+$ViewList['history'] = array(
+    'functions' => array('import'),
+    'script' => 'history.php',
+    'params' => array('ParentNodeID', 'ClassIdentifier')
+);
 $FunctionList = array();
 $FunctionList['import'] = array();
 $FunctionList['export'] = array();
