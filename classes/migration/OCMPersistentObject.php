@@ -596,6 +596,8 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 $filename = self::getFileNameFromContentDisposition($item);
             }
 
+            $filename = rawurldecode(rawurldecode(rawurldecode(rawurldecode($filename))));
+
             $values[] = [
                 'url' => OCMigration::getSecureUrl($item),
                 'filename' => $filename,
