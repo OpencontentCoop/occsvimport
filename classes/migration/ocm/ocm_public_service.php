@@ -57,6 +57,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'average_processing_time',
         'has_processing_time',
         'has_processing_time_text',
+        'has_cost_description',
         'de_name',
         'de_status_note',
         'de_alternative_name',
@@ -189,6 +190,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Giorni medi di attesa dalla richiesta" => $this->attribute('average_processing_time'),
             "Giorni massimi di attesa dalla richiesta*" => $this->attribute('has_processing_time'),
             "Tempi e scadenze" => $this->attribute('has_processing_time_text'),
+            "Descrizione dei costi" => $this->attribute('has_cost_description'),
 
             "Titel des Dienstes* [de]" => $this->attribute('de_name'),
             "Grund für den Status [de]" => $this->attribute('de_status_note'),
@@ -261,6 +263,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('average_processing_time', $row["Giorni medi di attesa dalla richiesta"]);
         $item->setAttribute('has_processing_time', $row["Giorni massimi di attesa dalla richiesta*"]);
         $item->setAttribute('has_processing_time_text', $row["Tempi e scadenze"]);
+        $item->setAttribute('has_cost_description', $row["Descrizione dei costi"]);
         $item->setAttribute('de_name', $row["Titel des Dienstes* [de]"]);
         $item->setAttribute('de_status_note', $row["Grund für den Status [de]"]);
         $item->setAttribute('de_alternative_name', $row["Alternativer Titel/Untertitel [de]"]);
@@ -398,6 +401,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'average_processing_time', (int)$this->attribute('average_processing_time'));
         $payload->setData($locale, 'has_processing_time', (int)$this->attribute('has_processing_time'));
         $payload->setData($locale, 'has_processing_time_text', $this->attribute('has_processing_time_text'));
+        $payload->setData($locale, 'has_cost_description', $this->attribute('has_cost_description'));
 
         $hasCost = json_decode($this->attribute('has_cost'), true);
         $payload->setData($locale, 'has_cost', $hasCost['ita-IT']);
