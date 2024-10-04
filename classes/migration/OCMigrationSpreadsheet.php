@@ -1241,7 +1241,7 @@ class OCMigrationSpreadsheet
                         }
                         if ($p instanceof OCMPayload) {
                             if ($cli) $cli->output(' validation', false);
-                            $p->validate();
+                            $p->validate(true);
                         }
                     }
                     $count = $count + $generatedPayloadCount;

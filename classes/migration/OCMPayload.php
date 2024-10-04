@@ -77,13 +77,38 @@ class OCMPayload extends eZPersistentObject
         return $item;
     }
 
+    static function convertArrayToUtf8(array $array): array
+    {
+        $convertedArray = [];
+        foreach ($array as $key => $value) {
+            if (gettype($key) == 'string') {
+                $key = utf8_encode($key);
+            }
+
+            if (is_array($value)) {
+                $value = self::convertArrayToUtf8($value);
+            }
+
+            if (gettype($value) == 'string') {
+                $convertedArray[$key] = utf8_encode($value);
+            } else {
+                $convertedArray[$key] = $value;
+            }
+        }
+        return $convertedArray;
+    }
+
     public static function create(string $id, string $type, int $priority, array $payload): OCMPayload
     {
+        $encodedPayload = json_encode($payload);
+        if (empty($encodedPayload)) {
+            $encodedPayload = json_encode(self::convertArrayToUtf8($payload));
+        }
         $item = new OCMPayload();
         $item->setAttribute('id', $id);
         $item->setAttribute('priority', $priority);
         $item->setAttribute('type', $type);
-        $item->setAttribute('payload', json_encode($payload));
+        $item->setAttribute('payload', $encodedPayload);
         $item->setAttribute('modified_at', time());
         $item->store();
 
@@ -139,7 +164,7 @@ class OCMPayload extends eZPersistentObject
         }
     }
 
-    public function validate()
+    public function validate($asNew = false)
     {
         $repository = new ContentRepository();
         $environment = EnvironmentLoader::loadPreset('content');
@@ -151,6 +176,9 @@ class OCMPayload extends eZPersistentObject
                 $createStruct = $environment->instanceCreateStruct($payload);
                 $createStruct->validate(true);
             }else{
+                if ($asNew){
+                    $payload['options']['update_null_field'] = true;
+                }
                 $updateStruct = $environment->instanceUpdateStruct($payload);
                 $updateStruct->validate(true);
             }
