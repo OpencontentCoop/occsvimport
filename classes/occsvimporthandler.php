@@ -33,7 +33,7 @@ class OCCSVImportHandler
         }
 
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . time();
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . eZRemoteIdUtility::generate('importcsv');
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
@@ -393,7 +393,7 @@ class OCCSVImportHandler
     public function inizializeFromHTTPFile($httpFile)
     {
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . time();
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . eZRemoteIdUtility::generate('importcsv');
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
