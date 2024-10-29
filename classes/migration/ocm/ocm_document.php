@@ -109,7 +109,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             $options
         ) {
             $data = [];
-            $idList = ['area', 'servizio', 'ufficio', 'struttura',];
+            $idList = ['area', 'servizio', 'ufficio', 'struttura', 'circoscrizione'];
             foreach ($idList as $id) {
                 if (isset($firstLocalizedContentData[$id])) {
                     foreach ($firstLocalizedContentData[$id]['content'] as $item) {
@@ -157,6 +157,79 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'full_description' => OCMigration::getMapperHelper('descrizione'),
                     'file' => OCMigration::getMapperHelper('file'),
                     'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('documento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ];
+                break;
+            case 'bilancio_di_previsione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Bilancio preventivo';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
+                        $data = [];
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            $attributes = [
+                                'bilancio_pluriennale',
+                                'delibera_bilancio',
+                                'dup',
+                                'nota_integrativa',
+                                'relazione_organo_revisione',
+                                'bilancio_previsionale_cittadino',
+                                'piano_indicatori',
+                                'bilancio_previsione_finanziaria',
+                                'allegati_bilancio',
+                                'relazione_parere',
+                                'bilancio_di_previsione',
+                                'relazione_previsionale_programmatica',
+                                'programma_generale_opere_pubbliche',
+                                'prospetto_legge_67',
+                            ];
+                            foreach ($attributes as $attribute) {
+                                $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl($object, $attribute, null, true);
+                                if ($fileByAttribute) {
+                                    $data[] = $fileByAttribute;
+                                }
+                            }
+
+                            /** @var eZContentObject[] $embedList */
+                            $embedList = $object->relatedContentObjectList();
+                            if (empty($embedList)) { // workaround per bug?? (non trova i file dell'attributo allegati)
+                                $objectId = (int)$object->attribute('id');
+                                $objectVersion = (int)$object->attribute('current_version');
+                                $rows = eZDB::instance()->arrayQuery("SELECT to_contentobject_id FROM ezcontentobject_link WHERE from_contentobject_id = $objectId AND from_contentobject_version = $objectVersion");
+                                $relatedIdList = array_column($rows, 'to_contentobject_id');
+                                $embedList = OpenPABase::fetchObjects($relatedIdList);
+                            }
+                            foreach ($embedList as $embed) {
+                                if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
+                                    ocm_file::removeById($embed->attribute('remote_id'));
+                                    $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                                    if ($url) {
+                                        $data[] = $url;
+                                    }
+                                }
+                            }
+                        }
+                        $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+                        foreach ($attachments as $attachment) {
+                            ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                            $url = OCMigrationComunweb::getFileAttributeUrl($attachment, 'file');
+                            if ($url) {
+                                $data[] = $url;
+                            }
+                        }
+
+                        return implode(PHP_EOL, $data);
+                    },
                     'has_organization' => $hasOrganization,
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
                     'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
@@ -337,7 +410,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     'document_type' => function () {
                         return 'Decreto sindacale';
                     },
-                    'file' => OCMigration::getMapperHelper('file'),
+                    'file' => function () {
+                        return '';
+                    },
                     'attachments' => $attachments,
                     'has_organization' => $hasOrganization,
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
@@ -722,7 +797,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                     },
                     'abstract' => OCMigration::getMapperHelper('abstract'),
                     'full_description' => OCMigration::getMapperHelper('descrizione'),
-                    'file' => OCMigration::getMapperHelper('file'),
+                    'file' => function () {
+                        return '';
+                    },
                     'attachments' => $attachments,
                     'has_organization' => $hasOrganization,
                     'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
@@ -881,6 +958,371 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                 ];
                 break;
 //            case 'trattamento': // npn utilizzato
+            case 'domanda_attualita':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'has_code' => OCMigration::getMapperHelper('numero'),
+                    'document_type' => function () {
+                        return 'Domanda di attualità';
+                    },
+                    'full_description' => OCMigration::getMapperHelper('soggetti'),
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'interroganti' => OCMigration::getMapperHelper('interroganti'),
+                    'gruppo_politico' => OCMigration::getMapperHelper('gruppo_politico'),
+                    'data_giunta' => OCMigration::getMapperHelper('data_passaggio_giunta'),
+                    'data_invio_uffici' => OCMigration::getMapperHelper('data_invio_uffici'),
+                    'data_risposta_consigliere' => OCMigration::getMapperHelper('data_risposta_uffici'),
+                    'data_consiglio' => OCMigration::getMapperHelper('data_consiglio'),
+                    'giorni_adozione' => OCMigration::getMapperHelper('giorni_adozione'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimento'),
+                    'other_information' => OCMigration::getMapperHelper('note'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                ];
+                break;
+            case 'disciplinare':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Disciplinare';
+                    },
+                    'has_code' => OCMigration::getMapperHelper('numero_protocollo'),
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_finepubblicazione'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimento'),
+                    'keyword' => OCMigration::getMapperHelper('parola_chiave'),
+                ];
+                break;
+            case 'gemellaggio':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Gemellaggio';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'image' => OCMigration::getMapperHelper('image'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'link' => OCMigration::getMapperHelper('url'),
+                    'attachments' => $attachments,
+                    'has_organization' => $hasOrganization,
+                    'other_information' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
+                        $text = OCMigration::getMapperHelper('testo_protocollo_intesa')(
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
+                        );
+                        $text .= OCMigration::getMapperHelper('testo_documento_amicizia')(
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
+                        );
+
+                        return $text;
+                    },
+                    'reference_doc' => OCMigration::getMapperHelper(' programma_gemellaggio '),
+                ];
+                break;
+            case 'istruzioni':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Gemellaggio';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'has_organization' => $hasOrganization,
+                    'reference_doc' => OCMigration::getMapperHelper(' documento '),
+                ];
+                break;
+            case 'petizione':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('oggetto'),
+                    'document_type' => function () {
+                        return 'Petizione';
+                    },
+                    'has_code' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
+                        $text = OCMigration::getMapperHelper('numero')(
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
+                        );
+                        if (!empty($text)){
+                            $text .= '/';
+                        }
+                        $text .= OCMigration::getMapperHelper('anno')(
+                            $content,
+                            $firstLocalizedContentData,
+                            $firstLocalizedContentLocale,
+                            $options
+                        );
+
+                        return $text;
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => function (
+                        Content $content,
+                        $firstLocalizedContentData,
+                        $firstLocalizedContentLocale,
+                        $options
+                    ) {
+                        $text = '';
+                        foreach (
+                            [
+                                'Tipo' => 'tipo_petizione',
+                                'Primo firmatario' => 'primo_firmatario',
+                                'Numero sottoscrizioni valide' => 'sottoscrizioni_valide',
+                                'Giorni per la risposta' => 'giorni_adozione',
+                                'Note' => 'note',
+                            ] as $k => $i
+                        ) {
+                            $value = OCMigration::getMapperHelper($i)(
+                                $content,
+                                $firstLocalizedContentData,
+                                $firstLocalizedContentLocale,
+                                $options
+                            );
+                            if (!empty($value)) {
+                                $text .= '<p><strong>'.$k.':</strong> ';
+                                $text .= $value;
+                                $text .= '</p>';
+                            }
+                        }
+
+                        return $text;
+                    },
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'other_information' => OCMigration::getMapperHelper('note'),
+                    'attachments' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
+                        $data = [];
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            $attributes = [
+                                'risposta',
+                            ];
+                            foreach ($attributes as $attribute) {
+                                $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl($object, $attribute, null, true);
+                                if ($fileByAttribute) {
+                                    $data[] = $fileByAttribute;
+                                }
+                            }
+
+                            /** @var eZContentObject[] $embedList */
+                            $embedList = $object->relatedContentObjectList();
+                            if (empty($embedList)) { // workaround per bug?? (non trova i file dell'attributo allegati)
+                                $objectId = (int)$object->attribute('id');
+                                $objectVersion = (int)$object->attribute('current_version');
+                                $rows = eZDB::instance()->arrayQuery("SELECT to_contentobject_id FROM ezcontentobject_link WHERE from_contentobject_id = $objectId AND from_contentobject_version = $objectVersion");
+                                $relatedIdList = array_column($rows, 'to_contentobject_id');
+                                $embedList = OpenPABase::fetchObjects($relatedIdList);
+                            }
+                            foreach ($embedList as $embed) {
+                                if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
+                                    ocm_file::removeById($embed->attribute('remote_id'));
+                                    $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                                    if ($url) {
+                                        $data[] = $url;
+                                    }
+                                }
+                            }
+                        }
+                        $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+                        foreach ($attachments as $attachment) {
+                            ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                            $url = OCMigrationComunweb::getFileAttributeUrl($attachment, 'file');
+                            if ($url) {
+                                $data[] = $url;
+                            }
+                        }
+
+                        return implode(PHP_EOL, $data);
+                    },
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'has_organization' => $hasOrganization,
+                    'reference_doc' => OCMigration::getMapperHelper(' documento '),
+                ];
+                break;
+            case 'rapporto':
+                $mapper = [
+                    'name' => OCMigration::getMapperHelper('titolo'),
+                    'document_type' => function () {
+                        return 'Rapporto';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'start_time' => OCMigration::getMapperHelper('data_inizio_validita'),
+                    'end_time' => OCMigration::getMapperHelper('data_fine_validita'),
+                    'publication_start_time' => OCMigration::getMapperHelper('data_iniziopubblicazione'),
+                    'expiration_time' => OCMigration::getMapperHelper('data_archiviazione'),
+                    'has_organization' => $hasOrganization,
+                    'other_information' => OCMigration::getMapperHelper('nota'),
+                ];
+                break;
+            case 'rendiconto':
+                $mapper = [
+                    'name' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            return $object->attribute('name');
+                        }
+                        return 'Rendiconto';
+                    },
+                    'document_type' => function () {
+                        return 'Rendiconto';
+                    },
+                    'file' => OCMigration::getMapperHelper('file'),
+                    'attachments' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
+                        $data = [];
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            $attributes = [
+                                'relazione_illustrativa',
+                                'relazione_organo_revisione',
+                            ];
+                            foreach ($attributes as $attribute) {
+                                $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl(
+                                    $object,
+                                    $attribute,
+                                    null,
+                                    true
+                                );
+                                if ($fileByAttribute) {
+                                    $data[] = $fileByAttribute;
+                                }
+                            }
+
+                            /** @var eZContentObject[] $embedList */
+                            $embedList = $object->relatedContentObjectList();
+                            if (empty($embedList)) { // workaround per bug?? (non trova i file dell'attributo allegati)
+                                $objectId = (int)$object->attribute('id');
+                                $objectVersion = (int)$object->attribute('current_version');
+                                $rows = eZDB::instance()->arrayQuery("SELECT to_contentobject_id FROM ezcontentobject_link WHERE from_contentobject_id = $objectId AND from_contentobject_version = $objectVersion");
+                                $relatedIdList = array_column($rows, 'to_contentobject_id');
+                                $embedList = OpenPABase::fetchObjects($relatedIdList);
+                            }
+                            foreach ($embedList as $embed) {
+                                if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
+                                    ocm_file::removeById($embed->attribute('remote_id'));
+                                    $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                                    if ($url) {
+                                        $data[] = $url;
+                                    }
+                                }
+                            }
+                        }
+                        $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+                        foreach ($attachments as $attachment) {
+                            ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                            $url = OCMigrationComunweb::getFileAttributeUrl($attachment, 'file');
+                            if ($url) {
+                                $data[] = $url;
+                            }
+                        }
+
+                        return implode(PHP_EOL, $data);
+                    },
+                ];
+                break;
+            case 'seduta_consiglio':
+                $mapper = [
+                    'name' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            return $object->attribute('name');
+                        }
+                        return 'Seduta del consiglio';
+                    },
+                    'document_type' => function () {
+                        return 'Seduta del consiglio';
+                    },
+                    'abstract' => OCMigration::getMapperHelper('abstract'),
+                    'full_description' => OCMigration::getMapperHelper('descrizione'),
+                    'file' => OCMigration::getMapperHelper('testo'),
+                    'reference_doc' => OCMigration::getMapperHelper('riferimenti'),
+                    'attachments' => function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
+                        $data = [];
+                        $object = eZContentObject::fetch($content->metadata['id']);
+                        if ($object instanceof eZContentObject) {
+                            $attributes = [
+                                'verbale',
+                            ];
+                            foreach ($attributes as $attribute) {
+                                $fileByAttribute = OCMigrationComunweb::getFileAttributeUrl(
+                                    $object,
+                                    $attribute,
+                                    null,
+                                    true
+                                );
+                                if ($fileByAttribute) {
+                                    $data[] = $fileByAttribute;
+                                }
+                            }
+
+                            /** @var eZContentObject[] $embedList */
+                            $embedList = $object->relatedContentObjectList();
+                            if (empty($embedList)) { // workaround per bug?? (non trova i file dell'attributo allegati)
+                                $objectId = (int)$object->attribute('id');
+                                $objectVersion = (int)$object->attribute('current_version');
+                                $rows = eZDB::instance()->arrayQuery("SELECT to_contentobject_id FROM ezcontentobject_link WHERE from_contentobject_id = $objectId AND from_contentobject_version = $objectVersion");
+                                $relatedIdList = array_column($rows, 'to_contentobject_id');
+                                $embedList = OpenPABase::fetchObjects($relatedIdList);
+                            }
+                            foreach ($embedList as $embed) {
+                                if (in_array($embed->contentClassIdentifier(), ['file', 'file_pdf'])) {
+                                    ocm_file::removeById($embed->attribute('remote_id'));
+                                    $url = OCMigrationComunweb::getFileAttributeUrl($embed);
+                                    if ($url) {
+                                        $data[] = $url;
+                                    }
+                                }
+                            }
+                        }
+                        $attachments = OCMigrationComunweb::getAttachmentsByNode($object->mainNode());
+                        foreach ($attachments as $attachment) {
+                            ocm_file::removeById($attachment->object()->attribute('remote_id'));
+                            $url = OCMigrationComunweb::getFileAttributeUrl($attachment, 'file');
+                            if ($url) {
+                                $data[] = $url;
+                            }
+                        }
+
+                        return implode(PHP_EOL, $data);
+                    },
+                    'other_information' => OCMigration::getMapperHelper('prosecuzioni'),
+                    'start_time' => OCMigration::getMapperHelper('data'),
+                ];
+                break;
+
             default:
                 $mapper = [];
         }
@@ -1227,6 +1669,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Documenti attività politica" => "Documenti attività politica",
             "Interpellanza" => "Documenti attività politica",
             "Interrogazione" => "Documenti attività politica",
+            "Domanda di attualità" => "Documenti attività politica",
             "Mozione" => "Documenti attività politica",
             "Ordine del giorno" => "Documenti attività politica",
             "Seduta del consiglio" => "Documenti attività politica",

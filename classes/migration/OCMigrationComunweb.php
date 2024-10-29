@@ -86,9 +86,20 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
                 'regolamento',
                 'statuto',
                 'trattamento',
+
+                'domanda_attualita',
+                'bilancio_di_previsione',
+                'disciplinare',
+                'gemellaggio',
+                'istruzioni',
+                'petizione',
+                'rapporto',
+                'rendiconto',
+                'seduta_consiglio',
             ],
             $escludePathList,
-            $escludeRemoteIdPrefix
+            $escludeRemoteIdPrefix,
+            ['aperto_a_tutti', 'rete_civica_28']
         );
 
         $this->fillByType(
@@ -131,7 +142,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
      * @param eZContentObject|eZContentObjectTreeNode $nodeOrObject
      * @return ?string
      */
-    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file', $parentAsGroup = null): ?string
+    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file', $parentAsGroup = null, $useAttributeName = false): ?string
     {
         $dataMap = $nodeOrObject->dataMap();
         if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
@@ -149,6 +160,8 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
             if ($parentAsGroup){
                 $parent = $nodeOrObject instanceof eZContentObjectTreeNode ? $nodeOrObject->fetchParent() : $nodeOrObject->mainNode()->fetchParent();
                 $group = '|' . $parent->attribute('name');
+            } elseif ($useAttributeName) {
+                $group = '|' . $attribute->attribute('contentclass_attribute_name');
             }
             return $url . '#' . $nodeOrObject->attribute('name') . $group;
         }

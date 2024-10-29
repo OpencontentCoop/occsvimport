@@ -690,7 +690,7 @@ class OCMImporter
         if ($message instanceof Throwable) {
             $message = $message->getMessage() . ' on ' . $message->getFile() . ' line ' . $message->getLine();
         }
-        eZCLI::instance()->error($this->padMessage($message));
+        eZCLI::instance()->output(eZCLI::instance()->stylize('error', $this->padMessage($message)));
         $this->stats['error']++;
     }
 

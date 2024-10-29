@@ -692,6 +692,10 @@ class OCMigration extends eZPersistentObject
             foreach ($nodes as $index => $node) {
                 $index++;
                 $this->debug(" $index/$count " . $node->classIdentifier() . ' ', false);
+                if (!$isUpdate && $ocmClass::fetch($node->object()->remoteID())){
+                    $this->debug(' (skip)');
+                    continue;
+                }
                 if ($this->createFromNode($node, new $ocmClass, [
                     'is_update' => $isUpdate,
                 ])->storeThis($isUpdate)) {
@@ -700,6 +704,7 @@ class OCMigration extends eZPersistentObject
                 } else {
                     $this->debug('');
                 }
+                eZContentObject::clearCache();
                 if ($index % 100 === 0) {
                     OCMigrationSpreadsheet::appendMessageToCurrentStatus([
                         $ocmClass => [

@@ -12,10 +12,11 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[action:][only:][update][reset][validate][import_url_alias]",
+    "[action:][only:][update][reset][validate][import_url_alias][test:]",
     "", [
         'action' => 'Select from:'  . PHP_EOL . ' '  . implode(PHP_EOL . ' ', ['export', 'push', 'pull', 'import']),
         'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
+        'test' => 'class and node_id to test export'
 ]);
 $script->initialize();
 $script->setUseDebugAccumulators(true);
@@ -23,6 +24,14 @@ $script->setUseDebugAccumulators(true);
 /** @var eZUser $user */
 $user = eZUser::fetchByName('admin');
 eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
+
+if ($options['test']) {
+    [$class, $node] = explode(':', $options['test']);
+    $test = new $class();
+    print_r($test->fromComunwebNode(eZContentObjectTreeNode::fetch($node)));
+    $test->storeThis(true);
+    die();
+}
 
 if ($options['reset']){
     OCMigrationSpreadsheet::resetCurrentStatus();
