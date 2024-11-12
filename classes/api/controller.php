@@ -52,7 +52,7 @@ class OCMController extends ezpRestMvcController
     public function doGetItemField()
     {
         $result = $this->doGetItem();
-
+        $format = $this->request->get['format'] ?? null;
         $value = '';
         if ($result->variables->hasAttribute($this->field)) {
             $value = $result->variables->attribute($this->field);
@@ -61,6 +61,13 @@ class OCMController extends ezpRestMvcController
             if (isset($spreadSheet[$this->field])){
                 $value = $spreadSheet[$this->field];
             }
+        }
+
+        if ($format === 'text'){
+            header('Content-Type: text/html');
+            header('HTTP/1.1 200 OK');
+            echo $value;
+            eZExecution::cleanExit();
         }
 
         header('Content-Type: text/html');
