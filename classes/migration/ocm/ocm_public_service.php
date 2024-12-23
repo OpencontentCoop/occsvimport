@@ -375,7 +375,6 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
                 $spatialCoverage = explode($separator, $spatialCoverage);
                 $spatialCoverage = array_map('trim', $spatialCoverage);
                 $spatialCoverage = array_filter($spatialCoverage);
-                $spatialCoverage = implode('#', $spatialCoverage);
             }
         }
         $payload->setData($locale, 'has_spatial_coverage', $spatialCoverage);
