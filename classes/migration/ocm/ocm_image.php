@@ -136,7 +136,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
             $filename = basename($this->attribute('image___url'));
         }
         $payload->setData($locale, 'image', [
-            'url' => $this->attribute('image___url'),
+            'url' => trim($this->attribute('image___url')),
             'filename' => $filename,
         ]);
         $payload->setData($locale, 'tags', $this->attribute('tags'));

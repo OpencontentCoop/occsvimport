@@ -597,6 +597,8 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             }
 
             $filename = rawurldecode(rawurldecode(rawurldecode(rawurldecode($filename))));
+            $item = str_replace(' ', '+', $item);
+            $item = trim($item);
 
             $values[] = [
                 'url' => OCMigration::getSecureUrl($item),
