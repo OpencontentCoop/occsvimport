@@ -355,6 +355,13 @@ class OCMigrationVocs
             "Circoscrizione",
             "Società partecipata",
             "Sindaco",
+            "Commissione comunale",
+            "Commissione consiliare",
+            "Consiglio di quartiere",
+            "Consulta",
+            "Difensore civico",
+            "Gruppo consiliare",
+            "Presidenza del Consiglio comunale",
 
             "Area archeologica",
             "Sito archeologico",
