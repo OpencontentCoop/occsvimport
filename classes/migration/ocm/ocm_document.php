@@ -54,6 +54,9 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'announcement_type',
         'data_di_scadenza_delle_iscrizioni',
         'data_di_conclusione',
+        'de_file',
+        'de_link',
+        'de_attachments',
     ];
 
     public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
@@ -937,12 +940,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             "Descrizione breve*" => $this->attribute('abstract'),
             "URL documento*" => $this->attribute('file'),
             "URL documento" => $this->attribute('file'),
+            "Link zum aktuellen Dokument [de]" => $this->attribute('de_file'),
             "Licenza di distribuzione*" => $this->attribute('license'),
             "Formati disponibili*" => $this->attribute('format'),
             "Ufficio responsabile del documento*" => $this->attribute('has_organization'),
             "Descrizione" => $this->attribute('full_description'),
             "Link esterno al documento" => $this->attribute('link'),
+            "Externer Link auf das Dokument [de]" => $this->attribute('de_link'),
             "File allegati" => $this->attribute('attachments'),
+            "Beigefügte Dokumente [de]" => $this->attribute('de_attachments'),
 //            "URL file allegato 1" => $attachments[0] ?? '',
 //            "URL file allegato 2" => $attachments[1] ?? '',
 //            "URL file allegato 3" => $attachments[2] ?? '',
@@ -1053,6 +1059,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_other_information', $row['Weitere Informationen [de]']);
         $item->setAttribute('de_keyword', $row['Stichwort [de]']);
 
+        $item->setAttribute('de_file', $row['Link zum aktuellen Dokument [de]']);
+        $item->setAttribute('de_link', $row['Externer Link auf das Dokument [de]']);
+        $item->setAttribute('de_attachments', $row['Beigefügte Dokumente [de]']);
+
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
     }
@@ -1145,6 +1155,11 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $payload->setData($locale, 'data_di_conclusione', $this->formatDate($this->attribute('data_di_conclusione')));
 
         $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
+
+        $payload->setData('ger-DE', 'file', $this->formatBinary($this->attribute('de_file'), false));
+        $payload->setData('ger-DE', 'link', trim($this->attribute('de_link')));
+        $payload->setData('ger-DE', 'attachments', $this->formatBinary($this->attribute('de_attachments')));
+
         $payloads = [self::getImportPriority() => $payload];
         $docs = ocm_document::getIdListByName($this->attribute('reference_doc'));
         if (count($docs) > 0) {
