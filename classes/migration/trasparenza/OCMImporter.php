@@ -251,6 +251,9 @@ class OCMImporter
 
     private function import($remoteObjectIdentifier, $parentNodeId, $withRelations = true): int
     {
+        if (getenv('IGNORE_RELATIONS')){
+            $withRelations = false;
+        }
         $updateContent = $this->settings['update-content'];
         if (!$withRelations){
             $updateContent = false;
@@ -263,6 +266,13 @@ class OCMImporter
         $this->readClient->read(urldecode($remoteObjectIdentifier));
 
         $content = $this->client->read(urlencode($remoteObjectIdentifier));
+
+        if (getenv('OVERRIDE_REMOTE_URL')){
+            [$old, $new] = explode('|', getenv('OVERRIDE_REMOTE_URL'));
+            $contentSerialized = json_encode($content);
+            $contentSerialized = str_replace($old, $new, $contentSerialized);
+            $content = json_decode($contentSerialized, true);
+        }
 
         $classIdentifier = $originalClassIdentifier = $content['metadata']['classIdentifier'];
         $remoteId = $content['metadata']['remoteId'];
@@ -427,6 +437,9 @@ class OCMImporter
                         break;
 
                     default:
+                        if ($identifier == 'titolo'){
+                            $payload->setData(null, $identifier, $content['metadata']['name']['ita-IT']);
+                        }
                         if ($identifier !== 'titolo' && $classIdentifier !== 'sovvenzione_contributo') {
                             $payload->setData(null, $identifier, '[...]');
                         }
