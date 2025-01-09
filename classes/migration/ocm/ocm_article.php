@@ -326,4 +326,8 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         return 110;
     }
 
+    public function avoidNameDuplication()
+    {
+        return false;
+    }
 }
