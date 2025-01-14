@@ -936,6 +936,7 @@ class OCMigration extends eZPersistentObject
         "Associazioni" => 'topic_7',
         "Attività produttive e commercio" => 'dfa6ed0f6ceeddbc718c6280e53b9385',
         "Casa" => 'topic_1',
+        "Abitazione" => 'topic_1',
         "Catasto" => 'topic_2_catasto',
         "Città intelligente" => 'topic_2_citta_intelligente',
         "Comune" => 'cf8eb21cf8b5c6743ae1caa2bc050c88',

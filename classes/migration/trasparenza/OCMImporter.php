@@ -84,6 +84,7 @@ class OCMImporter
                     'user_group',
                     'global_layout',
                     'shared_link',
+                    'public_service',
 //                    'office',
                 ],
                 'remap-classes' => [
@@ -97,9 +98,9 @@ class OCMImporter
                     'politici' => 'folder',
                 ],
                 'default-values' => [
-                    'image/license' => [
-                        "Creative Commons Attribution 4.0 International (CC BY 4.0)",
-                    ],
+                    'format' => 'PDF',
+                    'license' => $license = 'Creative Commons Attribution 4.0 International (CC BY 4.0)',
+                    'image/license' => [$license,],
                     'image/author' => eZINI::instance()->variable('SiteSettings', 'SiteName'),
                 ],
             ],
@@ -288,8 +289,7 @@ class OCMImporter
                 $this->debug(
                     'Already exists '
                     . $classIdentifier . ' - '
-                    . $content['metadata']['name']['ita-IT'] . '  - '
-                    . $content['metadata']['remoteId'] . '  - '
+                    . self::getContentLogIdentifier($content) . '  - '
                     . $localObject->attribute('id')
                 );
                 return (int)$localObject->attribute('id');
@@ -305,8 +305,7 @@ class OCMImporter
                         new ezcConsoleOutput(),
                         'Update '
                         . $classIdentifier . ' - '
-                        . $content['metadata']['name']['ita-IT'] . '  - '
-                        . $content['metadata']['remoteId'] . ' y/n ?',
+                        . self::getContentLogIdentifier($content) . ' y/n ?',
                         "n"
                     )) == "y"
                 );
@@ -319,8 +318,7 @@ class OCMImporter
             $this->log(
                 'Skip '
                 . $classIdentifier . ' - '
-                . $content['metadata']['name']['ita-IT'] . '  - '
-                . $content['metadata']['remoteId']
+                . self::getContentLogIdentifier($content)
             );
             return 0;
         }
@@ -338,8 +336,7 @@ class OCMImporter
         $this->log(
             ($localObject instanceof eZContentObject ? 'Update ' : 'Import ')
             . $classIdentifier . ($isRemapped ? " (remapped from $originalClassIdentifier)" : '') . ' - '
-            . $content['metadata']['name']['ita-IT'] . '  - '
-            . $content['metadata']['remoteId'] . ' ' . ($withRelations ? '(with relations)' : '')
+            . self::getContentLogIdentifier($content) . ' ' . ($withRelations ? '(with relations)' : '')
         );
 
         $contentClass = $this->importClassIfNeeded($classIdentifier);
@@ -419,30 +416,49 @@ class OCMImporter
         }
 
         foreach ($dataMap as $identifier => $classAttribute){
-            $value = $payload->getData($identifier, 'ita-IT');
-            if ($classAttribute->attribute('is_required') && empty($value)){
-                switch ($classAttribute->attribute('data_type_string')){
-                    case eZDateType::DATA_TYPE_STRING:
-                    case eZDateTimeType::DATA_TYPE_STRING:
-                        $payload->setData(null, $identifier, date('c', 86400));
-                        break;
+            foreach ($content['metadata']['languages'] as $language) {
+                $value = $payload->getData($identifier, $language);
+                if ($classAttribute->attribute('is_required') && empty($value)) {
+                    switch ($classAttribute->attribute('data_type_string')) {
+                        case eZDateType::DATA_TYPE_STRING:
+                        case eZDateTimeType::DATA_TYPE_STRING:
+                            $payload->setData(null, $identifier, date('c', 86400));
+                            break;
 
-                    case eZBooleanType::DATA_TYPE_STRING:
-                        $payload->setData(null, $identifier, 1);
-                        break;
+                        case eZBooleanType::DATA_TYPE_STRING:
+                            $payload->setData(null, $identifier, 1);
+                            break;
 
-                    case eZObjectRelationListType::DATA_TYPE_STRING:
-                    case eZObjectRelationType::DATA_TYPE_STRING:
-                        $payload->setData(null, $identifier, [OpenPaFunctionCollection::fetchHome()->attribute('contentobject_id')]);
-                        break;
+                        case eZObjectRelationListType::DATA_TYPE_STRING:
+                        case eZObjectRelationType::DATA_TYPE_STRING:
+                            $payload->setData(
+                                null,
+                                $identifier,
+                                [OpenPaFunctionCollection::fetchHome()->attribute('contentobject_id')]
+                            );
+                            break;
 
-                    default:
-                        if ($identifier == 'titolo'){
-                            $payload->setData(null, $identifier, $content['metadata']['name']['ita-IT']);
-                        }
-                        if ($identifier !== 'titolo' && $classIdentifier !== 'sovvenzione_contributo') {
-                            $payload->setData(null, $identifier, '[...]');
-                        }
+                        default:
+                            switch ($identifier) {
+                                case 'name':
+                                case 'abstract':
+                                case 'titolo':
+                                    $payload->setData(null, $identifier, $content['metadata']['name'][$language]);
+                                    break;
+
+                                case 'format':
+                                    $payload->setData(null, $identifier, $this->settings['default-values']['format']);
+                                    break;
+
+                                case 'license':
+                                    $payload->setData(
+                                        null,
+                                        $identifier,
+                                        $this->settings['default-values']['license']
+                                    );
+                                    break;
+                            }
+                    }
                 }
             }
         }
@@ -645,7 +661,7 @@ class OCMImporter
         }
         $replace = [
             '<?xml version="1.0" encoding="utf-8"?>',
-            'xmlns:'
+            'xmlns:',
         ];
 
         return str_replace($replace, '', $text);
@@ -719,5 +735,10 @@ class OCMImporter
     public function getStats(): array
     {
         return $this->stats;
+    }
+
+    private static function getContentLogIdentifier($content): string
+    {
+        return $content['metadata']['name']['ita-IT'] . '  - ' . $content['metadata']['remoteId'];
     }
 }
