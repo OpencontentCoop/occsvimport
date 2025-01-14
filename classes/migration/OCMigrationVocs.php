@@ -300,6 +300,7 @@ class OCMigrationVocs
             "Bilanci consuntivi",
             "Bilancio preventivo",
             "Bilanci preventivi",
+            "Bilancio consolidato",
             "Documento unico di programmazione",
             "DUP",
             "Piano Esecutivo di Gestione",
