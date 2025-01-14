@@ -1146,9 +1146,9 @@ class OCMigrationSpreadsheet
                             $nameCollection[] = $item->name();
                         }
                         $item->fillOverflowData();
-                        $item->storeThis(false);
+                        $stored = $item->storeThis(false);
                         if ($cli) {
-                            $cli->output( ' - ' . $item->id() . ' ' . $item->name());
+                            $cli->output( ' - ' . $item->id() . ' ' . $item->name() . ' ' . (int)$stored);
                         }
                         $count++;
                     } catch (Throwable $e) {

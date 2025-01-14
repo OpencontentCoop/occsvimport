@@ -331,6 +331,7 @@ class OCMigrationVocs
             "Domanda di attualità",
             "Linee programmatiche di mandato",
             "Piano integrato di azione e organizzazione (PIAO)",
+            "Documenti voto - esiti",
 
             "Unico",
             "Invernale",
