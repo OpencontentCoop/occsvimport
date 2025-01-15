@@ -16,6 +16,11 @@ $optionsConfigList = [
         'config' => '[dry-run]',
         'help' => 'Print actions not execute',
     ],
+    [
+        'identifier' => 'force',
+        'config' => '[force]',
+        'help' => 'Avoid check on ocinstaller_opencity_trasparenza_cct_version',
+    ],
 ];
 $configs = array_column($optionsConfigList, 'config');
 sort($configs);
@@ -30,7 +35,7 @@ $options = $script->getOptions(implode('', $configs), '', $optionsHelp);
 $script->initialize();
 $cli = eZCLI::instance();
 try {
-    if (!eZSiteData::fetchByName('ocinstaller_opencity_trasparenza_cct_version') instanceof eZSiteData) {
+    if (!eZSiteData::fetchByName('ocinstaller_opencity_trasparenza_cct_version') instanceof eZSiteData || $options['force']) {
         throw new Exception('Not needed here...');
     }
 
@@ -158,6 +163,9 @@ try {
         'b77effe1c84fcd44a88379b94ac0e402' => [
             'dataset_lotto',
         ],
+        'caf2ef64f0da331b8895ffd2c8032ad6' => [
+            'bando'
+        ]
     ];
 
     $classGroup = eZContentClassGroup::fetchByName('Amministrazione trasparente');
