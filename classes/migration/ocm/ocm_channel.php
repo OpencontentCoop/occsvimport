@@ -152,6 +152,14 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_cost', json_encode($costs));
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
+
+        $item->setAttribute('de_object', $row["Funktion des Support-Kanals über welchen die Dienstleistung erfolgt* [de]"]);
+        $item->setAttribute('de_abstract', $row["Kurze Beschreibung* [de]"]);
+        $item->setAttribute('de_description', $row["Beschreibung [de]"]);
+        $item->setAttribute('en_object', $row["Function* [en]"]);
+        $item->setAttribute('en_abstract', $row["Abstract* [en]"]);
+        $item->setAttribute('en_description', $row["Description [en]"]);
+
         return $item;
     }
 

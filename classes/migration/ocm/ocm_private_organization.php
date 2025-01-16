@@ -186,6 +186,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo*"]);
         $item->setAttribute('legal_name', $row["Nome*"]);
@@ -220,7 +221,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         $item->setAttribute('en_acronym', $row['Acronym [en]']);
         $item->setAttribute('en_description', $row['Description* [en]']);
         $item->setAttribute('en_business_objective', $row['Business objective [en]']);
-        $item->setAttribute('en_more_information', $row['More informations [en]']);
+        $item->setAttribute('en_more_information', $row['More Informations [en]']);
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;

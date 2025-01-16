@@ -105,6 +105,33 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         $item->setAttribute('en_name', $row['Contact title* [en]']);
         $item->setAttribute('phone_availability_time', $row['Orari disponibilità telefonica']);
 
+        $typeMap = [
+            'ita-IT' => [
+                'Telefono' => 'Telefono',
+                'E-mail' => 'E-mail',
+                'Fax' => 'Fax',
+                'PEC' => 'PEC',
+                'Sito web' => 'Sito web',
+                'Cellulare' => 'Cellulare',
+            ],
+            'ger-DE' => [
+                'Telefono' => 'Telefon',
+                'E-mail' => 'E-Mail',
+                'Fax' => 'Fax',
+                'PEC' => 'PEC',
+                'Sito web' => 'Web',
+                'Cellulare' => 'Mobiltelefon',
+            ],
+            'eng-GB' => [
+                'Telefono' => 'Phone',
+                'E-mail' => 'E-mail',
+                'Fax' => 'Fax',
+                'PEC' => 'PEC',
+                'Sito web' => 'Website',
+                'Cellulare' => 'Mobile phone',
+            ],
+        ];
+
         $contacts = [];
         for ($x = 0; $x <= 5; $x++) {
             $indexLabel = $x + 1;
@@ -126,11 +153,17 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
                     'value' => $row['Contatto ' . $indexLabelRequired],
                     'contact' => $row['Tipo di contatto ' . $indexLabel],
                 ];
-                $contacts['ita-IT'][$x] = $contacts['ger-DE'][$x] = $contact;
+                $contacts['ita-IT'][$x] = $contacts['ger-DE'][$x] = $contacts['eng-GB'][$x] = $contact;
                 if (isset($row['Kontakt ' . $indexLabelRequired . ' [de]'])) {
+                    if (isset($typeMap['ger-DE'][$contacts['ger-DE'][$x]['type']])) {
+                        $contacts['ger-DE'][$x]['type'] = $typeMap['ger-DE'][$contacts['ger-DE'][$x]['type']];
+                    }
                     $contacts['ger-DE'][$x]['value'] = $row['Kontakt ' . $indexLabelRequired . ' [de]'];
                 }
                 if (isset($row['Contact ' . $indexLabelRequired . ' [en]'])) {
+                    if (isset($typeMap['eng-GB'][$contacts['eng-GB'][$x]['type']])) {
+                        $contacts['eng-GB'][$x]['type'] = $typeMap['eng-GB'][$contacts['eng-GB'][$x]['type']];
+                    }
                     $contacts['eng-GB'][$x]['value'] = $row['Contact ' . $indexLabelRequired . ' [en]'];
                 }
             }
