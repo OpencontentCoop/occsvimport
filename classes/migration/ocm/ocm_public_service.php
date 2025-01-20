@@ -72,6 +72,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'de_conditions',
         'de_exceptions',
         'de_service_keyword',
+        'de_has_processing_time_text',
         'en_name',
         'en_status_note',
         'en_alternative_name',
@@ -86,6 +87,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'en_conditions',
         'en_exceptions',
         'en_service_keyword',
+        'en_has_processing_time_text',
     ];
 
     public static function getSpreadsheetTitle(): string
@@ -226,6 +228,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Bedingungen [de]" => $this->attribute('de_conditions'),
             "Sonderfälle [de]" => $this->attribute('de_exceptions'),
             "Schlüsselwort [de]" => $this->attribute('de_service_keyword'),
+            "Fristen und Fälligkeiten" => $this->attribute('de_has_processing_time_text'),
 
             "Title* [en]" => $this->attribute('en_name'),
             "Status note [en]" => $this->attribute('en_status_note'),
@@ -241,6 +244,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             "Conditions [en]" => $this->attribute('en_conditions'),
             "Exceptions [en]" => $this->attribute('en_exceptions'),
             "Keyword [en]" => $this->attribute('en_service_keyword'),
+            "Times and deadlines" => $this->attribute('en_has_processing_time_text'),
 
             'Pagina contenitore' => $this->attribute('_parent_name'),
             'Url originale' => $this->attribute('_original_url'),
@@ -299,6 +303,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('has_processing_time', $row["Giorni massimi di attesa dalla richiesta*"]);
         $item->setAttribute('has_processing_time_text', $row["Tempi e scadenze"]);
         $item->setAttribute('has_cost_description', $row["Descrizione dei costi"]);
+
         $item->setAttribute('de_name', $row["Titel des Dienstes* [de]"]);
         $item->setAttribute('de_status_note', $row["Grund für den Status [de]"]);
         $item->setAttribute('de_alternative_name', $row["Alternativer Titel/Untertitel [de]"]);
@@ -313,6 +318,23 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('de_conditions', $row["Bedingungen [de]"]);
         $item->setAttribute('de_exceptions', $row["Sonderfälle [de]"]);
         $item->setAttribute('de_service_keyword', $row["Schlüsselwort [de]"]);
+        $item->setAttribute('de_has_processing_time_text', $row["Fristen und Fälligkeiten"]);
+
+        $item->setAttribute('en_name', $row["Title* [en]"]);
+        $item->setAttribute('en_status_note', $row["Status note [en]"]);
+        $item->setAttribute('en_alternative_name', $row["Alternative Title [en]"]);
+        $item->setAttribute('en_abstract', $row["Abstract* [en]"]);
+        $item->setAttribute('en_audience', $row["Audience [en]"]);
+        $item->setAttribute('en_applicants', $row["Applicants [en]"]);
+        $item->setAttribute('en_description', $row["Description [en]"]);
+        $item->setAttribute('en_how_to', $row["How to* [en]"]);
+        $item->setAttribute('en_has_input', $row["What you need* [en]"]);
+        $item->setAttribute('en_output_notes', $row["Outcome-related procedures [en]"]);
+        $item->setAttribute('en_is_physically_available_at_how_to', $row["Instructions for accessing the service [en]"]);
+        $item->setAttribute('en_conditions', $row["Conditions [en]"]);
+        $item->setAttribute('en_exceptions', $row["Exceptions [en]"]);
+        $item->setAttribute('en_service_keyword', $row["Keyword [en]"]);
+        $item->setAttribute('en_has_processing_time_text', $row["Times and deadlines"]);
 
         $costs = [
             'ita-IT' => [],
