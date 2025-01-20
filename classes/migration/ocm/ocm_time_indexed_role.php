@@ -23,9 +23,11 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         'ruolo_principale',
         'priorita',
         'notes',
+        'de_label',
         'de_compensi',
         'de_importi',
         'de_notes',
+        'en_label',
         'en_compensi',
         'en_importi',
         'en_notes',
@@ -291,9 +293,11 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             'ger-DE' => explode(PHP_EOL, $row["Delegationen [de]"]),
             'eng-GB' => explode(PHP_EOL, $row["Delegations [en]"]),
         ]));
+        $item->setAttribute('de_label', $row['Titel des Auftrags [de]']);
         $item->setAttribute('de_compensi', $row['Entschädigung [de]']);
         $item->setAttribute('de_importi', $row['Reise - und/oder Servicebeträge [de]']);
         $item->setAttribute('de_notes', $row['Weitere Informationen [de]']);
+        $item->setAttribute('en_label', $row['Job title [en]']);
         $item->setAttribute('en_compensi', $row['Compensation [en]']);
         $item->setAttribute('en_importi', $row['Travel amounts [en]']);
         $item->setAttribute('en_notes', $row['Notes [en]']);
