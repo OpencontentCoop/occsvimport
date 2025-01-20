@@ -15,9 +15,11 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         'de_object',
         'de_abstract',
         'de_description',
+        'de_channel_url',
         'en_object',
         'en_abstract',
         'en_description',
+        'en_channel_url',
     ];
 
     public static function canPush(): bool
@@ -99,6 +101,8 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
         $item->setAttribute('description', $row["Descrizione"]);
         $item->setAttribute('channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta del canale*"]);
+        $item->setAttribute('de_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in tedesco"] ?? '');
+        $item->setAttribute('en_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in inglese"] ?? '');
         $item->setAttribute('image', $row["Immagini"]);
         $item->setAttribute('files', $row["Files"]);
 
@@ -185,10 +189,12 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
 
         $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
         if (!empty($hasCost['ger-DE'])) {
-            $payload->setData($locale, 'has_cost', $hasCost['ger-DE']);
+            $payload->setData('ger-DE', 'has_cost', $hasCost['ger-DE']);
+            $payload->setData('ger-DE', 'channel_url', $this->attribute('de_channel_url'));
         }
         if (!empty($hasCost['eng-GB'])) {
-            $payload->setData($locale, 'has_cost', $hasCost['eng-GB']);
+            $payload->setData('eng-GB', 'has_cost', $hasCost['eng-GB']);
+            $payload->setData('eng-GB', 'channel_url', $this->attribute('en_channel_url'));
         }
 
         $payload = $this->appendTranslationsToPayloadIfNeeded($payload);
