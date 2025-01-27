@@ -245,6 +245,17 @@ try {
     }
 
     if ($trasparenzaRoot instanceof eZContentObjectTreeNode) {
+        $policies[] = [
+            'ModuleName' => 'content',
+            'FunctionName' => 'read',
+            'Limitation' => [
+                'Subtree' => [
+                    $trasparenzaRoot->attribute('path_string'),
+                ]
+            ],
+            'LimitationReadable' => 'Read all'
+                . PHP_EOL . 'Subtree: ' . $trasparenzaRoot->attribute('name'),
+        ];
         $trasparenzaClasses = array_merge($trasparenzaClasses, $orphansClassIdentifiers);
         if (!empty($trasparenzaClasses)) {
             $policies[] = [

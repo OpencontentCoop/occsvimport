@@ -49,20 +49,23 @@ try {
             $dataMap = $object->dataMap();
             foreach ($attributeIdentifiers as $attributeIdentifier){
                 if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
-                    $filePaths = explode('|', $dataMap[$attributeIdentifier]->toString());
-                    if (empty($filePaths)) {
-                        continue;
-                    }
-                    foreach ($filePaths as $stringItem) {
-                        $filePathParts = explode('##', $stringItem);
+                    $decorations = OCMultiBinaryType::parseDecorations($dataMap[$attributeIdentifier]);
+                    $hasDecoration = false;
+                    foreach ($decorations as $decoration){
                         if (
-                            isset($filePathParts[2]) && !empty($filePathParts[2])
-                            || isset($filePathParts[3]) && !empty($filePathParts[3])
+                            !empty($decoration['display_group'])
+                            || !empty($decoration['display_text'])
                         ){
-                            $count++;
-                            $idList[$object->attribute('remote_id')][$attributeIdentifier][] = $filePathParts;
+                            $hasDecoration = true;
+                            break;
                         }
                     }
+
+                    if (!$hasDecoration) {
+                        continue;
+                    }
+                    $count++;
+                    $idList[$object->attribute('remote_id')][$attributeIdentifier] = $decorations;
                 }
             }
         }
@@ -74,7 +77,6 @@ try {
     if ($options['file']){
         file_put_contents( OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_md.json', json_encode($idList));
     }
-    eZSiteData::create('ocm_trasparenza', json_encode($idList))->store();
 
     $script->shutdown();
 } catch (Exception $e) {
