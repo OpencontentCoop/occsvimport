@@ -35,7 +35,7 @@ $options = $script->getOptions(implode('', $configs), '', $optionsHelp);
 $script->initialize();
 $cli = eZCLI::instance();
 try {
-    if (!eZSiteData::fetchByName('ocinstaller_opencity_trasparenza_cct_version') instanceof eZSiteData || $options['force']) {
+    if (!eZSiteData::fetchByName('ocinstaller_opencity_trasparenza_cct_version') instanceof eZSiteData && !$options['force']) {
         throw new Exception('Not needed here...');
     }
 
