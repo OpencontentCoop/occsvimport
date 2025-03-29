@@ -7,7 +7,7 @@ class OCMController extends ezpRestMvcController
         $result = new ezcMvcResult;
         $result->variables['message'] = $exception->getMessage();
 
-        $serverErrorCode = 500;
+        $serverErrorCode = 404;
         $errorType = get_class($exception);
 
         $result->status = new OpenApiErrorResponse(
