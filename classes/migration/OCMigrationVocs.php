@@ -34,7 +34,7 @@ class OCMigrationVocs
 
     private static function getVocabulariesAsList(): array
     {
-        return [
+        return array_unique([
             "Argomenti",
             "Accesso all'informazione",
             "Acqua",
@@ -2121,6 +2121,38 @@ class OCMigrationVocs
             'Russo',
             'Spagnolo',
             'Tedesco',
-        ];
+            'Ambiente',
+            'Gestione rifiuti',
+            'Verde pubblico e decoro urbano',
+            'Anagrafe e stato civile',
+            'CIE e certificati anagrafici',
+            'Servizi cimiteriali',
+            'Servizi elettorali',
+            'Matrimoni e stato civile',
+            'Appalti pubblici',
+            'Catasto e urbanistica',
+            'Cultura e tempo libero',
+            'Teatri, musei, biblioteche',
+            'Gestione manifestazioni ed eventi',
+            'Gestione impianti sportivi e contributi',
+            'Educazione e formazione',
+            'Giustizia e sicurezza pubblica',
+            'Gestione delle emergenze territorio',
+            'Sicurezza pubblica',
+            'Imprese e commercio',
+            'Mobilità e trasporti',
+            'Salute, benessere e assistenza',
+            'Animali',
+            'Servizi sociali e agevolazioni sociali',
+            'Tributi, finanze e contravvenzioni',
+            'Turismo',
+            'Vita lavorativa',
+            'Formazione e lavoro',
+            'Procedure di assunzione',
+            'Trasparenza e partecipazione',
+            'Trasparenza e accesso agli atti',
+            'Partecipazione e patti territoriali',
+            'Relazioni con il pubblico',
+        ]);
     }
 }
