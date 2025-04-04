@@ -322,7 +322,9 @@ class CSVImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     )
                 );
                 if ($searchResult['SearchCount'] > 0) {
-                    $relations[] = $searchResult['SearchResult'][0]->attribute('contentobject_id');
+                    if (isset($searchResult['SearchResult'][0])) {
+                        $relations[] = $searchResult['SearchResult'][0]->attribute('contentobject_id');
+                    }
                 }
             }
         }
