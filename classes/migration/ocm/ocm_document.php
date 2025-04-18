@@ -1202,6 +1202,10 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
             $payload->setData('eng-GB', 'attachments', $this->formatBinary($this->attribute('en_attachments')));
         }
 
+        $payload->setData('eng-GB', 'file', $this->formatBinary($this->attribute('en_file'), false));
+        $payload->setData('eng-GB', 'link', trim($this->attribute('en_link')));
+        $payload->setData('eng-GB', 'attachments', $this->formatBinary($this->attribute('en_attachments')));
+
         $payloads = [self::getImportPriority() => $payload];
         $docs = ocm_document::getIdListByName($this->attribute('reference_doc'));
         if (count($docs) > 0) {
