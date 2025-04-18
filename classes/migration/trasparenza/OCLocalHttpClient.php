@@ -16,13 +16,27 @@ class OCLocalHttpClient extends HttpClient
         parent::__construct($server, $login, $password, $apiEnvironmentPreset, $apiEndPointBase);
         $this->host = parse_url($this->server, PHP_URL_HOST);
         $this->server = 'localhost';
+        $this->setHeader('Host', $this->host);
+    }
+
+    public function getServer()
+    {
+        return $this->host;
     }
 
     public function request($method, $url, $data = null)
     {
-        $headers = [
-            'Host: ' . $this->host
-        ];
+        if (strpos($this->host, $url) !== false) {
+            $url = str_replace($this->host, $this->server, $url);
+            $url = str_replace('https://', 'http://', $url);
+        }
+
+        if (strpos($url, $this->server) === false) {
+            $url = 'http://' . $this->server . $url;
+        }
+
+        $headers = $this->headers;
+
         $url = str_replace(' ', '+', $url);
         if ($this->login && $this->password) {
             $credentials = "{$this->login}:{$this->password}";
