@@ -12,7 +12,7 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    "[action:][only:][update][reset][validate][import_url_alias]",
+    "[action:][only:][update][reset][validate][import_url_alias][skip:]",
     "", [
         'action' => 'Select from:'  . PHP_EOL . ' '  . implode(PHP_EOL . ' ', ['export', 'push', 'pull', 'import']),
         'only' => 'Csv values from:' . PHP_EOL . ' ' . implode(PHP_EOL . ' ', OCMigration::getAvailableClasses()),
@@ -34,6 +34,9 @@ $opt = [
     'validate' => $options['validate'],
     'import_url_alias' => !!$options['import_url_alias'],
 ];
+if ($options['skip']){
+    $opt['skip'] = (int)$options['skip'];
+}
 
 $action = $options['action'];
 $runWithCli = $options['verbose'] ? $cli : null;

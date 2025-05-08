@@ -1230,6 +1230,7 @@ class OCMigrationSpreadsheet
                 if ($cli) {
                     $cli->output(" - $countIndex/$itemCount " . get_class($item) . ' ' . $item->attribute('_id'), false);
                 }
+
                 try {
                     $generatedPayloadCount = $item->storePayload();
                     if ($validate && $generatedPayloadCount > 0) {
@@ -1364,6 +1365,7 @@ class OCMigrationSpreadsheet
                     'c' => 0,
                     'u' => 0,
                     'f' => 0,
+                    's' => (int)$options['skip'],
                 ];
             }
             $count[$className]++;
@@ -1402,10 +1404,19 @@ class OCMigrationSpreadsheet
                     'class' => $className,
                 ];
             } else {
+                $countIndex = $index + 1;
                 if ($cli) {
-                    $countIndex = $index + 1;
                     $cli->output(" - $countIndex/$payloadCount " . $className . ' ' . $payload->id(), false);
                 }
+
+                if (isset($options['skip']) && $countIndex <= $options['skip']) {
+                    if ($cli) {
+                        $cli->output(' skipped');
+                    }
+                    continue;
+                }
+
+
 
                 try {
                     $response = $payload->createOrUpdateContent($onlyCreation);
