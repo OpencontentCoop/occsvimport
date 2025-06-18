@@ -51,7 +51,7 @@ try {
         file_put_contents( 'migration/stats_'. OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_t.json', json_encode($stats));
         file_put_contents( 'migration/locations_'. OpenPABase::getCurrentSiteaccessIdentifier() . '.ocm_t.json', json_encode($locations->getArrayCopy()));
     }
-//    eZSiteData::create('ocm_trasparenza', json_encode([
+//    OCMPayload::eZSiteDataCreate('ocm_trasparenza', json_encode([
 //        'data' => $data->getArrayCopy(),
 //        'stats' => $stats,
 //        'locations' => $locations->getArrayCopy(),

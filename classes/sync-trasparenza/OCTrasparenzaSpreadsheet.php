@@ -138,7 +138,7 @@ EOT;
         $checkAccessSpreadsheet = self::instanceGoogleSheet($spreadsheetId);
         $siteData = eZSiteData::fetchByName('trasparenza_spreadsheet');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('trasparenza_spreadsheet', false);
+            $siteData = OCMPayload::eZSiteDataCreate('trasparenza_spreadsheet', false);
         }
         $siteData->setAttribute('value', $spreadsheetId);
         $siteData->store();
@@ -548,7 +548,7 @@ EOT;
     {
         $siteData = eZSiteData::fetchByName('trasparenza_spreadsheet');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('trasparenza_spreadsheet', false);
+            $siteData = OCMPayload::eZSiteDataCreate('trasparenza_spreadsheet', false);
         }
 
         return $siteData->attribute('value');

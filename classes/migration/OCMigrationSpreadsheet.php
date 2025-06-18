@@ -56,7 +56,7 @@ class OCMigrationSpreadsheet
     {
         $siteData = eZSiteData::fetchByName('migration_spreadsheet');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('migration_spreadsheet', false);
+            $siteData = OCMPayload::eZSiteDataCreate('migration_spreadsheet', false);
         }
 
         return $siteData->attribute('value');
@@ -79,7 +79,7 @@ class OCMigrationSpreadsheet
         $checkAccessSpreadsheet = self::instanceGoogleSheet($spreadsheet);
         $siteData = eZSiteData::fetchByName('migration_spreadsheet');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('migration_spreadsheet', false);
+            $siteData = OCMPayload::eZSiteDataCreate('migration_spreadsheet', false);
         }
         $siteData->setAttribute('value', $spreadsheet);
         $siteData->store();
@@ -102,7 +102,7 @@ class OCMigrationSpreadsheet
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('migration_status', json_encode(self::$nullAction));
+            $siteData = OCMPayload::eZSiteDataCreate('migration_status', json_encode(self::$nullAction));
         }
         $siteData->setAttribute('value', json_encode(self::$nullAction));
         $siteData->store();
@@ -112,7 +112,7 @@ class OCMigrationSpreadsheet
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('migration_status', json_encode(self::$nullAction));
+            $siteData = OCMPayload::eZSiteDataCreate('migration_status', json_encode(self::$nullAction));
         }
 
         $status = json_decode($siteData->attribute('value'), true);
@@ -126,7 +126,7 @@ class OCMigrationSpreadsheet
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('migration_status', false);
+            $siteData = OCMPayload::eZSiteDataCreate('migration_status', false);
         } elseif ($message === null) {
             $current = json_decode($siteData->attribute('value'), true);
             $message = isset($current['message']) ? $current['message'] : '';

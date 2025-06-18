@@ -36,7 +36,7 @@ class OCMGoogleSheetClient extends GoogleSheetClient
     {
         $siteData = eZSiteData::fetchByName('ocm_google_credentials');
         if (!$siteData instanceof eZSiteData) {
-            $siteData = eZSiteData::create('ocm_google_credentials', '');
+            $siteData = OCMPayload::eZSiteDataCreate('ocm_google_credentials', '');
         }
         if (empty($data)) {
             $siteData->remove();
