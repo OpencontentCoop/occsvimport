@@ -212,7 +212,7 @@ class OCMPayload extends eZPersistentObject
         return $this->source;
     }
 
-    public static function eZSiteDataCreate()
+    public static function eZSiteDataCreate($name, $value)
     {
         return new eZSiteData( array(
             'name' => $name,
