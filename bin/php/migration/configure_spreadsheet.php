@@ -22,7 +22,7 @@ $script->initialize();
 $script->setUseDebugAccumulators(true);
 
 $classFilter = $options['only'] ? explode(',', $options['only']) : [];
-$sleep = $options['sleep'] ?? false;
+$sleep = isset($options['sleep']) ? $options['sleep'] : false;
 foreach (OCMigration::getAvailableClasses($classFilter) as $className) {
     $cli->output('Configure ' . $className::getSpreadsheetTitle() . '... ', false);
     try {
@@ -37,7 +37,7 @@ foreach (OCMigration::getAvailableClasses($classFilter) as $className) {
             $cli->output('(sleep ' . (int)$sleep . ')');
             sleep((int)$sleep);
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         $cli->error($e->getMessage());
     }
 }

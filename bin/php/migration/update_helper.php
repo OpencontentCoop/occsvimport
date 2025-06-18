@@ -41,7 +41,7 @@ foreach ($classes as $className) {
     if ($options['verbose']) $cli->output('##########################################################################');
     try {
         OCMigrationSpreadsheet::instance()->updateHelper($className, $master, $options['dry-run'], $options['verbose']);
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         $cli->error($e->getMessage());
         if ($options['verbose']) $cli->error($e->getTraceAsString());
     }

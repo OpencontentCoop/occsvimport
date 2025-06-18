@@ -27,7 +27,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return false;
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         return [
             'name' => false,
@@ -48,26 +48,26 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebFieldMapper(): array
+    protected function getComunwebFieldMapper()
     {
         return [
             'name' => function(Content $content){
-                return $content->data['ita-IT']['name']['content'] ?? '';
+                return isset($content->data['ita-IT']['name']['content']) ? $content->data['ita-IT']['name']['content'] : '';
             },
             'de_name' => function(Content $content){
-                return $content->data['ger-DE']['name']['content'] ?? '';
+                return isset($content->data['ger-DE']['name']['content']) ? $content->data['ger-DE']['name']['content'] : '';
             },
             'en_name' => function(Content $content){
-                return $content->data['eng-GB']['name']['content'] ?? '';
+                return isset($content->data['eng-GB']['name']['content']) ? $content->data['eng-GB']['name']['content'] : '';
             },
             'caption' => function(Content $content){
-                return $content->data['ita-IT']['caption']['content'] ?? '';
+                return isset($content->data['ita-IT']['caption']['content']) ? $content->data['ita-IT']['caption']['content'] : '';
             },
             'de_caption' => function(Content $content){
-                return $content->data['ger-DE']['caption']['content'] ?? '';
+                return isset($content->data['ger-DE']['caption']['content']) ? $content->data['ger-DE']['caption']['content'] : '';
             },
             'en_caption' => function(Content $content){
-                return $content->data['eng-GB']['caption']['content'] ?? '';
+                return isset($content->data['eng-GB']['caption']['content']) ? $content->data['eng-GB']['caption']['content'] : '';
             },
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
@@ -75,22 +75,22 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Immagini';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Nome*";
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "ID*";
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             'ID*' => $this->attribute('_id'),
@@ -114,7 +114,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row['ID*']);
@@ -170,14 +170,14 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [
             'Url al file*'
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Licenza di utilizzo*' => [
@@ -188,7 +188,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
     }
 
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return -1;
     }
@@ -213,7 +213,7 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return $image->id();
     }
 
-    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    public static function getIdListByName($name, $field = 'name',$tryWithPrefix = null)
     {
         $data = [];
         $names = explode(PHP_EOL, $name);
@@ -227,13 +227,13 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
                         $anImageQuery = ocm_image::fetchObjectList(
                             ocm_image::definition(), null, ['_original_url' => ['like', 'http%']], null, ['limit' => 1]
                         );
-                        $anImage = $anImageQuery[0] ?? false;
+                        $anImage = isset($anImageQuery[0]) ? $anImageQuery[0] : false;
                         while ($anImage === false){
                             foreach (OCMigration::getAvailableClasses() as $class){
                                 $anImageQuery = $class::fetchObjectList(
                                     $class::definition(), null, ['_original_url' => ['like', 'http%']], null, ['limit' => 1]
                                 );
-                                $anImage = $anImageQuery[0] ?? false;
+                                $anImage = isset($anImageQuery[0]) ? $anImageQuery[0] : false;
                                 if ($anImage){
                                     break;
                                 }
@@ -284,17 +284,17 @@ class ocm_image extends OCMPersistentObject implements ocm_interface
         return $data;
     }
 
-    public function storePayload(): int
+    public function storePayload()
     {
         return 0;
     }
 
-    public function forceStorePayload(): int
+    public function forceStorePayload()
     {
         return parent::storePayload();
     }
 
-    public static function checkPayloadGeneration(): bool
+    public static function checkPayloadGeneration()
     {
         return false;
     }

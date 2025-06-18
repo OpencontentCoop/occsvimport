@@ -59,7 +59,7 @@ try {
     }
     $importer->walkTree($tree);
     print_r($importer->getStats());
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }

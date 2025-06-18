@@ -47,7 +47,7 @@ class OCMImportHandler extends SQLIImportAbstractHandler implements ISQLIImportH
                     OCMigrationSpreadsheet::instance()->push(null, $this->opt);
                     break;
             }
-        }catch (Throwable $e){
+        }catch (Exception $e){
             OCMigrationSpreadsheet::setCurrentStatus($action, 'error', $this->opt, $e->getMessage());
             $this->progressionNotes = $e->getMessage();
         }

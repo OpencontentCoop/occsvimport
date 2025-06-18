@@ -40,7 +40,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         'en_more_information',
     ];
 
-    protected function getComunwebFieldMapper(): array
+    protected function getComunwebFieldMapper()
     {
         $places = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
             $gps = $firstLocalizedContentData['gps']['content'];
@@ -127,22 +127,22 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         ];
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Organizzazioni private';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo*';
     }
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'legal_name';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo*" => $this->attribute('_id'),
@@ -184,7 +184,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
 
         $item = new static();
@@ -270,19 +270,19 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
-    protected function discoverParentNode(): int
+    protected function discoverParentNode()
     {
         return $this->getNodeIdFromRemoteId('10742bd28e405f0e83ae61223aea80cb');
     }
 
-    public static function getDateValidationHeaders(): array
+    public static function getDateValidationHeaders()
     {
         return [
             "Data di costituzione"
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Punti di contatto' => [
@@ -320,17 +320,17 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
         ];
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome*';
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 100;
     }
 
-    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    public static function getIdListByName($name, $field = 'name',$tryWithPrefix = null)
     {
         return parent::getIdListByName($name, 'legal_name', $tryWithPrefix);
     }

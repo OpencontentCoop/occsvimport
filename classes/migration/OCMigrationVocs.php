@@ -2,7 +2,7 @@
 
 class OCMigrationVocs
 {
-    public static function filterVocs($data): string
+    public static function filterVocs($data)
     {
         if (empty($data)) return '';
 
@@ -13,7 +13,7 @@ class OCMigrationVocs
         return implode(PHP_EOL, $validItems);
     }
 
-    private static function remapList($source): array
+    private static function remapList($source)
     {
         $map = [
             "Consigliere comunale" => "Consigliere",
@@ -26,13 +26,13 @@ class OCMigrationVocs
         ];
 
         $source = array_map(function ($item) use ($map){
-            return $map[$item] ?? $item;
+            return isset($map[$item]) ? $map[$item] : $item;
         }, $source);
 
         return $source;
     }
 
-    private static function getVocabulariesAsList(): array
+    private static function getVocabulariesAsList()
     {
         return array_unique([
             "Argomenti",

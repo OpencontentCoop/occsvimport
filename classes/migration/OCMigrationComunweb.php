@@ -131,7 +131,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
      * @param eZContentObject|eZContentObjectTreeNode $nodeOrObject
      * @return ?string
      */
-    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file', $parentAsGroup = null): ?string
+    public static function getFileAttributeUrl($nodeOrObject, $attributeIdentifier = 'file', $parentAsGroup = null)
     {
         $dataMap = $nodeOrObject->dataMap();
         if (isset($dataMap[$attributeIdentifier]) && $dataMap[$attributeIdentifier]->hasContent()){
@@ -161,7 +161,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
      * @params bool $onlyChild
      * @return eZContentObjectTreeNode[]
      */
-    public static function getAttachmentsByNode($node, $onlyChild = true): array
+    public static function getAttachmentsByNode($node, $onlyChild = true)
     {
         if (!$node instanceof eZContentObjectTreeNode){
             return [];
@@ -190,7 +190,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
         eZContentObjectTreeNode $node,
         ocm_interface $item,
         array $options = []
-    ): ocm_interface {
+    ),  {
         return $item->fromComunwebNode($node, $options);
     }
 }

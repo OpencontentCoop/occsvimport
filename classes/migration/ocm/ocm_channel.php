@@ -22,41 +22,41 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         'en_channel_url',
     ];
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Canali di erogazione';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo canale*';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Funzione del canale*';
     }
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'object';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $costs = json_decode($this->attribute('has_cost'), true);
         $url = $this->attribute('channel_url');
-        [$link, $name] = explode('|', $url);
+        list($link, $name) = explode('|', $url);
         return [
             "Identificativo canale*" => $this->attribute('_id'),
             "Pagina contenitore" => $this->attribute('_parent_name'),
@@ -90,7 +90,7 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo canale*"]);
@@ -101,8 +101,8 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
         $item->setAttribute('description', $row["Descrizione"]);
         $item->setAttribute('channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta del canale*"]);
-        $item->setAttribute('de_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in tedesco"] ?? '');
-        $item->setAttribute('en_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in inglese"] ?? '');
+        $item->setAttribute('de_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in tedesco"]);
+        $item->setAttribute('en_channel_url', $row["Valore del canale (url)*"].'|'.$row["Etichetta in inglese"]);
         $item->setAttribute('image', $row["Immagini"]);
         $item->setAttribute('files', $row["Files"]);
 
@@ -118,9 +118,9 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['ita-IT'][] = [
-                    'characteristic' => $characteristic['characteristic'] ?? '',
-                    'description' => $description['description'] ?? '',
-                    'value' => $value['value'] ?? '',
+                    'characteristic' => isset($characteristic['characteristic']) ? $characteristic['characteristic'] : '',
+                    'description' => isset($description['description']) ? $description['description'] : '',
+                    'value' => isset($value['value']) ? $value['value'] : '',
                     'currency' => $c,
                 ];
             }
@@ -132,9 +132,9 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['ger-DE'][] = [
-                    'characteristic' => $characteristic['characteristic'] ?? '',
-                    'description' => $description['description'] ?? '',
-                    'value' => $value['value'] ?? '',
+                    'characteristic' => isset($characteristic['characteristic']) ? $characteristic['characteristic'] : '',
+                    'description' => isset($description['description']) ? $description['description'] : '',
+                    'value' => isset($value['value']) ? $value['value'] : '',
                     'currency' => $c,
                 ];
             }
@@ -146,9 +146,9 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['eng-GB'][] = [
-                    'characteristic' => $characteristic['characteristic'] ?? '',
-                    'description' => $description['description'] ?? '',
-                    'value' => $value['value'] ?? '',
+                    'characteristic' => isset($characteristic['characteristic']) ? $characteristic['characteristic'] : '',
+                    'description' => isset($description['description']) ? $description['description'] : '',
+                    'value' => isset($value['value']) ? $value['value'] : '',
                     'currency' => $c,
                 ];
             }
@@ -201,12 +201,12 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         return $payload;
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 200;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Tipo di canale di erogazione' => [
@@ -216,7 +216,7 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
@@ -224,7 +224,7 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [
             'Valore del canale (url)*',

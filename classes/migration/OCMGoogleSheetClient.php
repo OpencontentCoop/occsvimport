@@ -22,7 +22,7 @@ class OCMGoogleSheetClient extends GoogleSheetClient
         $this->credentialData = $credentialData;
     }
 
-    public static function getGoogleCredentials(): ?array
+    public static function getGoogleCredentials()
     {
         $siteData = eZSiteData::fetchByName('ocm_google_credentials');
         if ($siteData instanceof eZSiteData) {
@@ -52,7 +52,7 @@ class OCMGoogleSheetClient extends GoogleSheetClient
         }
     }
 
-    private static function validateGoogleCredentials($data): bool
+    private static function validateGoogleCredentials($data)
     {
         if (is_string($data)) {
             $data = json_decode($data, true);

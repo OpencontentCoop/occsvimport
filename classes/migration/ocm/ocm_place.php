@@ -34,17 +34,17 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         'en_description',
     ];
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Luoghi';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificatore luogo*";
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         if ($node->classIdentifier() === 'servizio_sul_territorio') {
             return $this->fromNode($node, $this->getComunwebServizioSulTerritorioMapper(), $options);
@@ -55,26 +55,28 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, [], $options);
     }
 
-    protected function getComunwebServizioSulTerritorioMapper(): array
+    protected function getComunwebServizioSulTerritorioMapper()
     {
         return [
             'name' => function (Content $content) {
-                return trim($content->data['ita-IT']['titolo']['content']) ?? '';
+                return isset($content->data['ita-IT']['titolo']['content']) ? trim(
+                    $content->data['ita-IT']['titolo']['content']
+                ) : '';
             },
             'de_name' => function (Content $content) {
-                return $content->data['ger-DE']['titolo']['content'] ?? '';
+                return isset($content->data['ger-DE']['titolo']['content']) ? $content->data['ger-DE']['titolo']['content'] : '';
             },
             'caption' => function (Content $content) {
-                return $content->data['ita-IT']['abstract']['content'] ?? '';
+                return isset($content->data['ita-IT']['abstract']['content']) ? $content->data['ita-IT']['abstract']['content'] : '';
             },
             'de_caption' => function (Content $content) {
-                return $content->data['ger-DE']['abstract']['content'] ?? '';
+                return isset($content->data['ger-DE']['abstract']['content']) ? $content->data['ger-DE']['abstract']['content'] : '';
             },
             'en_name' => function (Content $content) {
-                return $content->data['eng-GB']['titolo']['content'] ?? '';
+                return isset($content->data['eng-GB']['titolo']['content']) ? $content->data['eng-GB']['titolo']['content'] : '';
             },
             'en_caption' => function (Content $content) {
-                return $content->data['eng-GB']['abstract']['content'] ?? '';
+                return isset($content->data['eng-GB']['abstract']['content']) ? $content->data['eng-GB']['abstract']['content'] : '';
             },
             'description' => OCMigration::getMapperHelper('descrizione'),
             'image___name' => OCMigration::getMapperHelper('image/name'),
@@ -207,26 +209,28 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebLuogoMapper(): array
+    protected function getComunwebLuogoMapper()
     {
         return [
             'name' => function (Content $content) {
-                return trim($content->data['ita-IT']['title']['content']) ?? '';
+                return isset($content->data['ita-IT']['title']['content']) ? trim(
+                    $content->data['ita-IT']['title']['content']
+                ) : '';
             },
             'de_name' => function (Content $content) {
-                return $content->data['ger-DE']['title']['content'] ?? '';
+                return isset($content->data['ger-DE']['title']['content']) ? $content->data['ger-DE']['title']['content'] : '';
             },
             'caption' => function (Content $content) {
-                return $content->data['ita-IT']['abstract']['content'] ?? '';
+                return isset($content->data['ita-IT']['abstract']['content']) ? $content->data['ita-IT']['abstract']['content'] : '';
             },
             'de_caption' => function (Content $content) {
-                return $content->data['ger-DE']['abstract']['content'] ?? '';
+                return isset($content->data['ger-DE']['abstract']['content']) ? $content->data['ger-DE']['abstract']['content'] : '';
             },
             'en_name' => function (Content $content) {
-                return $content->data['eng-GB']['titolo']['content'] ?? '';
+                return isset($content->data['eng-GB']['titolo']['content']) ? $content->data['eng-GB']['titolo']['content'] : '';
             },
             'en_caption' => function (Content $content) {
-                return $content->data['eng-GB']['abstract']['content'] ?? '';
+                return isset($content->data['eng-GB']['abstract']['content']) ? $content->data['eng-GB']['abstract']['content'] : '';
             },
             'image___name' => OCMigration::getMapperHelper('image/name'),
             'image___url' => OCMigration::getMapperHelper('image/url'),
@@ -292,7 +296,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $address = json_decode($this->attribute('has_address'), true);
         $deAddress = json_decode($this->attribute('de_has_address'), true);
@@ -332,10 +336,10 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $address = '';
-        [$latitude, $longitude] = explode(' ', $row["Latitudine e longitudine*"]);
+        list($latitude, $longitude) = explode(' ', $row["Latitudine e longitudine*"]);
         if (($latitude + $longitude) > 0) {
             $address = json_encode([
                 'address' => $row['Indirizzo*'],
@@ -436,12 +440,12 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         return $payloads;
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome del luogo*';
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             'Descrizione breve*',
@@ -451,14 +455,14 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Punti di contatto*' => [
@@ -488,7 +492,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 20;
     }

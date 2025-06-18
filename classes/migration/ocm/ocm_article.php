@@ -32,27 +32,27 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         'related_service',
     ];
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'title';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Avvisi - Notizie - Comunicati';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Titolo della notizia*";
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo dell\'articolo*';
     }
 
-    protected function getComunwebFieldMapper(): array
+    protected function getComunwebFieldMapper()
     {
         $attachments = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
             $data = [];
@@ -146,13 +146,13 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $options['remove_ezxml_embed'] = true;
         return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo dell'articolo*" => $this->attribute('_id'),
@@ -186,7 +186,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo dell'articolo*"]);
@@ -260,7 +260,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
-    protected function discoverParentNode(): int
+    protected function discoverParentNode()
     {
         if (in_array('Avviso', $this->formatTags($this->attribute('content_type')))){
             return $this->getNodeIdFromRemoteId('9a1756e11164d0d550ee950657154db8');
@@ -273,7 +273,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         return $this->getNodeIdFromRemoteId('ea708fa69006941b4dc235a348f1431d');
     }
 
-    public static function getDateValidationHeaders(): array
+    public static function getDateValidationHeaders()
     {
         return [
             "Data della notizia*",
@@ -281,7 +281,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
@@ -289,7 +289,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Tipo di notizia*" => [
@@ -323,7 +323,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
@@ -331,7 +331,7 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 110;
     }

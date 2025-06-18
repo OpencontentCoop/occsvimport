@@ -4,12 +4,12 @@ use Opencontent\Opendata\Api\Values\Content;
 
 class ocm_online_contact_point extends OCMPersistentObject implements ocm_interface
 {
-    public static function canPush(): bool
+    public static function canPush()
     {
         return true;
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
@@ -25,46 +25,46 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         'en_note',
     ];
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         return [
             'name' => function(Content $content){
-                return $content->data['ita-IT']['name']['content'] ?? '';
+                return isset($content->data['ita-IT']['name']['content']) ? $content->data['ita-IT']['name']['content'] : '';
             },
             'de_name' => function(Content $content){
-                return $content->data['ger-DE']['name']['content'] ?? '';
+                return isset($content->data['ger-DE']['name']['content']) ? $content->data['ger-DE']['name']['content'] : '';
             },
             'en_name' => function(Content $content){
-                return $content->data['eng-GB']['name']['content'] ?? '';
+                return isset($content->data['eng-GB']['name']['content']) ? $content->data['eng-GB']['name']['content'] : '';
             },
             'contact' => OCMigration::getMapperHelper('contact'),
             'phone_availability_time' => OCMigration::getMapperHelper('phone_availability_time'),
             'note' => false,
             'de_note' => function(Content $content){
-                return $content->data['ger-DE']['note']['content'] ?? '';
+                return isset($content->data['ger-DE']['note']['content']) ? $content->data['ger-DE']['note']['content'] : '';
             },
             'en_note' => function(Content $content){
-                return $content->data['eng-GB']['note']['content'] ?? '';
+                return isset($content->data['eng-GB']['note']['content']) ? $content->data['eng-GB']['note']['content'] : '';
             },
         ];
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Punti di contatto';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificatore punto di contatto*";
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Titolo punto di contatto*";
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $contacts = json_decode($this->attribute('contact'), true);
         $data = [
@@ -79,11 +79,11 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
             $indexLabel = $x + 1;
             $indexLabelRequired = $indexLabel;
             if ($indexLabel === 1) $indexLabelRequired = "1*";
-            $data['Tipologia di contatto ' . $indexLabelRequired] = $contacts['ita-IT'][$x]['type'] ?? '';
+            $data['Tipologia di contatto ' . $indexLabelRequired] = isset($contacts['ita-IT'][$x]['type']) ? $contacts['ita-IT'][$x]['type'] : '';
             $data['Contatto ' . $indexLabelRequired] = isset($contacts['ita-IT'][$x]['value']) ? $this->formatContentValue($contacts['ita-IT'][$x]['value']) : '';
-            $data['Tipo di contatto ' . $indexLabel] = $contacts['ita-IT'][$x]['contact'] ?? '';
-            $data['Kontakt ' . $indexLabelRequired . ' [de]'] = $contacts['ger-DE'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
-            $data['Contact ' . $indexLabelRequired . ' [en]'] = $contacts['eng_GB'][$x]['value'] ?? $data['Contatto ' . $indexLabelRequired];
+            $data['Tipo di contatto ' . $indexLabel] = isset($contacts['ita-IT'][$x]['contact']) ? $contacts['ita-IT'][$x]['contact'] : '';
+            $data['Kontakt ' . $indexLabelRequired . ' [de]'] = isset($contacts['ger-DE'][$x]['value']) ? $contacts['ger-DE'][$x]['value'] : $data['Contatto ' . $indexLabelRequired];
+            $data['Contact ' . $indexLabelRequired . ' [en]'] = isset($contacts['eng_GB'][$x]['value']) ? $contacts['eng_GB'][$x]['value'] : $data['Contatto ' . $indexLabelRequired];
         }
 
         $data['Note'] = $this->attribute('note');
@@ -96,7 +96,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         return $data;
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
@@ -170,15 +170,15 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         }
         $item->setAttribute('contact', json_encode($contacts));
 
-        $item->setAttribute('note', $row['Note'] ?? '');
-        $item->setAttribute('de_note', $row['Hinweise (de)'] ?? '');
-        $item->setAttribute('en_note', $row['Notes (de)'] ?? '');
+        $item->setAttribute('note', isset($row['Note']) ? $row['Note'] : '');
+        $item->setAttribute('de_note', isset($row['Hinweise (de)']) ? $row['Hinweise (de)'] : '');
+        $item->setAttribute('en_note', isset($row['Notes (de)']) ? $row['Notes (de)'] : '');
 
         self::fillNodeReferenceFromSpreadsheet($row, $item);
         return $item;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         $contactType = [
             'strict' => true,
@@ -206,7 +206,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [];
     }
@@ -225,7 +225,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         return $value;
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 10;
     }
@@ -261,7 +261,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
         return $payload;
     }
 
-    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    public static function getIdListByName($name, $field = 'name',$tryWithPrefix = null)
     {
         return parent::getIdListByName($name, $field, $tryWithPrefix);
     }

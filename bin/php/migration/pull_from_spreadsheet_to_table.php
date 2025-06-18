@@ -32,7 +32,7 @@ if ($options['truncate']){
 
 try {
     $executionInfo = OCMigrationSpreadsheet::instance()->pull($options['verbose'] ? $cli: null, $only);
-}catch (Throwable $e){
+}catch (Exception $e){
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }

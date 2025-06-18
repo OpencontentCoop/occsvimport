@@ -17,32 +17,32 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         'topics',
     ];
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Banner';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Nome";
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo del banner*';
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['image___name'] = OCMigration::getMapperHelper('image/name');
@@ -51,7 +51,7 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         return $mapper;
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo del banner*" => $this->attribute('_id'),
@@ -72,7 +72,7 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del banner*"]);
@@ -120,14 +120,14 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [
             'Url file immagine*',
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Argomenti" => [
@@ -141,7 +141,7 @@ class ocm_banner extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 200;
     }

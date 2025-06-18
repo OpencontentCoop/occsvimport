@@ -10,7 +10,7 @@ $http = eZHTTPTool::instance();
 
 $tpl->setVariable('error_spreadsheet', false);
 
-function jsonEncodeError(Throwable $e)
+function jsonEncodeError(Exception $e)
 {
     return json_encode([
         'status' => 'error',

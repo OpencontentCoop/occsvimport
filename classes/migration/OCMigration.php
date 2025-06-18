@@ -15,7 +15,7 @@ class OCMigration extends eZPersistentObject
      * @return OCMigrationComunweb|OCMigrationOpencity
      * @throws Exception
      */
-    final public static function factory(string $context = null)
+    final public static function factory($context = null)
     {
         if (!$context) {
             !$context = self::discoverContext();
@@ -63,15 +63,15 @@ class OCMigration extends eZPersistentObject
      * @return eZContentObjectTreeNode[]
      */
     private function getNodesByClassIdentifierList(
-        string &$exclusionMessage,
-        array $classIdentifiers,
-        array $escludePathList = [],
-        array $escludeRemoteIdPrefix = [],
-        array $restrictSections = [],
-        bool $groupByName = false,
-        int $publishedAfter = null,
-        int $publishedBeforeOrAt = null
-    ): array {
+        &$exclusionMessage,
+        $classIdentifiers,
+        $escludePathList = [],
+        $escludeRemoteIdPrefix = [],
+        $restrictSections = [],
+        $groupByName = false,
+        $publishedAfter = null,
+        $publishedBeforeOrAt = null
+    ) {
         $this->debug('Fetching ' . implode(', ', $classIdentifiers) . $exclusionMessage . ' ... ');
         $exclusionMessage .= ' *recupero dei contenuti di tipo: ' . implode(', ', $classIdentifiers);
 
@@ -185,7 +185,7 @@ class OCMigration extends eZPersistentObject
         return $nodes;
     }
 
-    final public static function isValidClass($class): bool
+    final public static function isValidClass($class)
     {
         return strpos($class, 'ocm_') !== false && in_array('ocm_interface', class_implements($class));
     }
@@ -327,18 +327,18 @@ class OCMigration extends eZPersistentObject
         }
     }
 
-    public static function getMapperHelper(string $field): callable
+    public static function getMapperHelper($field)
     {
         switch ($field) {
             case 'has_logo___name':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['has_logo']['content'] ?? false;
+                    $contentValue = isset($firstLocalizedContentData['has_logo']['content']) ? $firstLocalizedContentData['has_logo']['content'] : false;
                     return $contentValue ? $contentValue['filename'] : '';
                 };
 
             case 'has_logo___url':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['has_logo']['content'] ?? false;
+                    $contentValue = isset($firstLocalizedContentData['has_logo']['content']) ? $firstLocalizedContentData['has_logo']['content'] : false;
                     $url = $contentValue ? $contentValue['url'] : '';
                     eZURI::transformURI($url, false, 'full');
                     $url = str_replace('http://', 'https://', $url);
@@ -347,13 +347,13 @@ class OCMigration extends eZPersistentObject
 
             case 'image/name':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['image']['content'] ?? false;
+                    $contentValue = isset($firstLocalizedContentData['image']['content']) ? $firstLocalizedContentData['image']['content'] : false;
                     return $contentValue ? $contentValue['filename'] : '';
                 };
 
             case 'image/url':
                 return function (Content $content, $firstLocalizedContentData) {
-                    $contentValue = $firstLocalizedContentData['image']['content'] ?? false;
+                    $contentValue = isset($firstLocalizedContentData['image']['content']) ? $firstLocalizedContentData['image']['content'] : false;
                     $url = $contentValue ? $contentValue['url'] : '';
                     eZURI::transformURI($url, false, 'full');
                     $url = str_replace('http://', 'https://', $url);
@@ -364,7 +364,7 @@ class OCMigration extends eZPersistentObject
 
                 $subField = false;
                 if (strpos($field, '/') !== false) {
-                    [$field, $subField] = explode('/', $field);
+                    list($field, $subField) = explode('/', $field);
                 }
 
                 return function (
@@ -375,7 +375,7 @@ class OCMigration extends eZPersistentObject
                 ) use ($field, $subField) {
                     $localizedFields = [];
                     foreach ($content->data as $locale => $data) {
-                        $localizedFields[$locale] = $data[$field]['content'] ?? [];
+                        $localizedFields[$locale] = isset($data[$field]['content']) ? $data[$field]['content'] : [];
                     }
                     if (!isset($firstLocalizedContentData[$field])) {
                         return '';
@@ -395,7 +395,7 @@ class OCMigration extends eZPersistentObject
                             $data = [];
                             foreach ($contentValue as $metadata) {
                                 if ($field === 'topics') {
-                                    $data[] = $metadata['id'] ?? $metadata['metadata']['id'];
+                                    $data[] = isset($metadata['id']) ? $metadata['id'] : $metadata['metadata']['id'];
                                 } else {
                                     if ($metadata['classIdentifier'] === 'shared_link'){
                                         $sharedLink = eZContentObject::fetchByRemoteID($metadata['remoteId']);
@@ -536,7 +536,7 @@ class OCMigration extends eZPersistentObject
         }
     }
 
-    private static function getTopicsNameList($idList): array
+    private static function getTopicsNameList($idList)
     {
         $data = [];
         $objects = OpenPABase::fetchObjects($idList);
@@ -569,7 +569,7 @@ class OCMigration extends eZPersistentObject
         return count($rows) ? $rows[0]['remote_id'] : $name;
     }
 
-    public static function getTopicsIdListFromString($topicsStrings): array
+    public static function getTopicsIdListFromString($topicsStrings)
     {
         $data = [];
         $topicsNames = explode(PHP_EOL, $topicsStrings);
@@ -631,7 +631,7 @@ class OCMigration extends eZPersistentObject
         return $names;
     }
 
-    public static function isEmptyArray(array $array): bool
+    public static function isEmptyArray(array $array)
     {
         if (empty($array)){
             return true;
@@ -648,15 +648,15 @@ class OCMigration extends eZPersistentObject
     }
 
     protected function fillByType(
-        array $namesFilter, // esegui solo sulle ocm_ selezionate
-        bool $isUpdate, // non toccare contenuti già creati
-        string $ocmClass, // ocm class da elaborare
-        array $classIdentifiers, // filtro sulle classi
-        array $escludePathList = [], // escludi pat_string
-        array $escludeRemoteIdPrefix = [], // escludi in base a remote_id
-        array $restrictSections = [], // solo per le sezioni selezionate,
-        bool $groupByName = false,
-        int $restrictToLastYears = 0
+        $namesFilter, // esegui solo sulle ocm_ selezionate
+        $isUpdate, // non toccare contenuti già creati
+        $ocmClass, // ocm class da elaborare
+        $classIdentifiers, // filtro sulle classi
+        $escludePathList = [], // escludi pat_string
+        $escludeRemoteIdPrefix = [], // escludi in base a remote_id
+        $restrictSections = [], // solo per le sezioni selezionate,
+        $groupByName = false,
+        $restrictToLastYears = 0
     ) {
         if (empty($namesFilter) || in_array($ocmClass, $namesFilter)) {
             $publishedAfter = null;
@@ -721,10 +721,10 @@ class OCMigration extends eZPersistentObject
     }
 
     public function createFromNode(
-        eZContentObjectTreeNode $node,
-        ocm_interface $item,
-        array $options = []
-    ): ocm_interface {
+        $node,
+        $item,
+        $options = []
+    )  {
         throw new Exception('Implement ' . __METHOD__);
     }
 

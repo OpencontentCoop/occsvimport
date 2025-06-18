@@ -2,12 +2,12 @@
 
 class ocm_public_service extends OCMPersistentObject implements ocm_interface
 {
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
@@ -90,17 +90,17 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         'en_has_processing_time_text',
     ];
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Servizi';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo del servizio*';
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['has_spatial_coverage'] = function ($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
@@ -144,7 +144,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         return $mapper;
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $costs = json_decode($this->attribute('has_cost'), true);
         $links = json_decode($this->attribute('link'), true);
@@ -251,7 +251,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del servizio*"]);
@@ -280,7 +280,9 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('relation_service', $row["Servizi correlati/Altri servizi"]);
         $item->setAttribute('requires_service', $row["Servizi richiesti"]);
         $item->setAttribute('output_notes', $row["Procedure collegate all'esito"]);
-        $item->setAttribute('has_channel', $row["Accedi al servizio (canale digitale)*"] ?? $row["Accedi al servizio (canale digitale)"]);
+        $item->setAttribute('has_channel',
+            isset($row["Accedi al servizio (canale digitale)*"]) ? $row["Accedi al servizio (canale digitale)*"] : $row["Accedi al servizio (canale digitale)"]
+        );
         $item->setAttribute('is_physically_available_at_how_to', $row["Istruzioni per accedere al servizio (canale fisico)"]);
         $item->setAttribute('is_physically_available_at', $row["Accedi al servizio (Canale fisico)*"]);
         $item->setAttribute('conditions', $row["Vincoli"]);
@@ -348,9 +350,9 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['ita-IT'][] = [
-                    'characteristic' => $characteristic[$index] ?? '',
-                    'description' => $description[$index] ?? '',
-                    'value' => $value[$index] ?? '',
+                    'characteristic' => isset($characteristic[$index]) ? $characteristic[$index] : '',
+                    'description' => isset($description[$index]) ? $description[$index] : '',
+                    'value' => isset($value[$index]) ? $value[$index] : '',
                     'currency' => $c,
                 ];
             }
@@ -362,9 +364,9 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['ger-DE'][] = [
-                    'characteristic' => $characteristic[$index] ?? '',
-                    'description' => $description[$index] ?? '',
-                    'value' => $value[$index] ?? '',
+                    'characteristic' => isset($characteristic[$index]) ? $characteristic[$index] : '',
+                    'description' => isset($description[$index]) ? $description[$index] : '',
+                    'value' => isset($value[$index]) ? $value[$index] : '',
                     'currency' => $c,
                 ];
             }
@@ -376,9 +378,9 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($currency)){
             foreach ($currency as $index => $c){
                 $costs['eng-GB'][] = [
-                    'characteristic' => $characteristic[$index] ?? '',
-                    'description' => $description[$index] ?? '',
-                    'value' => $value[$index] ?? '',
+                    'characteristic' => isset($characteristic[$index]) ? $characteristic[$index] : '',
+                    'description' => isset($description[$index]) ? $description[$index] : '',
+                    'value' => isset($value[$index]) ? $value[$index] : '',
                     'currency' => $c,
                 ];
             }
@@ -395,8 +397,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($link)) {
             foreach ($link as $i => $l) {
                 $links['ita-IT'][] = [
-                    'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'nome_sito' => isset($name[$i]) ? $name[$i] : '',
+                    'link' => isset($l) ? $l : '',
                 ];
             }
         }
@@ -405,8 +407,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($link)) {
             foreach ($link as $i => $l) {
                 $links['ger-DE'][] = [
-                    'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'nome_sito' => isset($name[$i]) ? $name[$i] : '',
+                    'link' => isset($l) ? $l : '',
                 ];
             }
         }
@@ -415,8 +417,8 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         if (!OCMigration::isEmptyArray($link)) {
             foreach ($link as $i => $l) {
                 $links['eng-GB'][] = [
-                    'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'nome_sito' => isset($name[$i]) ? $name[$i] : '',
+                    'link' => isset($l) ? $l : '',
                 ];
             }
         }
@@ -426,7 +428,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Titolo del servizio*';
     }
@@ -534,12 +536,12 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         return $payloads;
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 220;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Stato del servizio*' => [
@@ -634,14 +636,14 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve"
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             "Descrizione breve",
@@ -656,7 +658,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [];
     }

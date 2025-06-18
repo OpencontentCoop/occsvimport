@@ -67,7 +67,7 @@ class OCMPayload extends eZPersistentObject
         ];
     }
 
-    public static function fetch($id): OCMPayload
+    public static function fetch($id)
     {
         $item = eZPersistentObject::fetchObject(self::definition(), null, ['id' => $id]);
         if (!$item instanceof OCMPayload) {
@@ -77,7 +77,7 @@ class OCMPayload extends eZPersistentObject
         return $item;
     }
 
-    static function convertArrayToUtf8(array $array): array
+    static function convertArrayToUtf8(array $array)
     {
         $convertedArray = [];
         foreach ($array as $key => $value) {
@@ -98,7 +98,7 @@ class OCMPayload extends eZPersistentObject
         return $convertedArray;
     }
 
-    public static function create(string $id, string $type, int $priority, array $payload): OCMPayload
+    public static function create($id,$type, $priority, array $payload)
     {
         $encodedPayload = json_encode($payload);
         if (empty($encodedPayload)) {
@@ -156,7 +156,7 @@ class OCMPayload extends eZPersistentObject
             $this->store();
 
             return $result['method'];
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $this->setAttribute('error', $e->getMessage());
             $this->store();
 
@@ -189,14 +189,14 @@ class OCMPayload extends eZPersistentObject
 
             $this->setAttribute('error', '');
             $this->store();
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $this->setAttribute('error', $e->getMessage());
             $this->store();
             throw $e;
         }
     }
 
-    public function getSourceItem(): ?OCMPersistentObject
+    public function getSourceItem()
     {
         if ($this->source === false){
             $this->source = null;

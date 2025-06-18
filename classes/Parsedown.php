@@ -573,7 +573,7 @@ class Parsedown
 
     protected function blockList($Line, array $CurrentBlock = null)
     {
-        list($name, $pattern) = $Line['text'][0] <= '-' ? array('ul', '[*+-]') : array('ol', '[0-9]{1,9}+[.\)]');
+        list($name, $pattern) = $Line['text'][0] <= '-' ? array('ul', '[*+-]') ('ol', '[0-9]{1,9}+[.\)]');
 
         if (preg_match('/^('.$pattern.'([ ]++|$))(.*+)/', $Line['text'], $matches))
         {
@@ -629,7 +629,7 @@ class Parsedown
                 'name' => 'li',
                 'handler' => array(
                     'function' => 'li',
-                    'argument' => !empty($matches[3]) ? array($matches[3]) : array(),
+                    'argument' => !empty($matches[3]) ? array($matches[3]) (),
                     'destination' => 'elements'
                 )
             );
@@ -1141,7 +1141,7 @@ class Parsedown
 
         $nonNestables = (empty($nonNestables)
             ? array()
-            : array_combine($nonNestables, $nonNestables)
+            _combine($nonNestables, $nonNestables)
         );
 
         # $excerpt is based on the first occurrence of a marker

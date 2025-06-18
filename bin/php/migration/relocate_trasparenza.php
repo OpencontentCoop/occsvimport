@@ -59,7 +59,7 @@ try {
             $cli->error(' - object not found');
         }
     }
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }

@@ -28,7 +28,7 @@ class OCTrasparenzaSpreadsheet extends eZPersistentObject
         return json_decode($this->attribute('check_data'), true);
     }
 
-    protected static function getFieldsDefinition(): array
+    protected static function getFieldsDefinition()
     {
         $fields = [];
         foreach (self::getDataFields() as $identifier => $name) {
@@ -119,7 +119,7 @@ EOT;
 
     private static $googleSheetClient;
 
-    public static function instanceGoogleSheetClient(): GoogleSheetClient
+    public static function instanceGoogleSheetClient()
     {
         if (self::$googleSheetClient === null) {
             self::$googleSheetClient = new OCMGoogleSheetClient();
@@ -128,7 +128,7 @@ EOT;
         return self::$googleSheetClient;
     }
 
-    private static function instanceGoogleSheet($id): GoogleSheet
+    private static function instanceGoogleSheet($id)
     {
         return new GoogleSheet($id, self::instanceGoogleSheetClient());
     }
@@ -174,14 +174,14 @@ EOT;
                     $check[$identifier] = 'danger';
                 }
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $check['error'] = $e->getMessage();
         }
 
         return json_encode($check);
     }
 
-    public static function diff(string $remoteId)
+    public static function diff($remoteId)
     {
         $item = self::fetchByRemoteId($remoteId);
         return $item ? $item->getDiff() : [
@@ -225,7 +225,7 @@ EOT;
         return $item;
     }
 
-    public static function fetchByRemoteId(string $remoteId)
+    public static function fetchByRemoteId($remoteId)
     {
         return OCTrasparenzaSpreadsheet::fetchObject(
             OCTrasparenzaSpreadsheet::definition(),
@@ -255,7 +255,7 @@ EOT;
         }
     }
 
-    public static function fetchObjectsWithCheck(): array
+    public static function fetchObjectsWithCheck()
     {
         $cond = [
             'check_data::text' => ['<>', '[]'],
@@ -322,7 +322,7 @@ EOT;
         }
     }
 
-    public function unserializeItem(array $data, $asHtml = false): array
+    public function unserializeItem(array $data, $asHtml = false)
     {
         $converters = self::getDataConverters();
         $attributes = [];
@@ -357,14 +357,14 @@ EOT;
                     $this->setAttribute('check_data', self::check($this->attribute('remote_id'), $this->toArray()));
                 }
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $this->setAttribute('check_data', json_encode(['error' => $e->getMessage()]));
         }
         $this->setAttribute('update_at', time());
         $this->store();
     }
 
-    private static function convertToMarkdown(?string $html): string
+    private static function convertToMarkdown($html)
     {
         if (!$html) {
             return '';
@@ -382,7 +382,7 @@ EOT;
         }
     }
 
-    public static function getDataFields(): array
+    public static function getDataFields()
     {
         if (self::$dataFields === null) {
             $class = eZContentClass::fetchByIdentifier('pagina_trasparenza');
@@ -424,7 +424,7 @@ EOT;
         return self::$vocabularies;
     }
 
-    private static function getClassAttribute(string $id): ?eZContentClassAttribute
+    private static function getClassAttribute($id)
     {
         $class = eZContentClass::fetchByIdentifier('pagina_trasparenza');
         foreach ($class->dataMap() as $identifier => $classAttribute) {
@@ -474,7 +474,7 @@ EOT;
         self::$appendToVoc[$classAttribute->attribute('id') . '-' . $optionValue] = true;
     }
 
-    public static function getDataConverters(): array
+    public static function getDataConverters()
     {
         if (self::$dataConverters === null) {
             $class = eZContentClass::fetchByIdentifier('pagina_trasparenza');

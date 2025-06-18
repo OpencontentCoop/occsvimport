@@ -33,7 +33,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         'en_notes',
     ];
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $this->fromNode($node, $this->getOpencityFieldMapper(), $options);
 
@@ -42,7 +42,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
             $dataMap = $node->dataMap();
             if (isset($dataMap['person']) && $dataMap['person']->hasContent()){
                 $people = $dataMap['person']->content();
-                $person = $people['relation_list'][0] ?? false;
+                $person = isset($people['relation_list'][0]) ? $people['relation_list'][0] : false;
                 if ($person) {
                     $type = $person['contentclass_identifier'] === 'politico' ? 'Politico' : 'Amministrativo';
                 }else{
@@ -55,7 +55,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         return $this->expandRole($this);
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $role = false;
         if ($node->classIdentifier() === 'dipendente'){
@@ -73,12 +73,12 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, [], $options);
     }
 
-    private function expandRole(ocm_time_indexed_role $role): ocm_time_indexed_role
+    private function expandRole(ocm_time_indexed_role $role)
     {
         $forEntities = explode(PHP_EOL, $role->attribute('for_entity'));
         sort($forEntities);
         if (count($forEntities) > 1){
-            $isUpdate = $options['is_update'] ?? false;
+            $isUpdate = isset($options['is_update']) ? $options['is_update'] : false;
             $first = array_shift($forEntities);
             $role->setAttribute('for_entity', $first);
             foreach ($forEntities as $index => $forEntity){
@@ -95,14 +95,14 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         return $role;
     }
 
-    protected function getComunwebFieldMapperFromRuolo(): array
+    protected function getComunwebFieldMapperFromRuolo()
     {
         return [
             'label' => OCMigration::getMapperHelper('titolo'),
             'person' => OCMigration::getMapperHelper('utente'),
             'role' => OCMigration::getMapperHelper('ruolo'),
             'type' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
-                $personClass = $firstLocalizedContentData['utente']['content'][0]['classIdentifier'] ?? false;
+                $personClass = isset($firstLocalizedContentData['utente']['content'][0]['classIdentifier']) ? $firstLocalizedContentData['utente']['content'][0]['classIdentifier'] : false;
                 return $personClass === 'dipendente' ? 'Amministrativo' : 'Politico';
             },
             'for_entity' => OCMigration::getMapperHelper('struttura_di_riferimento'),
@@ -122,7 +122,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebFieldMapperFromDipendente(): array
+    protected function getComunwebFieldMapperFromDipendente()
     {
         return [
             'label' => false,
@@ -163,7 +163,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebFieldMapperFromPolitico(): array
+    protected function getComunwebFieldMapperFromPolitico()
     {
         return [
             'label' => false,
@@ -208,22 +208,22 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Incarichi';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo incarico*';
     }
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'person';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $competences = json_decode($this->attribute('competences'), true);
         $delegations = json_decode($this->attribute('delegations'), true);
@@ -263,7 +263,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo incarico*"]);
@@ -361,7 +361,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         }
     }
 
-    public static function getDateValidationHeaders(): array
+    public static function getDateValidationHeaders()
     {
         return [
             "Data inizio incarico*",
@@ -370,7 +370,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Ruolo*" => [
@@ -396,12 +396,12 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Persona che ha il ruolo*';
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 110;
     }

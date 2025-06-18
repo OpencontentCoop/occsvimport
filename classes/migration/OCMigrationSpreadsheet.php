@@ -98,7 +98,7 @@ class OCMigrationSpreadsheet
         self::resetCurrentStatus();
     }
 
-    public static function resetCurrentStatus(): void
+    public static function resetCurrentStatus()
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
@@ -108,7 +108,7 @@ class OCMigrationSpreadsheet
         $siteData->store();
     }
 
-    public static function getCurrentStatus(string $action = null): array
+    public static function getCurrentStatus($action = null)
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
@@ -122,14 +122,14 @@ class OCMigrationSpreadsheet
         return $status;
     }
 
-    public static function setCurrentStatus(string $action, string $status, array $options, $message = null): void
+    public static function setCurrentStatus($action,$status, array $options, $message = null)
     {
         $siteData = eZSiteData::fetchByName('migration_status');
         if (!$siteData instanceof eZSiteData) {
             $siteData = eZSiteData::create('migration_status', false);
         } elseif ($message === null) {
             $current = json_decode($siteData->attribute('value'), true);
-            $message = $current['message'] ?? '';
+            $message = isset($current['message']) ? $current['message'] : '';
         }
         $siteData->setAttribute(
             'value',
@@ -147,7 +147,7 @@ class OCMigrationSpreadsheet
         $siteData->store();
     }
 
-    public static function appendMessageToCurrentStatus($message = null): void
+    public static function appendMessageToCurrentStatus($message = null)
     {
         if ($message) {
             $siteData = eZSiteData::fetchByName('migration_status');
@@ -167,7 +167,7 @@ class OCMigrationSpreadsheet
         }
     }
 
-    public static function runAction(string $action, array $options): array
+    public static function runAction($action, array $options)
     {
         if (!in_array($action, [
             'export',
@@ -242,7 +242,9 @@ class OCMigrationSpreadsheet
             }
 
             $executionInfo = [];
-            foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+            foreach (OCMigration::getAvailableClasses(
+                isset($options['class_filter']) ? $options['class_filter'] : []
+            ) as $className) {
                 $canMethod = 'can' . ucfirst($action);
                 if (method_exists($className, $canMethod) && $className::$canMethod()) {
                     $executionInfo[$className] = [
@@ -277,12 +279,12 @@ class OCMigrationSpreadsheet
         //$sheets = $spreadsheet->getSheetTitleList();
     }
 
-    private static function instanceGoogleSheet($id): GoogleSheet
+    private static function instanceGoogleSheet($id)
     {
         return new GoogleSheet($id, self::instanceGoogleSheetClient());
     }
 
-    public static function instanceGoogleSheetClient(): GoogleSheetClient
+    public static function instanceGoogleSheetClient()
     {
         if (self::$googleSheetClient === null){
             self::$googleSheetClient = new OCMGoogleSheetClient();
@@ -291,7 +293,7 @@ class OCMigrationSpreadsheet
         return self::$googleSheetClient;
     }
 
-    public static function getMasterSpreadsheetShortUrl(): string
+    public static function getMasterSpreadsheetShortUrl()
     {
         $shortUrl = OpenPAINI::variable('AssistenteMigrazione', 'MasterSpreadsheetShortUrl', false);
         if ($shortUrl){
@@ -306,7 +308,7 @@ class OCMigrationSpreadsheet
         return 'https://link.opencontent.it/new-kit-' . $context;
     }
 
-    public static function getMasterSpreadsheet($spreadsheetUrl = null): ?GoogleSheet
+    public static function getMasterSpreadsheet($spreadsheetUrl = null)
     {
         if (self::$masterSpreadsheet === null) {
             $context = OCMigration::discoverContext();
@@ -333,14 +335,14 @@ class OCMigrationSpreadsheet
         return self::$masterSpreadsheet;
     }
 
-    public static function getMasterSpreadsheetHelpTexts($sheetTitle, $master = null): array
+    public static function getMasterSpreadsheetHelpTexts($sheetTitle, $master = null)
     {
         $sheet = self::getMasterSpreadsheet($master)->getByTitle($sheetTitle);
 
         return self::getHelpTexts($sheetTitle, $sheet, self::$masterSpreadsheetId);
     }
 
-    private static function getHelpTexts($sheetTitle, $sheet, $id): array
+    private static function getHelpTexts($sheetTitle, $sheet, $id)
     {
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "{$sheetTitle}!R1C1:R2C{$colCount}";
@@ -352,13 +354,13 @@ class OCMigrationSpreadsheet
 
         $helper = [];
         foreach ($firstRows[0] as $index => $header) {
-            $helper[$header] = $firstRows[1][$index] ?? '';
+            $helper[$header] = isset($firstRows[1][$index]) ? $firstRows[1][$index] : '';
         }
 
         return $helper;
     }
 
-    public function updateGuide(): ?int
+    public function updateGuide()
     {
         self::getMasterSpreadsheet();
         $url = str_replace('copy', 'edit', self::$masterSpreadsheetUrl);
@@ -386,7 +388,7 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public function updateVocabolaries(): ?int
+    public function updateVocabolaries()
     {
         $sheetTitle = 'Vocabolari controllati';
 
@@ -425,7 +427,7 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public function updateHelper($className, $master = null, $dryRun = false, $verbose = false): ?int
+    public function updateHelper($className, $master = null, $dryRun = false, $verbose = false)
     {
         $sheetTitle = $className::getSpreadsheetTitle();
         $helper = self::getMasterSpreadsheetHelpTexts($sheetTitle, $master);
@@ -439,7 +441,7 @@ class OCMigrationSpreadsheet
         $cli = eZCLI::instance();
         if ($verbose) $cli->output();
         foreach($currentHelper as $header => $text){
-            $newText = $helper[$header] ?? '';
+            $newText = isset($helper[$header]) ? $helper[$header] : '';
             $value[$header] = trim($newText);
             if (!empty($text) && !isset($helper[$header])){
                 if ($verbose) $cli->error('missing ' . $header);
@@ -477,7 +479,7 @@ class OCMigrationSpreadsheet
         return $updateRows;
     }
 
-    public static function instance(): self
+    public static function instance()
     {
         if (self::$instance === null) {
             self::$instance = new static();
@@ -770,7 +772,7 @@ class OCMigrationSpreadsheet
         ];
     }
 
-    private function getHeaders($sheetTitle): array
+    private function getHeaders($sheetTitle)
     {
         if (!isset($this->headers[$sheetTitle])) {
             $sheet = $this->spreadsheet->getByTitle($sheetTitle);
@@ -783,7 +785,7 @@ class OCMigrationSpreadsheet
         return $this->headers[$sheetTitle];
     }
 
-    private function getColumnRange(array $ref): ?string
+    private function getColumnRange(array $ref)
     {
         $sheet = $ref['sheet'];
         $column = $ref['column'];
@@ -798,7 +800,7 @@ class OCMigrationSpreadsheet
         return false;
     }
 
-    private function getColumnLetter($sheetTitle, $column): string
+    private function getColumnLetter($sheetTitle, $column)
     {
         $headers = $this->getHeaders($sheetTitle);
         $alphabeth = range('A', 'Z');
@@ -820,7 +822,9 @@ class OCMigrationSpreadsheet
     private static function setAlreadyRunningStatus($action, $options)
     {
         $executionInfo = [];
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+        foreach (OCMigration::getAvailableClasses(
+            isset($options['class_filter']) ? $options['class_filter'] : []
+        ) as $className) {
             $executionInfo[$className] = [
                 'status' => 'error',
                 'action' => $action,
@@ -835,7 +839,7 @@ class OCMigrationSpreadsheet
     /**
      * @throws Exception
      */
-    public function push(eZCLI $cli = null, array $options = []): array
+    public function push(eZCLI $cli = null, array $options = [])
     {
         if (self::getCurrentStatus('push')['status'] == 'running') {
             if ($cli) {
@@ -854,7 +858,9 @@ class OCMigrationSpreadsheet
         self::setCurrentStatus('push', 'running', $options);
 
         $executionInfo = [];
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+        foreach (OCMigration::getAvailableClasses(
+            isset($options['class_filter']) ? $options['class_filter'] : []
+        ) as $className) {
             $executionInfo = array_merge($executionInfo, $this->pushByType($className, $cli, $options));
             self::appendMessageToCurrentStatus($executionInfo);
         }
@@ -869,7 +875,7 @@ class OCMigrationSpreadsheet
      * @return array
      * @throws Exception
      */
-    private function pushByType($className, eZCLI $cli = null, array $options = []): array
+    private function pushByType($className, eZCLI $cli = null, array $options = [])
     {
         $executionInfo = [];
 
@@ -940,7 +946,7 @@ class OCMigrationSpreadsheet
                 $data = $this->getItemToSpreadsheet($item);
                 $value = [];
                 foreach ($headers as $header) {
-                    $value[$header] = $data[$header] ?? '';
+                    $value[$header] = isset($data[$header]) ? $data[$header] : '';
                 }
                 $values[] = array_values($value);
             }
@@ -993,7 +999,7 @@ class OCMigrationSpreadsheet
                 'sheet' => $sheetTitle,
                 'range' => $range,
             ];
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $message = ($e instanceof \Google\Service\Exception) ? json_decode(
                 $e->getMessage()
             )->error->message : $e->getMessage();
@@ -1012,7 +1018,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    private function getItemToSpreadsheet(ocm_interface $item): array
+    private function getItemToSpreadsheet(ocm_interface $item)
     {
         $data = $item->toSpreadsheet();
         foreach ($data as $key => $value) {
@@ -1052,7 +1058,9 @@ class OCMigrationSpreadsheet
         $executionInfo = [];
         $remoteIdCollection = new ArrayObject();
         $skipPayloadGeneration = [];
-        $availableClasses = OCMigration::getAvailableClasses($options['class_filter'] ?? []);
+        $availableClasses = OCMigration::getAvailableClasses(
+            isset($options['class_filter']) ? $options['class_filter'] : []
+        );
         $availableClasses = array_reverse($availableClasses);
         foreach ($availableClasses as $className) {
             $executionInfo = array_merge($executionInfo, $this->pullByType($className, $cli, $options, $remoteIdCollection));
@@ -1063,7 +1071,9 @@ class OCMigrationSpreadsheet
         }
 
         OCMigration::createPayloadTableIfNeeded($cli);
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+        foreach (OCMigration::getAvailableClasses(
+            isset($options['class_filter']) ? $options['class_filter'] : []
+        ) as $className) {
             if (!in_array($className, $skipPayloadGeneration)) {
                 $executionInfo = array_merge($executionInfo, $this->createPayloadByType($className, $cli, $validate));
                 self::appendMessageToCurrentStatus($executionInfo);
@@ -1075,7 +1085,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    private function pullByType($className, eZCLI $cli = null, array $options, ArrayObject $remoteIdCollection): array
+    private function pullByType($className, eZCLI $cli = null, array $options, ArrayObject $remoteIdCollection)
     {
         $executionInfo = [];
 
@@ -1151,7 +1161,7 @@ class OCMigrationSpreadsheet
                             $cli->output( ' - ' . $item->id() . ' ' . $item->name() . ' ' . (int)$stored);
                         }
                         $count++;
-                    } catch (Throwable $e) {
+                    } catch (Exception $e) {
                         $executionInfo['errors'][$className][$item->attribute('_id')] = [
                             'message' => $e->getMessage(),
                             'action' => 'pull',
@@ -1171,7 +1181,7 @@ class OCMigrationSpreadsheet
                 'update' => 'Lette ' . $count . ' righe',
                 'sheet' => $sheetTitle,
             ];
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
                 'action' => 'pull',
@@ -1193,7 +1203,7 @@ class OCMigrationSpreadsheet
      * @param bool $validate
      * @return array
      */
-    private function createPayloadByType($className, eZCLI $cli = null, bool $validate = null): array
+    private function createPayloadByType($className, eZCLI $cli = null,  $validate = null)
     {
         $executionInfo = [];
 
@@ -1248,7 +1258,7 @@ class OCMigrationSpreadsheet
                     if ($cli) {
                         $cli->output(' ' . $generatedPayloadCount);
                     }
-                } catch (Throwable $e) {
+                } catch (Exception $e) {
                     if ($cli) {
                         $cli->output(' ' . $e->getMessage());
                     }
@@ -1291,7 +1301,7 @@ class OCMigrationSpreadsheet
                     OCMigrationSpreadsheet::appendMessageToCurrentStatus($executionInfo);
                 }
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $executionInfo[$className] = [
                 'status' => 'error',
                 'action' => 'pull',
@@ -1306,7 +1316,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    public function import(eZCLI $cli = null, array $options = []): array
+    public function import(eZCLI $cli = null, array $options = [])
     {
         if (self::getCurrentStatus('import')['status'] == 'running') {
             if ($cli) {
@@ -1369,7 +1379,9 @@ class OCMigrationSpreadsheet
             $count[$className]++;
         }
 
-        foreach (OCMigration::getAvailableClasses($options['class_filter'] ?? []) as $className) {
+        foreach (OCMigration::getAvailableClasses(
+            isset($options['class_filter']) ? $options['class_filter'] : []
+        ) as $className) {
             if (!isset($count[$className]) || $count[$className] === 0){
                 $executionInfo[$className] = [
                     'status' => 'success',
@@ -1426,7 +1438,7 @@ class OCMigrationSpreadsheet
                             $cli->output(' url_alias: ' . $importUrlAlias);
                         }
                     }
-                } catch (Throwable $e) {
+                } catch (Exception $e) {
                     $stat[$className]['f']++;
                     if ($cli) {
                         $cli->output(" error: " . $e->getMessage());
@@ -1463,7 +1475,7 @@ class OCMigrationSpreadsheet
         return $executionInfo;
     }
 
-    public static function export(eZCLI $cli = null, array $options = []): array
+    public static function export(eZCLI $cli = null, array $options = [])
     {
         if (self::getCurrentStatus('export')['status'] == 'running') {
             if ($cli) {
@@ -1488,10 +1500,10 @@ class OCMigrationSpreadsheet
 
         try {
             OCMigration::factory()->fillData(
-                $options['class_filter'] ?? [],
+                isset($options['class_filter']) ? $options['class_filter'] : [],
                 $options['update']
             );
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             self::setCurrentStatus('export', 'error', $options, $e->getMessage());
             return ['status' => 'error']; //@todo
         }
@@ -1502,7 +1514,7 @@ class OCMigrationSpreadsheet
         return ['status' => 'success']; //@todo
     }
 
-    private function getDataHash($sheetTitle): array
+    private function getDataHash($sheetTitle)
     {
         if (!isset($this->dataHash[$sheetTitle])) {
             $this->dataHash[$sheetTitle] = $this->spreadsheet->getSheetDataHash($sheetTitle);
@@ -1513,7 +1525,7 @@ class OCMigrationSpreadsheet
         return $this->dataHash[$sheetTitle];
     }
 
-    public function getRowLink($sheetTitle, $label, $value): ?string
+    public function getRowLink($sheetTitle, $label, $value)
     {
         $sheet = $this->spreadsheet->getByTitle($sheetTitle);
         $dataHash = $this->getDataHash($sheetTitle);

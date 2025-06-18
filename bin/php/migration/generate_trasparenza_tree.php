@@ -24,7 +24,7 @@ $user = eZUser::fetchByName('admin');
 eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
 
 try {
-    $rootId = $options['root'] ?? '5399ef12f98766b90f1804e5d52afd75';
+    $rootId = isset($options['root']) ? $options['root'] : '5399ef12f98766b90f1804e5d52afd75';
     $object = eZContentObject::fetchByRemoteID($rootId);
     $data = new ArrayObject();
     $locations = new ArrayObject();
@@ -58,7 +58,7 @@ try {
 //    ]))->store();
 
 
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
 }
 

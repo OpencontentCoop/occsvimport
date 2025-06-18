@@ -41,7 +41,7 @@ class OCMController extends ezpRestMvcController
             } else {
                 throw new Exception("$class type not found");
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $result = $this->doExceptionResult($e);
         }
 
@@ -52,7 +52,7 @@ class OCMController extends ezpRestMvcController
     public function doGetItemField()
     {
         $result = $this->doGetItem();
-        $format = $this->request->get['format'] ?? null;
+        $format = isset($this->request->get['format']) ? $this->request->get['format'] : null;
         $value = '';
         if ($result->variables->hasAttribute($this->field)) {
             $value = $result->variables->attribute($this->field);
@@ -82,8 +82,8 @@ class OCMController extends ezpRestMvcController
     {
         $result = new ezpRestMvcResult();
         $classes = OCMigration::getAvailableClasses();
-        $limit = $this->request->get['limit'] ?? 500;
-        $offset = $this->request->get['offset'] ?? 0;
+        $limit = isset($this->request->get['limit']) ? $this->request->get['limit'] : 500;
+        $offset = isset($this->request->get['offset']) ? $this->request->get['offset'] : 0;
         try {
             $class = $this->collection;
             if (strpos($class, 'ocm_') === false){
@@ -111,7 +111,7 @@ class OCMController extends ezpRestMvcController
             } else {
                 throw new Exception("$class type not found");
             }
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             $result = $this->doExceptionResult($e);
         }
 

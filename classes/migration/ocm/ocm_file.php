@@ -2,22 +2,22 @@
 
 class ocm_file extends OCMPersistentObject implements ocm_interface
 {
-    public static function canImport(): bool
+    public static function canImport()
     {
         return false;
     }
 
-    public static function canPull(): bool
+    public static function canPull()
     {
         return false;
     }
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'comunweb';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'comunweb';
     }
@@ -30,7 +30,7 @@ class ocm_file extends OCMPersistentObject implements ocm_interface
         'percorso_univoco',
     ];
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             'ID'=> $this->attribute('_id'),
@@ -44,7 +44,7 @@ class ocm_file extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row)
     {
         $item = new static();
         $item->setAttribute('_id', $row['ID']);
@@ -63,22 +63,22 @@ class ocm_file extends OCMPersistentObject implements ocm_interface
         return $this->getNewPayloadBuilderInstance();
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return -100;
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'File e file allegati';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Nome del file";
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'ID';
     }

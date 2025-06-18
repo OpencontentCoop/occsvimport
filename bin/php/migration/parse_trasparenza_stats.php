@@ -21,7 +21,7 @@ $script->setUseDebugAccumulators(true);
 
 $cli = eZCLI::instance();
 
-$dir = $options['data'] ?? 'extension/occsvimport/data';
+$dir = isset($options['data']) ? $options['data'] : 'extension/occsvimport/data';
 $classes = [];
 $files = eZDir::findSubitems($dir, 'f');
 foreach ($files as $file){

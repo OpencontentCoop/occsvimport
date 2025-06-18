@@ -24,7 +24,7 @@ eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
 
 try {
     print_r(OCMPayload::fetch($options['id'])->createOrUpdateContent());
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
 }
 

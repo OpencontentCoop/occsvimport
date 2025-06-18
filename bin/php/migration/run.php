@@ -53,7 +53,7 @@ try {
             break;
     }
 
-}catch (Throwable $e){
+}catch (Exception $e){
     OCMigrationSpreadsheet::setCurrentStatus($action, 'error', $opt, $e->getMessage());
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());

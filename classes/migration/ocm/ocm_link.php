@@ -22,32 +22,32 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         'en_descrizione',
     ];
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Link';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo del link*';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Nome";
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['image___name'] = OCMigration::getMapperHelper('image/name');
@@ -56,7 +56,7 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         return $mapper;
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo del link*" => $this->attribute('_id'),
@@ -84,7 +84,7 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del link*"]);
@@ -140,14 +140,14 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
         return $this->appendTranslationsToPayloadIfNeeded($payload);
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [
             'Url file immagine',
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 190;
     }

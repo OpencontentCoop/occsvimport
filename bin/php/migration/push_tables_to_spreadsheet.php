@@ -26,7 +26,7 @@ $opt = [
 
 try {
     $executionInfo = OCMigrationSpreadsheet::instance()->push($options['verbose'] ? $cli: null, $opt);
-}catch (Throwable $e){
+}catch (Exception $e){
     $cli->error($e->getMessage());
     $cli->error($e->getTraceAsString());
 }

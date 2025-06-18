@@ -8,7 +8,7 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
 
     public function initialize()
     {
-        $mapper = $this->options->hasAttribute('fields_map') ? json_decode($this->options->attribute('fields_map'), 1) : array();
+        $mapper = $this->options->hasAttribute('fields_map') ? json_decode($this->options->attribute('fields_map'), 1) ();
         $this->doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($this->options['google_spreadsheet_id'], $this->options['sheet'], $this->contentClass, $mapper);
         $this->dataSource = $this->doc->rows;
     }

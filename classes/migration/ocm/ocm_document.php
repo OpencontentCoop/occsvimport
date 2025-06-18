@@ -67,7 +67,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         'en_attachments',
     ];
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $attachments = function (Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options) {
             $data = [];
@@ -899,7 +899,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, $mapper, $options);
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         $mapper = array_fill_keys(static::$fields, false);
         $mapper['abstract'] = OCMigration::getMapperHelper('description');
@@ -909,22 +909,22 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $mapper;
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Documenti';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Titolo*";
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificativo del documento*";
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
 //        $rawAttachments = explode('|', $this->attribute('attachments'));
 //        $attachments = [];
@@ -1010,7 +1010,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
 
@@ -1036,7 +1036,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('document_type', $row["Tipo di documento*"]);
         $item->setAttribute('topics', $row["Argomento*"]);
         $item->setAttribute('abstract', $row["Descrizione breve*"]);
-        $item->setAttribute('file', $row["URL documento*"] ?? $row["URL documento"]);
+        $item->setAttribute('file', isset($row["URL documento*"]) ? $row["URL documento*"] : $row["URL documento"]);
         $item->setAttribute('license', $row["Licenza di distribuzione*"]);
         $item->setAttribute('format', $row["Formati disponibili*"]);
         $item->setAttribute('has_organization', $row["Ufficio responsabile del documento*"]);
@@ -1224,7 +1224,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $payloads;
     }
 
-    protected function discoverParentNode(): int
+    protected function discoverParentNode()
     {
         $containers = [
             "Documenti albo pretorio" => 'b5cd50ff40706b1520e7b56fb4d18481',
@@ -1315,7 +1315,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         return $this->getNodeIdFromRemoteId('cb945b1cdaad4412faaa3a64f7cdd065');
     }
 
-    public static function getDateValidationHeaders(): array
+    public static function getDateValidationHeaders()
     {
         return [
             "Data di inizio validità",
@@ -1333,7 +1333,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Tipo di documento*" => [
@@ -1383,7 +1383,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
@@ -1393,12 +1393,12 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 100;
     }
 
-    public function validatePayload(OCMPayload $payload): void
+    public function validatePayload(OCMPayload $payload)
     {
         $payload = json_decode($payload->attribute('payload'), true);
         foreach ($payload['data'] as $locale => $data){

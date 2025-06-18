@@ -22,32 +22,32 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
         'en_description',
     ];
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Output del servizio';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo output*';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome*';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo output*" => $this->attribute('_id'),
@@ -72,7 +72,7 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo output*"]);
@@ -120,12 +120,12 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
         return $payload;
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 210;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Tipologia di output/esito*' => [

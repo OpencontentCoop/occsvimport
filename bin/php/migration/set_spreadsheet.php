@@ -31,14 +31,17 @@ if ($connected && !$options['force']){
 
 $siteName = eZINI::instance()->variable('SiteSettings', 'SiteName');
 $siteName = str_ireplace('Comune di ', '', $siteName);
-$name = $options['name'] ?? '';
+$name = isset($options['name']) ? $options['name'] : '';
 $name .= ' - ' . $siteName;
 
 $client = new OCMGoogleSheetClient();
-$user = $client->getCredentials()['client_email'] ?? '?';
+$user = isset($client->getCredentials()['client_email']) ? $client->getCredentials()['client_email'] : '?';
 $cli->warning('User ' . $user);
 
-$spreadsheetUrl = $options['master'] ?? die('Missing master');
+if (!$options['master']){
+    die('Missing master');
+}
+$spreadsheetUrl = $options['master'];
 $masterSpreadsheetId = OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri($spreadsheetUrl);
 $masterSpreadsheet = new \Opencontent\Google\GoogleSheet($masterSpreadsheetId, $client);
 
@@ -51,7 +54,7 @@ try {
     $spreadsheet = $serviceDrive->files->copy($masterSpreadsheetId, $file);
     $cli->warning('Sheet: ' . $spreadsheet->getId() . ' ' . $spreadsheet->getName());
     OCMigrationSpreadsheet::setConnectedSpreadSheet($spreadsheet->getId());
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
 }
 

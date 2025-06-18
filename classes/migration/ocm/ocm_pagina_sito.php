@@ -4,22 +4,22 @@ use Opencontent\Opendata\Api\Values\Content;
 
 class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
 {
-    public static function canImport(): bool
+    public static function canImport()
     {
         return false;
     }
 
-    public static function canPull(): bool
+    public static function canPull()
     {
         return false;
     }
 
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'comunweb';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'comunweb';
     }
@@ -36,22 +36,22 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         'files',
     ];
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Pagine del sito';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "ID";
     }
 
-    protected function getComunwebFieldMapper(): array
+    protected function getComunwebFieldMapper()
     {
         $attachments = function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
             $data = [];
@@ -88,14 +88,14 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         return $mapper;
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $options['remove_ezxml_embed'] = true;
 //        $options['ezxml_strip_tags'] = true;
         return $this->fromNode($node, $this->getComunwebFieldMapper(), $options);
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         $address = json_decode($this->attribute('gps'), true);
         return [
@@ -115,10 +115,10 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $address = '';
-        [$latitude, $longitude] = explode(' ', $row["Latitudine e longitudine"]);
+        list($latitude, $longitude) = explode(' ', $row["Latitudine e longitudine"]);
         if ($latitude && $longitude) {
             $address = json_encode([
                 'address' => $row['Indirizzo'],
@@ -143,7 +143,7 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Rimappare in" => [
@@ -162,7 +162,7 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
         return $this->getNewPayloadBuilderInstance();
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return -120;
     }

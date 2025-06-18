@@ -4,22 +4,22 @@ use Opencontent\Opendata\Api\Values\Content;
 
 class ocm_public_organization extends ocm_organization
 {
-    public static function canPush(): bool
+    public static function canPush()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Enti e fondazioni';
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $mapper = [
             'legal_name' => false,
@@ -54,12 +54,12 @@ class ocm_public_organization extends ocm_organization
         return $this->fromNode($node, $mapper, $options);
     }
 
-    protected function discoverParentNode(): int
+    protected function discoverParentNode()
     {
         return $this->getNodeIdFromRemoteId('10742bd28e405f0e83ae61223aea80cb');
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 29;
     }

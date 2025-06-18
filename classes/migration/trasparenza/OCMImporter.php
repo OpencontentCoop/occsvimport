@@ -112,7 +112,7 @@ class OCMImporter
         $this->repository->setCurrentEnvironmentSettings($this->environmentSettings);
     }
 
-    public function setAsDryRun(): void
+    public function setAsDryRun()
     {
         $this->dryRun = true;
     }
@@ -160,7 +160,7 @@ class OCMImporter
                                 $this->import($childRemoteId, $parentObject->mainNodeID());
                             }
                             $this->addLocation($child, $parentObject);
-                        } catch (Throwable $e) {
+                        } catch (Exception $e) {
                             $this->error($e);
                         }
                         $this->recursion--;
@@ -175,13 +175,13 @@ class OCMImporter
                         $this->recursion++;
                         try {
                             $this->import($childRemoteId, $parentObject->mainNodeID());
-                        } catch (Throwable $e) {
+                        } catch (Exception $e) {
                             $this->error("Error importing {$childRemoteId}: " . $e->getMessage() . ' ' . $e->getFile() . ' ' . $e->getLine());
                         }
                         $this->recursion--;
                     }
                 }
-            } catch (Throwable $e) {
+            } catch (Exception $e) {
                 $this->error($e);
             }
         }
@@ -250,7 +250,7 @@ class OCMImporter
         return $addedLocation;
     }
 
-    private function import($remoteObjectIdentifier, $parentNodeId, $withRelations = true): int
+    private function import($remoteObjectIdentifier, $parentNodeId, $withRelations = true)
     {
         if (getenv('IGNORE_RELATIONS')){
             $withRelations = false;
@@ -269,7 +269,7 @@ class OCMImporter
         $content = $this->client->read(urlencode($remoteObjectIdentifier));
 
         if (getenv('OVERRIDE_REMOTE_URL')){
-            [$old, $new] = explode('|', getenv('OVERRIDE_REMOTE_URL'));
+            list($old, $new) = explode('|', getenv('OVERRIDE_REMOTE_URL'));
             $contentSerialized = json_encode($content);
             $contentSerialized = str_replace($old, $new, $contentSerialized);
             $content = json_decode($contentSerialized, true);
@@ -409,7 +409,7 @@ class OCMImporter
         }
 
         foreach ($this->settings['default-values'] as $id => $value) {
-            [$class, $identifier] = explode('/', $id);
+            list($class, $identifier) = explode('/', $id);
             if ($classIdentifier == $class) {
                 $payload->setData(null, $identifier, $value);
             }
@@ -478,7 +478,7 @@ class OCMImporter
         return (int)$result['content']['metadata']['id'];
     }
 
-    private function isCustomTrasparenza(eZContentObject $object): bool
+    private function isCustomTrasparenza(eZContentObject $object)
     {
         $contentClass = $object->contentClass();
         if ($contentClass instanceof eZContentClass) {
@@ -593,7 +593,7 @@ class OCMImporter
                     $object = $this->client->read($relatedObjectID);
                     $localObjectID = $this->import($object['metadata']['remoteId'], $this->getRelationsNodeId(), false);
                     $mapObjects[$relatedObjectID] = $localObjectID;
-                } catch (Throwable $e) {
+                } catch (Exception $e) {
                     $this->error($e);
                 }
             }
@@ -605,7 +605,7 @@ class OCMImporter
                     if ($localObject instanceof eZContentObject) {
                         $mapNodes[$nodeID] = $localObject->attribute('id');
                     }
-                } catch (Throwable $e) {
+                } catch (Exception $e) {
                     $this->error($e);
                 }
             }
@@ -667,7 +667,7 @@ class OCMImporter
         return str_replace($replace, '', $text);
     }
 
-    private function getRelationsNodeId(): int
+    private function getRelationsNodeId()
     {
         if ($this->dryRun) {
             return 1;
@@ -716,7 +716,7 @@ class OCMImporter
 
     private function error($message)
     {
-        if ($message instanceof Throwable) {
+        if ($message instanceof Exception) {
             $message = $message->getMessage() . ' on ' . $message->getFile() . ' line ' . $message->getLine();
         }
         eZCLI::instance()->error($this->padMessage($message));
@@ -732,12 +732,12 @@ class OCMImporter
     /**
      * @return int[]
      */
-    public function getStats(): array
+    public function getStats()
     {
         return $this->stats;
     }
 
-    private static function getContentLogIdentifier($content): string
+    private static function getContentLogIdentifier($content)
     {
         return $content['metadata']['name']['ita-IT'] . '  - ' . $content['metadata']['remoteId'];
     }

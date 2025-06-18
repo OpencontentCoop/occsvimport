@@ -55,27 +55,27 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         'en_event_content_keyword'
     ];
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'event_title';
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Eventi';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return 'Identificativo evento*';
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Titolo dell'evento*";
     }
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         return [
             'event_title' => false,
@@ -128,7 +128,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         $eventToString = function ($dataMap){
             $from = $dataMap['from_time']->toString();
@@ -159,7 +159,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
                 $name = $content->metadata['name']['ita-IT'];
                 $placeId = $id . ':place';
-                $placeName = $luogo_svolgimento ?? $name;
+                $placeName = isset($luogo_svolgimento) ? $luogo_svolgimento : $name;
                 $place = ocm_place::instanceBy('name', $placeName, $placeId);
                 $place->setAttribute('has_address', json_encode($geo));
 
@@ -214,7 +214,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         return $this->fromNode($node, $mapper, $options);
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificativo evento*" => $this->attribute('_id'),
@@ -270,7 +270,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo evento*"]);
@@ -291,7 +291,9 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         $item->setAttribute('topics', $row["Argomenti*"]);
         $item->setAttribute('time_interval_events', $row["Date ed orari dell'evento*"]);
         $item->setAttribute('time_interval_ical', $row["Ripetizioni evento (formato ical)"]);
-        $item->setAttribute('takes_place_in', $row["Luogo dell'evento"] ?? $row["Luogo dell'evento*"]);
+        $item->setAttribute('takes_place_in',
+            isset($row["Luogo dell'evento"]) ? $row["Luogo dell'evento"] : $row["Luogo dell'evento*"]
+        );
         $item->setAttribute('attendee', $row["Partecipano"]);
         $item->setAttribute('is_accessible_for_free', $row["È gratuito"]);
         $item->setAttribute('cost_notes', $row["Informazioni sui costi"]);
@@ -363,8 +365,8 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             ){
                 $startEndChunks = array_chunk($events, 2);
                 foreach ($startEndChunks as $startEndChunk){
-                    $start = $startEndChunk[0] ?? '';
-                    $end = $startEndChunk[1] ?? '';
+                    $start = isset($startEndChunk[0]) ? $startEndChunk[0] : '';
+                    $end = isset($startEndChunk[1]) ? $startEndChunk[1] : '';
                     if ($start && $end) {
                         $start = self::getDateTimePayload($start, false);
                         $end = self::getDateTimePayload($end, false);
@@ -375,7 +377,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
                 }
             }else {
                 foreach ($events as $event) {
-                    [$start, $end] = explode('-', $event);
+                    list($start, $end) = explode('-', $event);
                     if ($start && $end) {
                         $start = self::getDateTimePayload($start, false);
                         $end = self::getDateTimePayload($end, false);
@@ -433,7 +435,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         return $payloads;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             "Tipo di evento*" => [
@@ -483,7 +485,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*",
@@ -491,7 +493,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 180;
     }

@@ -34,7 +34,7 @@ eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
 
 try {
     $executionInfo = OCMigrationSpreadsheet::instance()->import($options['verbose'] ? $cli: null, $only);
-}catch (Throwable $e){
+}catch (Exception $e){
     $cli->error($e->getMessage());
 //    $cli->error($e->getTraceAsString());
 }

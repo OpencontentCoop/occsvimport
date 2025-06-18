@@ -53,7 +53,7 @@ class WalkerTrasparenza
     }
 }
 
-function convertToMarkdown(?string $html): string
+function convertToMarkdown( $html)
 {
     if (!$html) {
         return '';
@@ -63,7 +63,7 @@ function convertToMarkdown(?string $html): string
     return $converter->convert($html);
 }
 
-function getSheet($spreadsheetId, $sheetTitle): Sheet
+function getSheet($spreadsheetId, $sheetTitle)
 {
     global $googleSheetClient, $sheetService;
     $spreadsheet = new Opencontent\Google\GoogleSheet($spreadsheetId, $googleSheetClient);
@@ -120,7 +120,7 @@ function writeSheet($spreadsheetId, Sheet $sheet, array $values)
     );
 }
 
-function hashToRows($vocabularies): array
+function hashToRows($vocabularies)
 {
     $length = 0;
     foreach ($vocabularies as $terms) {
@@ -133,7 +133,7 @@ function hashToRows($vocabularies): array
     for ($i = 0; $i < $length; $i++) {
         $row = [];
         foreach ($vocabularies as $vocabulary) {
-            $row[] = $vocabulary[$i] ?? '';
+            $row[] = isset($vocabulary[$i]) ? $vocabulary[$i] : '';
         }
         $rows[] = $row;
     }
@@ -142,7 +142,7 @@ function hashToRows($vocabularies): array
 }
 
 try {
-    $rootId = $options['root'] ?? '5399ef12f98766b90f1804e5d52afd75';
+    $rootId = isset($options['root']) ? $options['root'] : '5399ef12f98766b90f1804e5d52afd75';
     $object = eZContentObject::fetchByRemoteID($rootId);
     if (!$object instanceof eZContentObject) {
         throw new Exception("Object $rootId not found");
@@ -193,7 +193,7 @@ try {
     $values = $data->getArrayCopy();
     cleanSheet($spreadsheetId, $sheet);
     writeSheet($spreadsheetId, $sheet, $values);
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
 }
 

@@ -4,12 +4,12 @@ use Opencontent\Opendata\Api\Values\Content;
 
 class ocm_opening_hours_specification extends OCMPersistentObject implements ocm_interface
 {
-    public static function canPush(): bool
+    public static function canPush()
     {
         return true;
     }
 
-    public static function canExport(): bool
+    public static function canExport()
     {
         return OCMigration::discoverContext() === 'opencity';
     }
@@ -35,7 +35,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         'opening_hours___sunday',
     ];
 
-    protected function getOpencityFieldMapper(): array
+    protected function getOpencityFieldMapper()
     {
         return [
             'name' => false,
@@ -59,7 +59,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         ];
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Orari';
     }
@@ -74,17 +74,17 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         return $var;
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificatore*";
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return "Nome*";
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             'Identificatore*' => $this->attribute('_id'),
@@ -111,7 +111,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore*']);
@@ -138,7 +138,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         return $item;
     }
 
-    public static function getDateValidationHeaders(): array
+    public static function getDateValidationHeaders()
     {
         return [
             'Valido dal*',
@@ -146,14 +146,14 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             'Note',
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Stagionalità*' => [
@@ -163,7 +163,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 0;
     }
@@ -212,13 +212,13 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
         $contacts = [];
         for ($x = 0; $x <= $rowCount; $x++) {
             $contact = [
-                'monday' => $monday[$x] ?? '',
-                'tuesday' => $tuesday[$x] ?? '',
-                'wednesday' => $wednesday[$x] ?? '',
-                'thursday' => $thursday[$x] ?? '',
-                'friday' => $friday[$x] ?? '',
-                'saturday' => $saturday[$x] ?? '',
-                'sunday' => $sunday[$x] ?? '',
+                'monday' => isset($monday[$x]) ? $monday[$x] : '',
+                'tuesday' => isset($tuesday[$x]) ? $tuesday[$x] : '',
+                'wednesday' => isset($wednesday[$x]) ? $wednesday[$x] : '',
+                'thursday' => isset($thursday[$x]) ? $thursday[$x] : '',
+                'friday' => isset($friday[$x]) ? $friday[$x] : '',
+                'saturday' => isset($saturday[$x]) ? $saturday[$x] : '',
+                'sunday' => isset($sunday[$x]) ? $sunday[$x] : '',
             ];
             if (!self::isEmptyArray($contact)) {
                 $contacts[$x] = $contact;
@@ -238,8 +238,8 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
             );
             for ($x = 0; $x <= $rowCount; $x++) {
                 $closure = [
-                    'day' => $closureDay[$x] ?? '',
-                    'reason' => $closureReason[$x] ?? '',
+                    'day' => isset($closureDay[$x]) ? $closureDay[$x] : '',
+                    'reason' => isset($closureReason[$x]) ? $closureReason[$x] : '',
                 ];
                 if (!self::isEmptyArray($closure)) {
                     $closures[$x] = $closure;
@@ -257,7 +257,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
      * @return int
      * @throws Exception
      */
-    private function discoverParentNode(): int
+    private function discoverParentNode()
     {
         if (!empty(ocm_public_service::fetchByField('has_online_contact_point', $this->attribute('name')))) {
             return $this->getOrariServiziParentNode();
@@ -270,7 +270,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
      * @return int
      * @throws Exception
      */
-    private function getOrariStruttureParentNode(): int
+    private function getOrariStruttureParentNode()
     {
         return $this->getNodeIdFromRemoteId('fa52241c11d26c8aa24ab93813995e10');
     }
@@ -279,7 +279,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
      * @return int
      * @throws Exception
      */
-    private function getOrariServiziParentNode(): int
+    private function getOrariServiziParentNode()
     {
         return $this->getNodeIdFromRemoteId('f10a85a4ddd1810f10f655785dd84e75');
     }

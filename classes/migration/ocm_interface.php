@@ -4,48 +4,48 @@ use Opencontent\Opendata\Rest\Client\PayloadBuilder;
 
 interface ocm_interface
 {
-    public static function getSpreadsheetTitle(): string;
+    public static function getSpreadsheetTitle();
 
-    public static function getIdColumnLabel(): string;
+    public static function getIdColumnLabel();
 
-    public static function getColumnName(): string;
+    public static function getColumnName();
 
-    public static function getSortField(): string;
+    public static function getSortField();
 
-    public function toSpreadsheet(): array;
+    public function toSpreadsheet();
 
-    public static function fromSpreadsheet($row): ocm_interface;
+    public static function fromSpreadsheet($row);
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []);
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface;
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []);
 
     /**
      * @return PayloadBuilder|PayloadBuilder[]
      */
     public function generatePayload();
 
-    public function storePayload(): int;
+    public function storePayload();
 
-    public static function getImportPriority(): int;
+    public static function getImportPriority();
 
-    public static function canImport(): bool;
+    public static function canImport();
 
-    public static function canPull(): bool;
+    public static function canPull();
 
-    public static function canPush(): bool;
+    public static function canPush();
 
-    public static function canExport(): bool;
+    public static function canExport();
 
-    public static function enableImport(): void;
+    public static function enableImport();
 
-    public static function disableImport(): void;
+    public static function disableImport();
 
-    public function storeThis(bool $isUpdate): bool;
+    public function storeThis($isUpdate);
 
     public function setAttribute($attr, $val);
 
-    public static function checkPayloadGeneration(): bool;
+    public static function checkPayloadGeneration();
 
-    public function validatePayload(OCMPayload $payload): void;
+    public function validatePayload(OCMPayload $payload);
 }

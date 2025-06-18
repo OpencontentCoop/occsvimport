@@ -126,7 +126,7 @@ try {
     if ($options['count']) {
         print_r($count);
     }
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
     $cli->output($e->getTraceAsString());
 }

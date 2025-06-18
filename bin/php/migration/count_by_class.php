@@ -24,7 +24,7 @@ try {
     $user = eZUser::fetchByName('admin');
     eZUser::setCurrentlyLoggedInUser($user, $user->attribute('contentobject_id'));
 
-    $class = $options['class'] ?? 'none';
+    $class = isset($options['class']) ? $options['class'] : 'none';
     if (eZContentClass::fetchByIdentifier($class)) {
         $count = (int)eZContentObjectTreeNode::subTreeCountByNodeID([
             'MainNodeOnly' => true,

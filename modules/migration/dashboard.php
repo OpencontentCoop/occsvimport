@@ -30,7 +30,7 @@ $tpl->setVariable('error_spreadsheet', false);
 
 $tpl->setVariable('master_spreadsheet_url', OCMigrationSpreadsheet::getMasterSpreadsheetShortUrl());
 
-function jsonEncodeError(Throwable $e)
+function jsonEncodeError(Exception $e)
 {
     return json_encode([
         'status' => 'error',
@@ -94,7 +94,7 @@ if (!$context && $requestAction === 'payload' && !empty($requestId)) {
     header('HTTP/1.1 200 OK');
     try {
         echo OCMPayload::fetch($requestId)->attribute('payload');
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
@@ -107,7 +107,7 @@ if (!$context && $requestAction === 'import' && !empty($requestId)) {
     header('HTTP/1.1 200 OK');
     try {
         echo json_encode(OCMPayload::fetch($requestId)->createOrUpdateContent());
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
@@ -138,7 +138,7 @@ if ($requestAction === 'store_payload' && !empty($requestId) && $http->hasVariab
         }else{
             throw new Exception("$class type not found");
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
@@ -164,7 +164,7 @@ if ($context && $requestAction === 'create' && !empty($requestId) && $http->hasV
         }else{
             throw new Exception("$class type not found");
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
@@ -193,14 +193,14 @@ if (in_array($requestAction, $classes) && !empty($requestId)) {
         }else{
             throw new Exception("$class type not found");
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     eZExecution::cleanExit();
 }
 
 if ($requestAction === 'link') {
-    [$class, $id] = explode(':', base64_decode($requestId), 2);
+    list($class, $id) = explode(':', base64_decode($requestId), 2);
     try {
         if (in_array($class, $classes)) {
             /** @var OCMPersistentObject $item */
@@ -215,7 +215,7 @@ if ($requestAction === 'link') {
         }else {
             throw new Exception("$class not found");
         }
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo jsonEncodeError($e);
     }
     header('Content-Type: application/json');
@@ -302,7 +302,7 @@ if ($requestAction === 'datatable') {
     header('HTTP/1.1 200 OK');
     try {
         echo json_encode($data);
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo json_encode([
             'status' => 'error',
             'message' => $e->getMessage(),
@@ -384,7 +384,7 @@ if ($requestAction === 'run') {
                 (array)$http->getVariable('options')
             )
         );
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         echo json_encode([
             'status' => 'error',
             'message' => $e->getMessage(),

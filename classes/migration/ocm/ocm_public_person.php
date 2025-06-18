@@ -40,17 +40,17 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return false;
     }
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Persone pubbliche';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificatore persona pubblica*";
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
     {
         if ($node->classIdentifier() === 'employee'){
             return $this->fromNode($node, $this->getOpencityFieldMapperFromEmployee(), $options);
@@ -62,7 +62,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return null;
     }
 
-    protected function getOpencityFieldMapperFromEmployee(): array
+    protected function getOpencityFieldMapperFromEmployee()
     {
         return [
             'given_name' => OCMigration::getMapperHelper('nome'),
@@ -96,7 +96,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getOpencityFieldMapperFromPolitico(): array
+    protected function getOpencityFieldMapperFromPolitico()
     {
         return [
             'given_name' => OCMigration::getMapperHelper('given_name'),
@@ -185,7 +185,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         if ($node->classIdentifier() === 'dipendente'){
             return $this->fromNode($node, $this->getComunwebFieldMapperFromDipendente(), $options);
@@ -197,7 +197,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return null;
     }
 
-    protected function getComunwebFieldMapperFromDipendente(): array
+    protected function getComunwebFieldMapperFromDipendente()
     {
         return [
             'given_name' => OCMigration::getMapperHelper('nome'),
@@ -265,7 +265,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebFieldMapperFromPolitico(): array
+    protected function getComunwebFieldMapperFromPolitico()
     {
         return [
             'given_name' => OCMigration::getMapperHelper('nome'),
@@ -347,12 +347,12 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'family_name';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             "Identificatore persona pubblica*" => $this->attribute('_id'),
@@ -397,7 +397,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row["Identificatore persona pubblica*"]);
@@ -491,7 +491,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
 
     // 3da91bfec50abc9740f0f3d62c8aaac4 amm
     // 50f295ca2a57943b195fa8ffc6b909d8 pol
-    private function discoverParentNode(): int
+    private function discoverParentNode()
     {
         if (strpos($this->attribute('_original_url'), 'Amministrazione-Trasparente') === false) {
             $type = $this->getPersonType();
@@ -533,7 +533,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return false;
     }
 
-    public function getPersonType(): ?string
+    public function getPersonType()
     {
         $name = $this->attribute('family_name') . ' ' . $this->attribute('given_name');
         /** @var ocm_time_indexed_role[] $rows */
@@ -549,7 +549,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return $type;
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Punti di contatto*' => [
@@ -567,14 +567,14 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve"
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             "Descrizione breve",
@@ -583,24 +583,24 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getUrlValidationHeaders(): array
+    public static function getUrlValidationHeaders()
     {
         return [
             "Curriculum vitae",
         ];
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome completo';
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 40;
     }
 
-    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    public static function getIdListByName($name, $field = 'name',$tryWithPrefix = null)
     {
         $data = [];
         $names = explode(PHP_EOL, $name);
@@ -642,7 +642,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
         return $data;
     }
 
-    public function name(): ?string
+    public function name()
     {
         return $this->attribute('family_name') . ' ' . $this->attribute('given_name');
     }

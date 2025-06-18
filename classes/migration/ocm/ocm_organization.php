@@ -36,17 +36,17 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         'en_description',
     ];
 
-    public static function getSpreadsheetTitle(): string
+    public static function getSpreadsheetTitle()
     {
         return 'Unità organizzative';
     }
 
-    public static function getIdColumnLabel(): string
+    public static function getIdColumnLabel()
     {
         return "Identificativo unità organizzativa*";
     }
 
-    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromComunwebNode(eZContentObjectTreeNode $node, array $options = [])
     {
         if (in_array($node->classIdentifier(), ['area', 'servizio', 'ufficio'])){
             return $this->fromNode($node, $this->getComunwebAmministrativaFieldMapper(), $options);
@@ -59,12 +59,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         return null;
     }
 
-    protected function getComunwebSindacoFieldMapper(): array
+    protected function getComunwebSindacoFieldMapper()
     {
         return []; //@todo
     }
 
-    protected function getComunwebAmministrativaFieldMapper(): array
+    protected function getComunwebAmministrativaFieldMapper()
     {
         return [
             'legal_name' => OCMigration::getMapperHelper('titolo'),
@@ -164,7 +164,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getComunwebPoliticaFieldMapper(): array
+    protected function getComunwebPoliticaFieldMapper()
     {
         return [
             'legal_name' => OCMigration::getMapperHelper('titolo'),
@@ -247,7 +247,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = []): ?ocm_interface
+    public function fromOpencityNode(eZContentObjectTreeNode $node, array $options = [])
     {
         if ($node->classIdentifier() === 'administrative_area'){
             return $this->fromNode($node, $this->getOpencityFieldMapperFromAdministrativeArea(), $options);
@@ -265,7 +265,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         return null;
     }
 
-    protected function getOpencityFieldMapperFromAdministrativeArea(): array
+    protected function getOpencityFieldMapperFromAdministrativeArea()
     {
         return [
             'legal_name' => false,
@@ -299,7 +299,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getOpencityFieldMapperFromOrganizationalArea(): array
+    protected function getOpencityFieldMapperFromOrganizationalArea()
     {
         return [
             'legal_name' => false,
@@ -334,7 +334,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getOpencityFieldMapperFromOffice(): array
+    protected function getOpencityFieldMapperFromOffice()
     {
         return [
             'legal_name' => false,
@@ -369,7 +369,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    protected function getOpencityFieldMapperFromPoliticalBody(): array
+    protected function getOpencityFieldMapperFromPoliticalBody()
     {
         return [
             'legal_name' => false,
@@ -403,12 +403,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getSortField(): string
+    public static function getSortField()
     {
         return 'legal_name';
     }
 
-    public function toSpreadsheet(): array
+    public function toSpreadsheet()
     {
         return [
             'Identificativo unità organizzativa*' => $this->attribute('_id'),
@@ -444,7 +444,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function fromSpreadsheet($row): ocm_interface
+    public static function fromSpreadsheet($row) 
     {
         $item = new static();
         $item->setAttribute('_id', $row['Identificativo unità organizzativa*']);
@@ -480,7 +480,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         return $item;
     }
 
-    protected function discoverParentNode(): int
+    protected function discoverParentNode()
     {
         $isPol = count(array_diff(
             $this->formatTags($this->attribute('type')), [
@@ -547,19 +547,19 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         return $payloads;
     }
 
-    public static function getColumnName(): string
+    public static function getColumnName()
     {
         return 'Nome dell\'unità organizzativa*';
     }
 
-    public static function getMax160CharConditionalFormatHeaders(): array
+    public static function getMax160CharConditionalFormatHeaders()
     {
         return [
             "Descrizione breve*"
         ];
     }
 
-    public static function getInternalLinkConditionalFormatHeaders(): array
+    public static function getInternalLinkConditionalFormatHeaders()
     {
         return [
             'Descrizione breve*',
@@ -569,7 +569,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getRangeValidationHash(): array
+    public static function getRangeValidationHash()
     {
         return [
             'Contatti*' => [
@@ -603,12 +603,12 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
         ];
     }
 
-    public static function getImportPriority(): int
+    public static function getImportPriority()
     {
         return 30;
     }
 
-    public static function getIdListByName($name, $field = 'name', string $tryWithPrefix = null): array
+    public static function getIdListByName($name, $field = 'name',$tryWithPrefix = null)
     {
         return parent::getIdListByName($name, 'legal_name', $tryWithPrefix); // TODO: Change the autogenerated stub
     }

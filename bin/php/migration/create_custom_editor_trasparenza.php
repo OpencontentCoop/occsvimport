@@ -365,7 +365,7 @@ try {
         eZCache::clearByID(['user_info_cache']);
         eZDB::instance()->query('DELETE FROM ezdfsfile_cache WHERE name LIKE \'%user-info%\'');
     }
-} catch (Throwable $e) {
+} catch (Exception $e) {
     $cli->error($e->getMessage());
 }
 $script->shutdown();
