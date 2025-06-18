@@ -54,7 +54,7 @@ class OCMigrationOpencity extends OCMigration implements OCMigrationInterface
         eZContentObjectTreeNode $node,
         ocm_interface $item,
         array $options = []
-    ),  {
+    )  {
         return $item->fromOpencityNode($node, $options);
     }
 

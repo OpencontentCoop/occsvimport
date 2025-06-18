@@ -190,7 +190,7 @@ class OCMigrationComunweb extends OCMigration implements OCMigrationInterface
         eZContentObjectTreeNode $node,
         ocm_interface $item,
         array $options = []
-    ),  {
+    )  {
         return $item->fromComunwebNode($node, $options);
     }
 }
