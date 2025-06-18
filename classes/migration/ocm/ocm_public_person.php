@@ -114,7 +114,8 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
 
                 $hoursName = false;
-                $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
+                $h = OCMigration::getMapperHelper('ricevimento');
+                $ricevimento = $h($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";
@@ -279,7 +280,8 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
                 $hoursName = false;
-                $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
+                $h = OCMigration::getMapperHelper('ricevimento');
+                $ricevimento = $h($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Ricevimento di $name";

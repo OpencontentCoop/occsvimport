@@ -118,7 +118,8 @@ class ocm_article extends OCMPersistentObject implements ocm_interface
             },
             'abstract' => OCMigration::getMapperHelper('titolo'),
             'published' => function(Content $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options){
-                $published = OCMigration::getMapperHelper('data_iniziopubblicazione')(
+                $helper = OCMigration::getMapperHelper('data_iniziopubblicazione');
+                $published = $helper(
                     $content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options
                 );
                 if (empty($published)){

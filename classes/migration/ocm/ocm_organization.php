@@ -89,7 +89,8 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
                 $hoursName = "Orari $className $name";
                 $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                 $hours->setAttribute('stagionalita', "Unico");
-                $hours->setAttribute('note', OCMigration::getMapperHelper('orario')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $h = OCMigration::getMapperHelper('orario');
+                $hours->setAttribute('note', $h($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 
@@ -202,7 +203,8 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
                 $hoursName = "Orari $className $name";
                 $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
                 $hours->setAttribute('stagionalita', "Unico");
-                $hours->setAttribute('note', OCMigration::getMapperHelper('contatti')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
+                $h = OCMigration::getMapperHelper('contatti');
+                $hours->setAttribute('note', $h($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options));
                 $hours->setNodeReference($node);
                 $hours->storeThis($options['is_update']);
 

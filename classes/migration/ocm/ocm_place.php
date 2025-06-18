@@ -87,7 +87,8 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
                 $firstLocalizedContentLocale,
                 $options
             ) {
-                $address = OCMigration::getMapperHelper('geo')(
+                $h = OCMigration::getMapperHelper('geo');
+                $address = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,
@@ -113,19 +114,22 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
                 $id = $content->metadata['classIdentifier'] . ':' . $content->metadata['id'];
-                $galleria = OCMigration::getMapperHelper('galleria')(
+                $h = OCMigration::getMapperHelper('galleria');
+                $galleria = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,
                     $options
                 );
-                $imageName = OCMigration::getMapperHelper('image/name')(
+                $h = OCMigration::getMapperHelper('image/name');
+                $imageName = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,
                     $options
                 );
-                $imageUrl = OCMigration::getMapperHelper('image/url')(
+                $h = OCMigration::getMapperHelper('image/url');
+                $imageUrl = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,
@@ -155,7 +159,8 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
 
                 $hoursName = false;
-                $orario = OCMigration::getMapperHelper('orario')(
+                $h = OCMigration::getMapperHelper('orario');
+                $orario = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,
@@ -240,7 +245,8 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
                 $firstLocalizedContentLocale,
                 $options
             ) {
-                $address = OCMigration::getMapperHelper('geo')(
+                $h = OCMigration::getMapperHelper('geo');
+                $address = $h(
                     $content,
                     $firstLocalizedContentData,
                     $firstLocalizedContentLocale,

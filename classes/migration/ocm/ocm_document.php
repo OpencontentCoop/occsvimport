@@ -198,7 +198,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $fase = OCMigration::getMapperHelper('fase')(
+                        $h = OCMigration::getMapperHelper('fase');
+                        $fase = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -253,19 +254,22 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $criteri = OCMigration::getMapperHelper('criteri')(
+                        $h = OCMigration::getMapperHelper('criteri');    
+                        $criteri = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $tracce = OCMigration::getMapperHelper('tracce')(
+                        $h = OCMigration::getMapperHelper('tracce');
+                        $tracce = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $assunti = OCMigration::getMapperHelper('assunti')(
+                        $h = OCMigration::getMapperHelper('assunti');
+                        $assunti = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -274,7 +278,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         if (!empty($assunti)) {
                             $assunti = "<p>Numero assunti:$assunti</p>";
                         }
-                        $spese = OCMigration::getMapperHelper('spese')(
+                        $h = OCMigration::getMapperHelper('spese');
+                        $spese = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -330,13 +335,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');    
+                        $numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');
+                        $anno = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -368,13 +375,15 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');
+                        $numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');
+                        $anno = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -389,7 +398,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $informazioni_esecutivita = OCMigration::getMapperHelper('informazioni_esecutivita')(
+                        $h = OCMigration::getMapperHelper('informazioni_esecutivita');
+                        $informazioni_esecutivita = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -398,7 +408,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         if (!empty($informazioni_esecutivita)) {
                             $informazioni_esecutivita = '<p><b>Informazioni riguardanti l\'esecutività della delibera</b></p><p>' . $informazioni_esecutivita . '</p>';
                         }
-                        $stato = OCMigration::getMapperHelper('stato')(
+                        $h = OCMigration::getMapperHelper('stato');
+                        $stato = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -407,7 +418,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         if (!empty($stato)) {
                             $stato = '<p><b>Stato in cui si trova la delibera</b></p><p>' . $informazioni_esecutivita . '</p>';
                         }
-                        $pubblicazione = OCMigration::getMapperHelper('pubblicazione')(
+                        $h = OCMigration::getMapperHelper('pubblicazione');
+                        $pubblicazione = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -425,7 +437,8 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $organo = OCMigration::getMapperHelper('organo_competente')(
+                        $h = OCMigration::getMapperHelper('organo_competente');
+                        $organo = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -463,13 +476,13 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -541,13 +554,13 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -587,13 +600,13 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -713,13 +726,13 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
-                        $anno = OCMigration::getMapperHelper('anno')(
+                        $h = OCMigration::getMapperHelper('anno');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -747,14 +760,16 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $isUrgenza = OCMigration::getMapperHelper('urgenza')(
+                        $h = OCMigration::getMapperHelper('urgenza');
+                        $isUrgenza = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
                             $options
                         );
                         $urgenza = $isUrgenza ? '<p>Ordinanza emanata in deroga alla legislazione vigente</p>' : '';
-                        $motivo_non_pubblicazione = OCMigration::getMapperHelper('motivo_non_pubblicazione')(
+                        $h = OCMigration::getMapperHelper('motivo_non_pubblicazione');
+                        $motivo_non_pubblicazione = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
@@ -776,7 +791,7 @@ class ocm_document extends OCMPersistentObject implements ocm_interface
                         $firstLocalizedContentLocale,
                         $options
                     ) {
-                        $numero = OCMigration::getMapperHelper('numero')(
+                        $h = OCMigration::getMapperHelper('numero');$numero = $h(
                             $content,
                             $firstLocalizedContentData,
                             $firstLocalizedContentLocale,
