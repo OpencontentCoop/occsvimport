@@ -34,6 +34,9 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
             die();
         }
 
+        eZClusterFileHandler::instance($this->options->attribute('csv_path'))
+            ->fetch();
+
         $csvOptions = new SQLICSVOptions(array(
             'csv_path' => $this->options->attribute('csv_path'),
             'delimiter' => $this->options->attribute('delimiter'),
@@ -219,6 +222,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
                         $files = explode(',', $row->{$header});
                         array_walk($files, 'trim');
 
+                        // @phpstan-ignore empty.variable
                         if (!empty($files) && $files[0] != '') {
                             $actionArray = explode('_', $rawHeader);
                             $action = array_shift($actionArray);
@@ -244,8 +248,10 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $sFields = array('partecipanti', 'aggiudicatari');
         foreach ($sFields as $s) {
             if ($row->{$s} == '2') {
+                // @phpstan-ignore variable.undefined
                 $content->fields->{$rawHeaders[array_search($s, $headers)]} = $this->prepareMatrixData($remoteID, $row, $s);
             } else {
+                // @phpstan-ignore variable.undefined
                 $content->fields->{$rawHeaders[array_search($s, $headers)]} = $this->preserveMatrixData($remoteID, $s);
             }
         }
@@ -257,6 +263,7 @@ class CSVImportHandlerLotto extends SQLIImportAbstractHandler implements ISQLIIm
         $newNodeID = $content->getRawContentObject()->attribute('main_node_id');
         unset($content);
 
+        // @phpstan-ignore variable.undefined
         if ($doAction !== false) {
             foreach ($doAction as $action => $values) {
                 $parameters = array(

@@ -33,7 +33,7 @@ class OCCSVImportHandler
         }
 
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . eZRemoteIdUtility::generate('importcsv');
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
@@ -65,6 +65,8 @@ class OCCSVImportHandler
                 eZDir::recursiveDelete($this->file_dir);
                 return false;
             }
+            $fileHandler = eZClusterFileHandler::instance();
+            $fileHandler->fileStore($this->getCSVFile(), 'csvimport', false, 'text/csv');
             return true;
         }
         return false;
@@ -391,7 +393,7 @@ class OCCSVImportHandler
     public function inizializeFromHTTPFile($httpFile)
     {
         $storageDir = $this->ini->variable('Storage', 'StorageZipDir');
-        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir;
+        $storage = eZSys::storageDirectory() . eZSys::fileSeparator() . $storageDir . '/' . eZRemoteIdUtility::generate('importcsv');
         if (!is_dir($storage)) {
             eZDir::mkdir($storage, false, true);
         }
@@ -425,6 +427,8 @@ class OCCSVImportHandler
                 eZDir::recursiveDelete($this->file_dir);
                 return false;
             }
+            $fileHandler = eZClusterFileHandler::instance();
+            $fileHandler->fileStore($this->getCSVFile(), 'csvimport', false, 'text/csv');
             return true;
         }
         return false;
@@ -447,7 +451,7 @@ class OCCSVImportHandler
 
         $pendingImport = new SQLIImportItem(array(
             'handler' => $handler,
-            'user_id' => eZUser::currentUserID()
+            'user_id' => eZUser::currentUserID(),
         ));
         $pendingImport->setAttribute('options', new SQLIImportHandlerOptions($this->import_options));
         $pendingImport->store();
@@ -493,7 +497,7 @@ class OCCSVImportHandler
                 $contentOptions = new SQLIContentOptions(array(
                     'class_identifier' => $classIdentifier,
                     'remote_id' => $remoteID,
-                    'language' => $parameters['language']
+                    'language' => $parameters['language'],
                 ));
 
                 $object = trim($object);
@@ -508,6 +512,7 @@ class OCCSVImportHandler
                         $content->addTranslation($parameters['language']);
                     }
                     $content->fields->name = (isset($nameArray[1]) && !empty($nameArray[1])) ? $nameArray[1] : $nameArray[0];
+                    // @phpstan-ignore variable.undefined
                     $content->fields->{$field} = $fileName;
                     $content->addLocation(SQLILocation::fromNodeID($parentNodeID));
                     $publisher = SQLIContentPublisher::getInstance();
@@ -519,6 +524,33 @@ class OCCSVImportHandler
                 }
             }
         }
+    }
+
+    public function fetchImportHistory($parentNodeId, $classIdentifier)
+    {
+        $handler = $this->ini->variable('Settings', 'SQLIImportHandler');
+        if ($this->ini->hasVariable('Settings', 'SQLIImportHandler_' . $classIdentifier)) {
+            $handler = $this->ini->variable('Settings', 'SQLIImportHandler_' . $classIdentifier);
+        }
+        $handler = eZDB::instance()->escapeString($handler);
+        $parentNodeIdFilter = 's:14:"parent_node_id";i:' . (int)$parentNodeId;
+        $parentNodeIdFilterAsString = sprintf('s:14:"parent_node_id";s:%s:"%s"', strlen($parentNodeId), $parentNodeId);
+        $query = "SELECT * FROM sqliimport_item WHERE handler = '$handler' AND (options_serialized like '%$parentNodeIdFilter%' OR options_serialized like '%$parentNodeIdFilterAsString%') ORDER BY requested_time DESC";
+
+        $rows = eZDB::instance()->arrayQuery($query);
+        /** @var SQLIImportItem[] $objects */
+        $objects = eZPersistentObject::handleRows($rows, 'SQLIImportItem', true);
+        $data = [];
+        foreach ($objects as $item){
+            $data[] = [
+                'requested_time' => date("Y-m-d H:i:s", $item->attribute('requested_time')),
+                'status' => $item->attribute('status'),
+                'status_string' => $item->getStatusString(),
+                'progression_notes' => $item->attribute('progression_notes'),
+                'duration' => $item->getFormatedProcessTime(),
+            ];
+        }
+        return ['items' => $data];
     }
 
 }
