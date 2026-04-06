@@ -17,12 +17,12 @@ class OCCSVImportTagHandler
         if (isset(self::$sheets[$sheet]) && self::$sheets[$sheet] != $recursion) {
             throw new Exception("Errore di ricorsione: il foglio $sheet è già usato nel livello " . self::$sheets[$sheet]);
         }
-        $handler = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetUri($googleSpreadsheetUrl);
-        $worksheetFeed = $handler->getWorksheetFeed();
-        $worksheet = $worksheetFeed->getByTitle($sheet);
         self::$sheets[$sheet] = $recursion;
 
-        $doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($worksheet);
+        $doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc(
+            OCGoogleSpreadsheetHandler::getSpreadsheetIdFromUri($googleSpreadsheetUrl), $sheet
+        );
+        // @phpstan-ignore arguments.count
         return $doc->rows;
     }
 

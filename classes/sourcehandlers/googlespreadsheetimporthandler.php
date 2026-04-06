@@ -8,11 +8,8 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
 
     public function initialize()
     {
-        $this->worksheetFeed = OCGoogleSpreadsheetHandler::instanceFromPublicSpreadsheetId($this->options['google_spreadsheet_id'])->getWorksheetFeed();
-        $this->worksheet = $this->worksheetFeed->getByTitle($this->options['sheet']);
-
         $mapper = $this->options->hasAttribute('fields_map') ? json_decode($this->options->attribute('fields_map'), 1) : array();
-        $this->doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($this->worksheet, $this->contentClass, $mapper);
+        $this->doc = OCGoogleSpreadsheetHandler::getWorksheetAsSQLICSVDoc($this->options['google_spreadsheet_id'], $this->options['sheet'], $this->contentClass, $mapper);
         $this->dataSource = $this->doc->rows;
     }
 
