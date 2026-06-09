@@ -278,6 +278,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
                 $name = $content->metadata['name']['ita-IT'];
                 $object = eZContentObject::fetch((int)$content->metadata['id']);
                 $node = $object->mainNode();
+                $dataMap = $object instanceof eZContentObject ? $object->dataMap() : [];
                 $hoursName = false;
                 $ricevimento = OCMigration::getMapperHelper('ricevimento')($content, $firstLocalizedContentData, $firstLocalizedContentLocale, $options);
                 if (!empty($ricevimento)) {
@@ -399,6 +400,7 @@ class ocm_public_person extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificatore persona pubblica*"]);
         $item->setAttribute('given_name', $row["Nome*"]);

@@ -193,6 +193,7 @@ class OCMigration extends eZPersistentObject
     final public static function getAvailableClasses($namesFilter = [])
     {
         $ocmList = [];
+        // @phpstan-ignore-next-line include.fileNotFound
         $classes = include 'var/autoload/ezp_extension.php';
         foreach (array_keys($classes) as $class) {
             if (strpos($class, 'ocm_') !== false && in_array('ocm_interface', class_implements($class))) {

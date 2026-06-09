@@ -98,6 +98,7 @@ class ocm_online_contact_point extends OCMPersistentObject implements ocm_interf
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore punto di contatto*']);
         $item->setAttribute('name', $row['Titolo punto di contatto*']);

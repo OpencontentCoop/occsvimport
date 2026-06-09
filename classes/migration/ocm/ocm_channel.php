@@ -92,6 +92,7 @@ class ocm_channel extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo canale*"]);
         $item->setAttribute('_parent_name', $row["Pagina contenitore"]);

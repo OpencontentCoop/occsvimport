@@ -113,6 +113,7 @@ class ocm_opening_hours_specification extends OCMPersistentObject implements ocm
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row['Identificatore*']);
         $item->setAttribute('name', $row['Nome*']);

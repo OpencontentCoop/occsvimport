@@ -186,7 +186,7 @@ class ocm_private_organization extends OCMPersistentObject implements ocm_interf
 
     public static function fromSpreadsheet($row): ocm_interface
     {
-
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo*"]);
         $item->setAttribute('legal_name', $row["Nome*"]);

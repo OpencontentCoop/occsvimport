@@ -74,6 +74,7 @@ class ocm_output extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo output*"]);
         $item->setAttribute('name', $row["Nome*"]);

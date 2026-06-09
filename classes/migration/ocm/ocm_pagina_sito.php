@@ -127,6 +127,7 @@ class ocm_pagina_sito extends OCMPersistentObject implements ocm_interface
             ]);
         }
 
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row['ID']);
         $item->setAttribute('name', $row['Nome']);

@@ -272,6 +272,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo evento*"]);
         $item->setAttribute('event_title', $row["Titolo dell'evento*"]);
@@ -391,6 +392,7 @@ class ocm_event extends OCMPersistentObject implements ocm_interface
             $intervalStrings[] = implode('|', $customEvents);
         }
         $intervalString = implode('#', $intervalStrings);
+        // @phpstan-ignore-next-line empty.variable
         if (!empty($intervalString)) {
             $payload->setData($locale, 'time_interval', $intervalString);
         }

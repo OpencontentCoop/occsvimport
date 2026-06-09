@@ -253,6 +253,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del servizio*"]);
         $item->setAttribute('type', $row["Categoria del servizio*"]);
@@ -396,7 +397,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             foreach ($link as $i => $l) {
                 $links['ita-IT'][] = [
                     'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'link' => $l,
                 ];
             }
         }
@@ -406,7 +407,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             foreach ($link as $i => $l) {
                 $links['ger-DE'][] = [
                     'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'link' => $l,
                 ];
             }
         }
@@ -416,7 +417,7 @@ class ocm_public_service extends OCMPersistentObject implements ocm_interface
             foreach ($link as $i => $l) {
                 $links['eng-GB'][] = [
                     'nome_sito' => $name[$i] ?? '',
-                    'link' => $l ?? '',
+                    'link' => $l,
                 ];
             }
         }

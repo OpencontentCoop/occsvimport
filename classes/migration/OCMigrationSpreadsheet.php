@@ -368,8 +368,10 @@ class OCMigrationSpreadsheet
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        // @phpstan-ignore-next-line class.notFound
         $clear = new Google_Service_Sheets_ClearValuesRequest();
         $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
+        // @phpstan-ignore-next-line class.notFound
         $body = new Google_Service_Sheets_ValueRange([
             'values' => [[$data]],
         ]);
@@ -404,12 +406,14 @@ class OCMigrationSpreadsheet
         $rowCount = $sheet->getProperties()->getGridProperties()->getRowCount();
         $colCount = $sheet->getProperties()->getGridProperties()->getColumnCount();
         $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        // @phpstan-ignore-next-line class.notFound
         $clear = new Google_Service_Sheets_ClearValuesRequest();
         $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
 
         $rowCount = count($data);
         $colCount = count($data[0]);
         $range = "$sheetTitle!R1C1:R{$rowCount}C{$colCount}";
+        // @phpstan-ignore-next-line class.notFound
         $body = new Google_Service_Sheets_ValueRange([
             'values' => $data,
         ]);
@@ -457,6 +461,7 @@ class OCMigrationSpreadsheet
         }
 
         $values = [array_values($value)];
+        // @phpstan-ignore-next-line class.notFound
         $body = new Google_Service_Sheets_ValueRange([
             'values' => $values,
         ]);
@@ -480,6 +485,7 @@ class OCMigrationSpreadsheet
     public static function instance(): self
     {
         if (self::$instance === null) {
+            // @phpstan-ignore-next-line new.static
             self::$instance = new static();
         }
 
@@ -520,6 +526,7 @@ class OCMigrationSpreadsheet
             $sheetId = $currentRules->properties->sheetId;
             if (isset($currentRules->conditionalFormats)) {
                 foreach (array_reverse(array_keys($currentRules->conditionalFormats)) as $index) {
+                    // @phpstan-ignore-next-line class.notFound
                     $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                         'deleteConditionalFormatRule' => [
                             'sheetId' => $sheetId,
@@ -542,6 +549,7 @@ class OCMigrationSpreadsheet
                 }
             }
             if (!empty($requiredRanges)) {
+                // @phpstan-ignore-next-line class.notFound
                 $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                     'addConditionalFormatRule' => [
                         'rule' => [
@@ -575,6 +583,7 @@ class OCMigrationSpreadsheet
                     }
                 }
                 if (!empty($internalLinkRanges)) {
+                    // @phpstan-ignore-next-line class.notFound
                     $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                         'addConditionalFormatRule' => [
                             'rule' => [
@@ -607,6 +616,7 @@ class OCMigrationSpreadsheet
             if (!empty($max160CharConditionalFormatHeaders)) {
                 foreach ($headers as $index => $header) {
                     if (in_array($header, $max160CharConditionalFormatHeaders)) {
+                        // @phpstan-ignore-next-line class.notFound
                         $addConditionalFormatRulesRequests[] = new Google_Service_Sheets_Request([
                             'addConditionalFormatRule' => [
                                 'rule' => [
@@ -656,6 +666,7 @@ class OCMigrationSpreadsheet
             if (!empty($dateValidationHeaders)) {
                 foreach ($headers as $index => $header) {
                     if (in_array($header, $dateValidationHeaders)) {
+                        // @phpstan-ignore-next-line class.notFound
                         $setDataValidationRequests[] = new Google_Service_Sheets_Request([
                             'setDataValidation' => [
                                 'range' => [
@@ -685,6 +696,7 @@ class OCMigrationSpreadsheet
                     if (isset($rangeValidationHash[$header])) {
                         $userEnteredValue = $this->getColumnRange($rangeValidationHash[$header]['ref']);
                         if ($userEnteredValue) {
+                            // @phpstan-ignore-next-line class.notFound
                             $setDataValidationRequests[] = new Google_Service_Sheets_Request([
                                 'setDataValidation' => [
                                     'range' => [
@@ -715,6 +727,7 @@ class OCMigrationSpreadsheet
             if (!empty($urlValidationHeaders)) {
                 foreach ($headers as $index => $header) {
                     if (in_array($header, $urlValidationHeaders)) {
+                        // @phpstan-ignore-next-line class.notFound
                         $setDataValidationRequests[] = new Google_Service_Sheets_Request([
                             'setDataValidation' => [
                                 'range' => [
@@ -748,6 +761,7 @@ class OCMigrationSpreadsheet
 
         if (!empty($requests)) {
             try {
+                // @phpstan-ignore-next-line class.notFound
                 $batchUpdateRequest = new Google_Service_Sheets_BatchUpdateSpreadsheetRequest([
                     'requests' => $requests,
                 ]);
@@ -947,6 +961,7 @@ class OCMigrationSpreadsheet
 
             $updateRows = 0;
             if (!empty($values)) {
+                // @phpstan-ignore-next-line class.notFound
                 $body = new Google_Service_Sheets_ValueRange([
                     'values' => $values,
                 ]);
@@ -958,6 +973,7 @@ class OCMigrationSpreadsheet
                 if ($override) {
                     // cancella tutti i valori non formule di tutto il folgio (escluso header)
                     $range = "$sheetTitle!R{$startCleanAtRow}C1:R{$rowCount}C{$allColCount}";
+                    // @phpstan-ignore-next-line class.notFound
                     $clear = new Google_Service_Sheets_ClearValuesRequest();
                     $this->googleSheetService->spreadsheets_values->clear($this->spreadsheetId, $range, $clear);
 

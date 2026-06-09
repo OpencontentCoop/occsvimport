@@ -78,7 +78,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
         $forEntities = explode(PHP_EOL, $role->attribute('for_entity'));
         sort($forEntities);
         if (count($forEntities) > 1){
-            $isUpdate = $options['is_update'] ?? false;
+            $isUpdate = false;
             $first = array_shift($forEntities);
             $role->setAttribute('for_entity', $first);
             foreach ($forEntities as $index => $forEntity){
@@ -265,6 +265,7 @@ class ocm_time_indexed_role extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo incarico*"]);
         $item->setAttribute('label', $row["Titolo dell'incarico"]);

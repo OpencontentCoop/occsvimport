@@ -289,6 +289,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         );
 
         if (!$instance) {
+            // @phpstan-ignore-next-line new.static
             $instance = new static();
             $instance->setAttribute('_id', $id);
             $instance->setAttribute($field, trim($value));
@@ -454,6 +455,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         } catch (Throwable $e) {
         }
         $parts = explode('/', $url);
+        // @phpstan-ignore-next-line new.static
         $self = new static();
         $remoteId = array_pop($parts);
         $remoteId = 'link-to-' . $remoteId;
@@ -493,7 +495,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             return null;
         }
 
-        return !empty($data);
+        return true;
     }
 
     protected static function getDatePayload(string $data, $format = 'c')
@@ -614,7 +616,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
                 'text' => $text,
             ];
         }
-        if (!$isMultiple && !empty($values)) {
+        if (!$isMultiple) {
             return $values[0];
         }
 

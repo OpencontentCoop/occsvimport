@@ -86,6 +86,7 @@ class ocm_link extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificativo del link*"]);
         $item->setAttribute('name', $row['Nome*']);

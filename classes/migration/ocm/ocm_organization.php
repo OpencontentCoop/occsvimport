@@ -446,6 +446,7 @@ class ocm_organization extends OCMPersistentObject implements ocm_interface
 
     public static function fromSpreadsheet($row): ocm_interface
     {
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row['Identificativo unità organizzativa*']);
         $item->setAttribute('legal_name', $row['Nome dell\'unità organizzativa*']);

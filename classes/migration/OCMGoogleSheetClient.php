@@ -67,6 +67,7 @@ class OCMGoogleSheetClient extends GoogleSheetClient
     {
         $client = new \Google_Client();
         $client->setApplicationName('Google Sheets Importer');
+        // @phpstan-ignore-next-line class.notFound
         $client->setScopes([\Google_Service_Sheets::SPREADSHEETS]);
         $client->setAccessType('offline');
         $client->setAuthConfig($this->credentialData);

@@ -292,7 +292,7 @@ EOT;
     public function createContentObject()
     {
         $parentObject = $this->getParentObject();
-        if (!$parentObject instanceof eZContentObject || isset($check['error'])) {
+        if (!$parentObject instanceof eZContentObject) {
             throw new Exception('Parent object ' . $this->attribute('parent_remote_id') . ' not found');
         }
         $mainNode = $parentObject->mainNode();
@@ -346,7 +346,7 @@ EOT;
                 $converters = self::getDataConverters();
                 $attributes = [];
                 foreach ($check as $identifier => $diff) {
-                    if (empty($fields) || (!empty($fields) && in_array($identifier, $fields))) {
+                    if (empty($fields) || in_array($identifier, $fields)) {
                         $callback = $converters[$identifier]['toAttribute'];
                         $attributes[$identifier] = $callback($this->attribute($identifier));
                     }

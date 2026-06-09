@@ -159,7 +159,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
                     $firstLocalizedContentLocale,
                     $options
                 );
-                if (!empty($ricevimento)) {
+                if (!empty($orario)) {
                     $hoursId = $id . ':hours';
                     $hoursName = "Orari $className $name";
                     $hours = ocm_opening_hours_specification::instanceBy('name', $hoursName, $hoursId);
@@ -344,6 +344,7 @@ class ocm_place extends OCMPersistentObject implements ocm_interface
             ]);
         }
 
+        // @phpstan-ignore-next-line new.static
         $item = new static();
         $item->setAttribute('_id', $row["Identificatore luogo*"]);
         $item->setAttribute('name', $row["Nome del luogo*"]);

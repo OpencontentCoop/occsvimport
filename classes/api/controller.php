@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @property string $collection
+ * @property string $item
+ * @property string $field
+ */
 class OCMController extends ezpRestMvcController
 {
     private function doExceptionResult(Exception $exception)
