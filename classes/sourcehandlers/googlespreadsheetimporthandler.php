@@ -65,9 +65,14 @@ class OCGoogleSpreadsheetImportHandler extends CSVImportHandler implements ISQLI
             $filename = basename($url);
             $suffix = eZFile::suffix($filename);
             if ($suffix == $filename || strpos($suffix, '?') !== false) {
-                $newFileName = $this->getFileNameFromContentDisposition($url);
+                $newFileName = OCMPersistentObject::sanitizeRemoteFileName(
+                    $this->getFileNameFromContentDisposition($url)
+                );
                 $localPathName = $this->getRemoteFile($url);
-                $localPath = dirname($localPathName);
+                // one directory per url: files of the same row are collected before being used,
+                // different urls can resolve to the same file name
+                $localPath = dirname($localPathName) . '/' . md5($url);
+                eZDir::mkdir($localPath, false, true);
                 $newLocalPathName = $localPath . '/' . $newFileName;
                 if ($newLocalPathName != $localPathName) {
                     eZFile::rename($localPathName, $newLocalPathName);
