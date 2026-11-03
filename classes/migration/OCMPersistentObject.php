@@ -605,6 +605,7 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
             }
 
             $filename = rawurldecode(rawurldecode(rawurldecode(rawurldecode($filename))));
+            $filename = self::sanitizeRemoteFileName($filename);
             $item = str_replace(' ', '+', $item);
             $item = trim($item);
 
@@ -621,6 +622,18 @@ abstract class OCMPersistentObject extends eZPersistentObject implements ocm_int
         }
 
         return $values;
+    }
+
+    /**
+     * Without a usable Content-Disposition the file name falls back to the last segment of the url,
+     * query string included (e.g. "uc?id=...&export=download" for Google Drive links): never keep the query
+     * as part of the name, it ends up in the binary file name stored on the cluster.
+     */
+    public static function sanitizeRemoteFileName($filename)
+    {
+        $sanitized = trim(preg_replace('/\?.*$/s', '', $filename));
+
+        return $sanitized !== '' ? $sanitized : 'file';
     }
 
     private static function getFileNameFromContentDisposition($url)
